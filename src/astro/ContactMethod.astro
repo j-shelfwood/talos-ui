@@ -1,0 +1,71 @@
+---
+/**
+ * ContactMethod — a single contact row: an optional `icon` slot (or a small
+ * bordered glyph box fallback), a tiny uppercase HUD label, and a value that
+ * becomes a link when `href` is supplied. De-Tailwinded; no icon library.
+ * Requires "@shelfwood/talos-ui/talos.css" (tokens).
+ */
+interface Props {
+  label: string;
+  value: string;
+  href?: string;
+  class?: string;
+}
+const { label, value, href, class: className } = Astro.props;
+const isExternal = href?.startsWith("http");
+---
+
+<div class={["contact-method", className].filter(Boolean).join(" ")}>
+  <span class="contact-method__glyph" aria-hidden="true">
+    <slot name="icon">◇</slot>
+  </span>
+  <div class="contact-method__body">
+    <p class="contact-method__label">{label}</p>
+    {href ? (
+      <a
+        class="contact-method__value"
+        href={href}
+        {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      >{value}</a>
+    ) : (
+      <p class="contact-method__value">{value}</p>
+    )}
+  </div>
+</div>
+
+<style>
+  .contact-method { display: flex; align-items: flex-start; gap: 0.875rem; }
+  .contact-method__glyph {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.85rem;
+    color: hsl(0 0% 100% / 0.7);
+    background: hsl(0 0% 100% / 0.05);
+    border: 1px solid hsl(0 0% 100% / 0.18);
+  }
+  .contact-method__body { min-width: 0; }
+  .contact-method__label {
+    font-family: var(--talos-font-display);
+    font-size: 0.6rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: var(--talos-tracking-hud);
+    color: hsl(0 0% 100% / 0.45);
+    margin: 0 0 0.2rem;
+  }
+  .contact-method__value {
+    font-size: 0.9rem;
+    font-weight: 300;
+    line-height: 1.4;
+    color: hsl(0 0% 100% / 0.92);
+    margin: 0;
+    text-decoration: none;
+    word-break: break-word;
+    transition: color var(--talos-dur-fast) ease;
+  }
+  a.contact-method__value:hover { color: var(--talos-accent); }
+</style>

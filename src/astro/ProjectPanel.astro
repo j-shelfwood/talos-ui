@@ -1,0 +1,76 @@
+---
+/**
+ * ProjectPanel — project link card: header (title + directional corner glyph),
+ * muted description, and a tag row. Renders as an anchor when `href` is set so
+ * the GlassPanel HUD brackets light up on hover. De-Tailwinded.
+ * Requires "@shelfwood/talos-ui/talos.css".
+ */
+import GlassPanel from "./GlassPanel.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  tags?: string[];
+  href?: string;
+  external?: boolean;
+  class?: string;
+}
+const {
+  title,
+  description,
+  tags = [],
+  href,
+  external = false,
+  class: className,
+} = Astro.props;
+
+const glyph = external ? "↗" : "→"; // ↗ external / → internal
+const linkProps = href
+  ? { as: "a" as const, href, ...(external ? { target: "_blank", rel: "noreferrer noopener" } : {}) }
+  : {};
+---
+
+<GlassPanel
+  class={["project-card", "talos-pad", className].filter(Boolean).join(" ")}
+  {...linkProps}
+>
+  <div class="project-card__head">
+    <h3 class="project-card__title">{title}</h3>
+    <span class="project-card__glyph" aria-hidden="true">{glyph}</span>
+  </div>
+
+  <p class="project-card__desc">{description}</p>
+
+  {tags.length > 0 && (
+    <div class="project-card__tags">
+      {tags.map((tag) => <span class="talos-tag">{tag}</span>)}
+    </div>
+  )}
+</GlassPanel>
+
+<style>
+  .project-card { display: flex; flex-direction: column; }
+  .project-card__head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 1rem; margin-bottom: 0.75rem;
+  }
+  .project-card__title {
+    font-family: var(--talos-font-display); font-weight: 400; font-size: 0.88rem;
+    text-transform: uppercase; letter-spacing: var(--talos-tracking-hud-tight);
+    color: var(--talos-foreground); margin: 0;
+  }
+  .project-card__glyph {
+    flex: 0 0 auto; font-family: var(--talos-font-display); font-size: 0.95rem;
+    line-height: 1; color: hsl(0 0% 100% / 0.5);
+    transition: transform var(--talos-dur-fast) var(--talos-ease-out),
+      color var(--talos-dur-fast) var(--talos-ease-out);
+  }
+  .project-card:hover .project-card__glyph {
+    color: hsl(0 0% 100%); transform: translate(0.15rem, -0.15rem);
+  }
+  .project-card__desc {
+    font-size: 0.85rem; line-height: 1.6; color: var(--talos-muted-foreground);
+    margin: 0 0 1.25rem; flex: 1; text-wrap: pretty;
+  }
+  .project-card__tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: auto; }
+</style>

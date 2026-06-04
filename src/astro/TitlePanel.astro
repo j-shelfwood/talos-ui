@@ -1,0 +1,47 @@
+---
+/**
+ * TitlePanel — compact section-header panel: optional `icon` slot + title (h2)
+ * and muted subtitle in a single flex row. De-Tailwinded; self-contained styles.
+ * Requires "@shelfwood/talos-ui/talos.css".
+ */
+import GlassPanel from "./GlassPanel.astro";
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  class?: string;
+}
+const { title, subtitle, class: className } = Astro.props;
+
+const hasIcon = Astro.slots.has("icon");
+---
+
+<GlassPanel class={["title-card", "talos-pad", className].filter(Boolean).join(" ")}>
+  <div class="title-card__row">
+    {hasIcon && (
+      <span class="title-card__icon" aria-hidden="true"><slot name="icon" /></span>
+    )}
+    <div class="title-card__body">
+      <h2 class="title-card__title">{title}</h2>
+      {subtitle && <p class="title-card__subtitle">{subtitle}</p>}
+    </div>
+  </div>
+</GlassPanel>
+
+<style>
+  .title-card__row { display: flex; align-items: center; gap: 1rem; }
+  .title-card__icon {
+    flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; background: hsl(0 0% 100% / 0.1);
+    color: var(--talos-foreground);
+  }
+  .title-card__body { display: flex; flex-direction: column; gap: 0.2rem; }
+  .title-card__title {
+    font-family: var(--talos-font-display); font-weight: 300; font-size: 1.15rem;
+    text-transform: uppercase; letter-spacing: var(--talos-tracking-hud-tight);
+    color: var(--talos-foreground); margin: 0;
+  }
+  .title-card__subtitle {
+    font-size: 0.85rem; line-height: 1.4; color: var(--talos-muted-foreground); margin: 0;
+  }
+</style>

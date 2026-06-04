@@ -1,0 +1,117 @@
+---
+/**
+ * ContactInfoPanel — right-aligned HUD "get in touch" card: header
+ * (eyebrow + title), a list of contact methods (email / phone / location /
+ * calendar), and a bordered muted "response time" info box at the bottom.
+ * De-Tailwinded from shelfwood.co's ContactInfoPanel. Uses ContactMethod.
+ * Requires "@shelfwood/talos-ui/talos.css" (tokens).
+ */
+import GlassPanel from "./GlassPanel.astro";
+import ContactMethod from "./ContactMethod.astro";
+
+interface Props {
+  email?: string;
+  phone?: string;
+  location?: string;
+  calendarUrl?: string;
+  class?: string;
+}
+const {
+  email,
+  phone,
+  location,
+  calendarUrl,
+  class: className,
+} = Astro.props;
+---
+
+<GlassPanel class={["contact-info", "talos-pad-lg", className].filter(Boolean).join(" ")}>
+  <header class="contact-info__head">
+    <p class="talos-eyebrow">// Get in touch</p>
+    <h2 class="contact-info__title">Get in touch</h2>
+    <p class="contact-info__lede">
+      Ready to start your next project? Let's discuss how I can help bring your ideas to life.
+    </p>
+  </header>
+
+  <div class="contact-info__methods">
+    {email && (
+      <ContactMethod label="Email" value={email} href={`mailto:${email}`}>
+        <span slot="icon">✉</span>
+      </ContactMethod>
+    )}
+    {calendarUrl && (
+      <ContactMethod label="Schedule a call" value="Book a consultation" href={calendarUrl}>
+        <span slot="icon">◷</span>
+      </ContactMethod>
+    )}
+    {phone && (
+      <ContactMethod label="Phone" value={phone} href={`tel:${phone}`}>
+        <span slot="icon">☎</span>
+      </ContactMethod>
+    )}
+    {location && (
+      <ContactMethod label="Location" value={location}>
+        <span slot="icon">◉</span>
+      </ContactMethod>
+    )}
+  </div>
+
+  <div class="contact-info__note">
+    <p class="contact-info__note-label">// Response time</p>
+    <p class="contact-info__note-text">Typically within 24 hours during business days.</p>
+  </div>
+</GlassPanel>
+
+<style>
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    text-align: right;
+    align-items: flex-end;
+  }
+  .contact-info__head { display: flex; flex-direction: column; align-items: flex-end; }
+  .contact-info__title {
+    font-family: var(--talos-font-display);
+    font-weight: 300;
+    font-size: 1.75rem;
+    color: hsl(0 0% 100%);
+    margin: 0.5rem 0 0.5rem;
+  }
+  .contact-info__lede {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: hsl(var(--talos-muted-foreground-hsl));
+    margin: 0;
+    max-width: 36ch;
+  }
+  .contact-info__methods {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: left;
+  }
+  .contact-info__note {
+    width: 100%;
+    text-align: left;
+    background: hsl(0 0% 100% / 0.03);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    padding: 1rem 1.25rem;
+  }
+  .contact-info__note-label {
+    font-family: var(--talos-font-display);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: var(--talos-tracking-hud);
+    color: hsl(0 0% 100% / 0.55);
+    margin: 0 0 0.3rem;
+  }
+  .contact-info__note-text {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: hsl(var(--talos-muted-foreground-hsl));
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,41 @@
+---
+/**
+ * FeatureItem — inner list item: small left marker + title + muted description.
+ * No GlassPanel wrapper (composed inside panels like ServicePanel).
+ * Requires "@shelfwood/talos-ui/talos.css".
+ */
+interface Props {
+  title: string;
+  description: string;
+  class?: string;
+}
+const { title, description, class: className } = Astro.props;
+---
+
+<div class={["feature-item", className].filter(Boolean).join(" ")}>
+  <span class="feature-item__marker" aria-hidden="true">+</span>
+  <div class="feature-item__body">
+    <h3 class="feature-item__title">{title}</h3>
+    <p class="feature-item__desc">{description}</p>
+  </div>
+</div>
+
+<style>
+  .feature-item { display: flex; align-items: flex-start; gap: 0.75rem; }
+  .feature-item__marker {
+    flex: 0 0 auto; width: 1rem; height: 1rem; margin-top: 0.15rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--talos-font-display); font-size: 0.7rem; line-height: 1;
+    color: hsl(0 0% 100% / 0.55); border: 1px solid hsl(0 0% 100% / 0.18);
+  }
+  .feature-item__body { display: flex; flex-direction: column; gap: 0.25rem; }
+  .feature-item__title {
+    font-family: var(--talos-font-display); font-weight: 400; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: var(--talos-tracking-hud-tight);
+    color: var(--talos-foreground); margin: 0;
+  }
+  .feature-item__desc {
+    font-size: 0.85rem; line-height: 1.5; color: var(--talos-muted-foreground);
+    margin: 0; text-wrap: pretty;
+  }
+</style>

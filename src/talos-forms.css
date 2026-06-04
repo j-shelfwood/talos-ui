@@ -1,0 +1,112 @@
+/* ============================================================================
+   @shelfwood/talos-ui — TALOS-FORMS.CSS  (opt-in module)
+   HUD form chrome: field wrapper, uppercase HUD label, chamfered text inputs
+   and textareas, and a bordered fieldset divider. Plain CSS so it works in
+   Blade / plain HTML as well as Astro. Import AFTER talos.css.
+
+     <link rel="stylesheet" href=".../talos-ui/talos.css" />
+     <link rel="stylesheet" href=".../talos-ui/talos-forms.css" />
+
+   Class-based, token-driven. Assumes talos.css (tokens + fonts) is loaded.
+   ========================================================================== */
+
+/* ----------------------------------------------------------------------------
+   FIELD — vertical label + control stack.
+   -------------------------------------------------------------------------- */
+.talos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ----------------------------------------------------------------------------
+   LABEL — tiny uppercase HUD voice, wide tracking.
+   -------------------------------------------------------------------------- */
+.talos-label {
+  font-family: var(--talos-font-display);
+  font-size: 0.62rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: hsl(0 0% 100% / 0.55);
+}
+
+/* ----------------------------------------------------------------------------
+   INPUT / TEXTAREA — subtle fill, hairline border, small bottom-right chamfer
+   echoing the buttons. Focus brightens the border and lifts the fill.
+   -------------------------------------------------------------------------- */
+.talos-input,
+.talos-textarea {
+  width: 100%;
+  font-family: var(--talos-font-body);
+  font-size: 0.9rem;
+  font-weight: 300;
+  line-height: 1.5;
+  color: hsl(var(--talos-foreground-hsl));
+  background: hsl(0 0% 100% / 0.04);
+  border: 1px solid hsl(0 0% 100% / 0.15);
+  border-radius: 0;
+  padding: 0.75rem 1rem;
+  /* Small bottom-right cut — kept modest so the control stays usable. */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--talos-chamfer-flag)),
+    calc(100% - var(--talos-chamfer-flag)) 100%,
+    0 100%
+  );
+  transition: border-color var(--talos-dur-fast) ease,
+    background var(--talos-dur-fast) ease,
+    box-shadow var(--talos-dur-fast) ease;
+}
+
+.talos-textarea {
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
+.talos-input::placeholder,
+.talos-textarea::placeholder {
+  color: hsl(var(--talos-muted-foreground-hsl) / 0.6);
+}
+
+.talos-input:hover,
+.talos-textarea:hover {
+  border-color: hsl(0 0% 100% / 0.28);
+}
+
+.talos-input:focus,
+.talos-textarea:focus {
+  outline: none;
+  border-color: hsl(0 0% 100% / 0.45);
+  background: hsl(0 0% 100% / 0.07);
+  box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.18);
+}
+
+.talos-input:disabled,
+.talos-textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------------------------------------
+   FIELDSET — bordered divider section (mirrors the contact form's top rule
+   that groups secondary fields).
+   -------------------------------------------------------------------------- */
+.talos-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 1.5rem 0 0;
+  border: 0;
+  border-top: 1px solid hsl(0 0% 100% / 0.1);
+}
+.talos-fieldset > legend {
+  font-family: var(--talos-font-display);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: hsl(0 0% 100% / 0.4);
+  padding: 0;
+}

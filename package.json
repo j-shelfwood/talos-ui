@@ -29,6 +29,7 @@
     "src/tokens.css",
     "src/talos.css",
     "src/talos-blog.css",
+    "src/talos-forms.css",
     "src/fonts",
     "src/astro",
     "DESIGN.md",
@@ -42,14 +43,12 @@
     "./tokens.css": "./src/tokens.css",
     "./talos.css": "./src/talos.css",
     "./talos-blog.css": "./src/talos-blog.css",
+    "./talos-forms.css": "./src/talos-forms.css",
     "./wc": {
       "types": "./dist/wc/index.d.ts",
       "import": "./dist/wc/index.js"
     },
-    "./astro/GlassPanel.astro": "./src/astro/GlassPanel.astro",
-    "./astro/Button.astro": "./src/astro/Button.astro",
-    "./astro/HeroPanel.astro": "./src/astro/HeroPanel.astro",
-    "./astro/MissionPanel.astro": "./src/astro/MissionPanel.astro",
+    "./astro/*": "./src/astro/*",
     "./fonts/*": "./src/fonts/*"
   },
   "scripts": {

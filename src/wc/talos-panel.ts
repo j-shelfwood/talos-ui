@@ -120,6 +120,15 @@ export class TalosPanel extends HTMLElement {
     if (edge) this.style.setProperty("--_edge", edge);
     this.style.setProperty("--_stroke", String(strokeWidth));
 
+    // The SVG outline is absolutely positioned, so it contributes no intrinsic
+    // height. Reserve space from the panel's aspect ratio (and a min-height
+    // floor) so a bare panel renders its chrome even when slotted content is
+    // short — consumers can still override width/height via CSS.
+    this.style.setProperty("aspect-ratio", `${width} / ${height}`);
+    if (!this.style.minHeight) {
+      this.style.minHeight = `${Math.min(height, 160)}px`;
+    }
+
     const segments: Segment[] = [];
     for (const el of Array.from(this.children)) {
       const seg = (el as { toSegment?: () => Segment | null }).toSegment?.();
