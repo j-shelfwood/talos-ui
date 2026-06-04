@@ -1,0 +1,260 @@
+/* ============================================================================
+   @shelfwood/talos-ui — TALOS-BLOG.CSS  (opt-in module)
+   Long-form / content-page chrome: prose typography, navbar pill, tag pill,
+   table-of-contents dropdown, footer. Import AFTER talos.css.
+
+     <link rel="stylesheet" href=".../talos-ui/talos.css" />
+     <link rel="stylesheet" href=".../talos-ui/talos-blog.css" />
+
+   Plain CSS. The navbar compact-on-scroll + TOC toggle need a few lines of JS
+   (see the showcase / README); the styling here is driven by data attributes
+   (header[data-compact] / header.toc-expanded).
+   ========================================================================== */
+
+/* ----------------------------------------------------------------------------
+   PROSE — readable long-form. HUD voice deliberately softened inside articles:
+   headings drop the uppercase + wide tracking the global type uses, so body
+   copy stays comfortable. Colors are opacity-composed off the foreground.
+   -------------------------------------------------------------------------- */
+.talos-prose {
+  --_body: hsl(var(--talos-foreground-hsl) / 0.82);
+  --_heading: hsl(var(--talos-foreground-hsl));
+  --_muted: hsl(var(--talos-muted-foreground-hsl));
+  --_link: hsl(var(--talos-primary-hsl));
+  --_border: hsl(var(--talos-border-hsl));
+  --_code-bg: hsl(0 0% 10%);
+
+  color: var(--_body);
+  font-weight: 300;
+  line-height: 1.7;
+  max-width: 68ch;
+}
+.talos-prose > * + * { margin-top: 1.25em; }
+
+.talos-prose h1,
+.talos-prose h2,
+.talos-prose h3,
+.talos-prose h4 {
+  color: var(--_heading);
+  font-family: var(--talos-font-display);
+  font-weight: 400;
+  /* Undo the global HUD uppercase/tracking for readability. */
+  text-transform: none;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin-top: 2em;
+  margin-bottom: 0.6em;
+}
+.talos-prose h1 { font-size: 2rem; }
+.talos-prose h2 {
+  font-size: 1.5rem;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--_border);
+}
+.talos-prose h3 { font-size: 1.2rem; }
+.talos-prose h4 { font-size: 1rem; }
+
+.talos-prose p,
+.talos-prose ul,
+.talos-prose ol { margin-block: 1.25em; }
+.talos-prose ul,
+.talos-prose ol { padding-left: 1.4em; }
+.talos-prose li { margin-block: 0.4em; }
+.talos-prose li::marker { color: hsl(var(--talos-muted-foreground-hsl) / 0.6); }
+
+.talos-prose a {
+  color: var(--_link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: hsl(var(--talos-primary-hsl) / 0.3);
+  transition: text-decoration-color 160ms ease;
+}
+.talos-prose a:hover { text-decoration-color: hsl(var(--talos-primary-hsl) / 0.8); }
+
+.talos-prose strong { color: var(--_heading); font-weight: 500; }
+.talos-prose em { color: hsl(var(--talos-foreground-hsl) / 0.9); }
+
+.talos-prose blockquote {
+  margin-inline: 0;
+  padding-left: 1.25em;
+  border-left: 2px solid hsl(var(--talos-primary-hsl) / 0.2);
+  color: hsl(var(--talos-foreground-hsl) / 0.78);
+  font-style: italic;
+}
+
+.talos-prose code {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+  font-size: 0.875em;
+  color: hsl(var(--talos-primary-hsl));
+  background: hsl(0 0% 100% / 0.06);
+  padding: 0.15em 0.4em;
+  border-radius: 2px;
+}
+.talos-prose pre {
+  background: var(--_code-bg);
+  border: 1px solid var(--_border);
+  border-radius: 2px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-size: 0.85em;
+  line-height: 1.6;
+}
+.talos-prose pre code {
+  background: none;
+  padding: 0;
+  color: hsl(var(--talos-foreground-hsl) / 0.88);
+}
+
+.talos-prose hr {
+  border: 0;
+  height: 1px;
+  background: var(--_border);
+  margin-block: 2.5em;
+}
+.talos-prose img { max-width: 100%; height: auto; }
+.talos-prose table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+.talos-prose th,
+.talos-prose td {
+  text-align: left;
+  padding: 0.5em 0.75em;
+  border-bottom: 1px solid hsl(var(--talos-border-hsl) / 0.5);
+}
+.talos-prose th { border-bottom-color: var(--_border); font-weight: 500; }
+
+/* ----------------------------------------------------------------------------
+   POST HEADER — centered title + meta (date / reading-time).
+   -------------------------------------------------------------------------- */
+.talos-post-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.talos-post-header h1 {
+  font-family: var(--talos-font-display);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  font-size: clamp(1.875rem, 4vw, 2.25rem);
+  margin: 0 0 1rem;
+}
+.talos-post-meta {
+  font-family: var(--talos-font-display);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-muted-foreground);
+}
+.talos-post-meta .sep { margin-inline: 0.5rem; opacity: 0.5; }
+
+/* ----------------------------------------------------------------------------
+   NAVBAR PILL — fixed, centered, compact-on-scroll. Wrap a .glass-panel
+   (use .glass-panel--navbar-dense). JS toggles header[data-compact].
+   -------------------------------------------------------------------------- */
+.talos-navbar {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 50;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+}
+.talos-navbar-pill {
+  width: 100%;
+  max-width: 600px;
+  padding: 0.75rem 2rem;
+  max-height: 72px;
+  transition: max-width 0.5s var(--talos-ease-out),
+    padding 0.35s ease, max-height 0.35s ease;
+}
+.talos-navbar-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 3rem;
+}
+.talos-navbar-inner > * { flex: 1; display: flex; align-items: center; }
+.talos-navbar-inner > :nth-child(1) { justify-content: flex-start; }
+.talos-navbar-inner > :nth-child(2) { justify-content: center; flex: 0 0 auto; }
+.talos-navbar-inner > :nth-child(3) { justify-content: flex-end; }
+
+/* Compact state — collapse to a small pill, hide link text. */
+.talos-navbar[data-compact="true"]:not(.toc-expanded) .talos-navbar-pill {
+  max-width: 220px;
+  padding: 0.75rem 1rem;
+}
+.talos-nav-text {
+  white-space: nowrap;
+  transition: opacity 0.4s var(--talos-ease-out), max-width 0.4s var(--talos-ease-out);
+}
+.talos-navbar[data-compact="true"]:not(.toc-expanded) .talos-nav-text {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+}
+.talos-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--talos-font-display);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-muted-foreground);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+.talos-nav-link:hover { color: var(--talos-foreground); }
+
+/* ----------------------------------------------------------------------------
+   TAG — small pill badge.
+   -------------------------------------------------------------------------- */
+.talos-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--talos-font-display);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-muted-foreground);
+  background: hsl(0 0% 100% / 0.05);
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+}
+
+/* ----------------------------------------------------------------------------
+   FOOTER — three-column (links / logo / contact), stacks on mobile.
+   -------------------------------------------------------------------------- */
+.talos-footer {
+  margin-top: 6rem;
+}
+.talos-footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+@media (min-width: 768px) {
+  .talos-footer-grid {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+  }
+  .talos-footer-grid > :nth-child(1) { justify-self: start; }
+  .talos-footer-grid > :nth-child(2) { justify-self: center; }
+  .talos-footer-grid > :nth-child(3) { justify-self: end; text-align: right; }
+}
+.talos-footer-note {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid hsl(0 0% 100% / 0.1);
+  text-align: center;
+  font-family: var(--talos-font-display);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-muted-foreground);
+}
+.talos-footer-note .sep { margin-inline: 0.5rem; opacity: 0.5; }

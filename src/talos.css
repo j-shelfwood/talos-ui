@@ -379,6 +379,121 @@
   100% { opacity: 1; filter: blur(0) brightness(1); }
 }
 
+/* ============================================================================
+   LAYOUT SYSTEM — plain-CSS bento/mosaic grid + section helpers.
+   De-Tailwinded from shelfwood.co's BentoGrid (4/8/12 cols, gap-6) so mosaics
+   compose without a Tailwind toolchain.
+   ========================================================================== */
+
+/* Bento grid — 4 cols (mobile) → 8 (md) → 12 (lg). Pair children with
+   .col-span-* / .row-span-*. Wrap in .bento-stagger for the cascade entrance. */
+.talos-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+@media (min-width: 768px) {
+  .talos-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .talos-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+}
+
+/* Column spans. On mobile everything is full-width (4 cols); md/lg honor the
+   responsive variants. Mirrors Tailwind's col-span-N / md:/lg: prefixes. */
+.col-span-1  { grid-column: span 1; }
+.col-span-2  { grid-column: span 2; }
+.col-span-3  { grid-column: span 3; }
+.col-span-4  { grid-column: span 4; }
+.col-span-full,
+.col-span-12 { grid-column: 1 / -1; }
+
+@media (min-width: 768px) {
+  .md\:col-span-2 { grid-column: span 2; }
+  .md\:col-span-3 { grid-column: span 3; }
+  .md\:col-span-4 { grid-column: span 4; }
+  .md\:col-span-6 { grid-column: span 6; }
+  .md\:col-span-8 { grid-column: span 8; }
+}
+@media (min-width: 1024px) {
+  .lg\:col-span-3  { grid-column: span 3; }
+  .lg\:col-span-4  { grid-column: span 4; }
+  .lg\:col-span-6  { grid-column: span 6; }
+  .lg\:col-span-8  { grid-column: span 8; }
+  .lg\:col-span-9  { grid-column: span 9; }
+  .lg\:col-span-12 { grid-column: 1 / -1; }
+  .lg\:row-span-2  { grid-row: span 2; }
+}
+
+/* Panel padding helper — panels carry their own padding rather than baking it
+   into .glass-panel (which must stay layout-neutral for the navbar/reading
+   variants). */
+.talos-pad   { padding: 1.5rem; }
+@media (min-width: 768px) {
+  .talos-pad   { padding: 2rem; }
+}
+.talos-pad-lg { padding: 2rem; }
+@media (min-width: 768px) {
+  .talos-pad-lg { padding: 3rem; }
+}
+
+/* The .glass-panel content wrapper should fill + stack by default so padded
+   cards lay out predictably (matches shelfwood.co's w-full flex-col). */
+.glass-panel > .glass-panel-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+/* When a panel is itself the link (as="a"), don't let the browser underline
+   its child text — the panel is the affordance, not the words. */
+a.glass-panel,
+a.glass-panel .glass-panel-content { text-decoration: none; color: inherit; }
+
+/* Section + label vocabulary — the HUD eyebrow / slug / gradient rule. */
+.talos-eyebrow {
+  font-family: var(--talos-font-display);
+  font-size: 0.7rem;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-muted-foreground);
+}
+.talos-slug {
+  font-family: var(--talos-font-display);
+  font-size: 0.68rem;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: hsl(0 0% 100% / 0.35);
+  font-variant-numeric: tabular-nums;
+}
+/* Gradient divider — bright at left, fades to transparent. */
+.talos-rule {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    to right,
+    hsl(0 0% 100% / 0.2) 0%,
+    hsl(0 0% 100% / 0.06) 65%,
+    transparent 100%
+  );
+}
+/* Status dot — the single accent. */
+.talos-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--talos-accent);
+  box-shadow: 0 0 8px var(--talos-accent);
+  animation: talos-pulse 2.4s ease-in-out infinite;
+}
+@keyframes talos-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talos-dot { animation: none; }
+}
+
 /* ----------------------------------------------------------------------------
    Reduced-motion + touch fallbacks.
    -------------------------------------------------------------------------- */
