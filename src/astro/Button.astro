@@ -1,0 +1,28 @@
+---
+/**
+ * Button — chamfered HUD CTA. Renders <a> when href is set, else <button>.
+ * Requires "@shelfwood/talos-ui/talos.css".
+ */
+interface Props {
+  variant?: "primary" | "secondary" | "ghost";
+  size?: "sm" | "md" | "lg";
+  href?: string;
+  class?: string;
+  [key: string]: any;
+}
+
+const { variant = "primary", size = "md", href, class: className, ...rest } =
+  Astro.props;
+const Element = href ? "a" : "button";
+const cls = [
+  "talos-button",
+  variant !== "primary" && `talos-button--${variant}`,
+  size !== "md" && `talos-button--${size}`,
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+const elementProps = href ? { href, ...rest } : rest;
+---
+
+<Element class={cls} {...elementProps}><slot /></Element>

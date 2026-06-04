@@ -1,0 +1,397 @@
+/* ============================================================================
+   @shelfwood/talos-ui — TALOS.CSS
+   The zero-JS core stylesheet. Plain CSS, no Tailwind, no build step required.
+   Link it directly in any Astro page, Blade view, or plain HTML document.
+
+     <link rel="stylesheet" href=".../talos-ui/talos.css">
+
+   Provides: chamfered HUD panels (.glass-panel), single-corner chamfer
+   utilities, the ambient cursor-grid overlay, the bento cascade entrance,
+   HUD viewfinder brackets, and the chamfered button.
+   ========================================================================== */
+
+@import "./tokens.css";
+
+/* ----------------------------------------------------------------------------
+   @property registrations — enable smooth transitions of the custom props
+   that drive the sheen + lift. Safe no-op in engines without @property.
+   -------------------------------------------------------------------------- */
+@property --talos-mx {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+@property --talos-my {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+@property --talos-sheen {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --talos-lift {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+/* ----------------------------------------------------------------------------
+   HUD PANEL — anti.space-style chamfered chrome (two-layer hairline).
+     - Host element: clip-path = full chamfered shape; background = edge color.
+     - ::before:      inset 1px, slightly smaller chamfer; background = fill.
+                      → uniform 1px hairline along all edges incl. the cuts.
+     - ::after:       cursor-tracked sheen (radial-gradient via --talos-mx/my).
+   Corner convention: top-right + bottom-left chamfered; top-left +
+   bottom-right square (brackets attach there on hover).
+   -------------------------------------------------------------------------- */
+.glass-panel {
+  --_chamfer: var(--talos-chamfer);
+  --_fill: var(--talos-hud-fill);
+  --_edge: var(--talos-hud-edge);
+  --_edge-hot: var(--talos-hud-edge-hot);
+
+  position: relative;
+  isolation: isolate;
+  color: hsl(0 0% 92%);
+
+  background: var(--_edge);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--_chamfer)) 0,
+    100% var(--_chamfer),
+    100% 100%,
+    var(--_chamfer) 100%,
+    0 calc(100% - var(--_chamfer))
+  );
+
+  --talos-mx: 50%;
+  --talos-my: 0%;
+  --talos-sheen: 0;
+  --talos-lift: 0px;
+  transform: translateY(var(--talos-lift));
+  transition: --talos-sheen 240ms ease,
+    --talos-lift var(--talos-dur-mid) var(--talos-ease-glass),
+    filter var(--talos-dur-mid) var(--talos-ease-glass),
+    background 220ms ease;
+}
+
+/* Inner fill — 1px inset, smaller chamfer to ride the bevel cleanly. */
+.glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: var(--_fill);
+  clip-path: polygon(
+    0 0,
+    calc(100% - (var(--_chamfer) - 1px)) 0,
+    100% calc(var(--_chamfer) - 1px),
+    100% 100%,
+    calc(var(--_chamfer) - 1px) 100%,
+    0 calc(100% - (var(--_chamfer) - 1px))
+  );
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Cursor sheen — soft white spotlight following the pointer, above the fill. */
+.glass-panel::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: radial-gradient(
+    240px circle at var(--talos-mx) var(--talos-my),
+    hsl(0 0% 100% / calc(0.07 * var(--talos-sheen))),
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 1;
+  clip-path: polygon(
+    0 0,
+    calc(100% - (var(--_chamfer) - 1px)) 0,
+    100% calc(var(--_chamfer) - 1px),
+    100% 100%,
+    calc(var(--_chamfer) - 1px) 100%,
+    0 calc(100% - (var(--_chamfer) - 1px))
+  );
+  transition: background 80ms linear;
+}
+
+/* Content wrapper — sits above sheen + border layers. */
+.glass-panel > .glass-panel-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Interactive variants — lift + edge brighten. */
+.interactive-panel {
+  cursor: pointer;
+}
+.interactive-panel:hover {
+  --talos-sheen: 1;
+  --talos-lift: -3px;
+  background: var(--_edge-hot);
+  filter: drop-shadow(0 8px 18px hsl(0 0% 0% / 0.6));
+}
+.interactive-panel:active {
+  --talos-lift: -1px;
+  transition-duration: var(--talos-dur-fast);
+}
+.interactive-panel:focus-visible,
+.glass-panel:focus-visible {
+  outline: none;
+  background: hsl(0 0% 100% / 0.85);
+  animation: talos-focus-pulse var(--talos-dur-slow) var(--talos-ease-out) 1;
+}
+@keyframes talos-focus-pulse {
+  0% { filter: brightness(1); }
+  40% { filter: brightness(1.35) drop-shadow(0 0 12px hsl(0 0% 100% / 0.45)); }
+  100% { filter: brightness(1); }
+}
+
+/* Panel variants. */
+.glass-panel--navbar-dense {
+  --_fill: hsl(0 0% 6%);
+  --_edge: hsl(0 0% 100% / 0.38);
+}
+.glass-panel--reading {
+  --_chamfer: 24px;
+  --_fill: hsl(0 0% 4%);
+  --_edge: hsl(0 0% 100% / 0.18);
+  padding: 2.5rem 2rem;
+}
+@media (min-width: 640px) {
+  .glass-panel--reading {
+    padding: 3.5rem 3rem;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   HUD CORNER BRACKETS — camera-viewfinder L-shapes on the two square corners
+   of interactive cards. Chamfered corners get nothing (the bevel reads as a
+   corner already). Hidden by default, fade in on hover.
+   -------------------------------------------------------------------------- */
+.hud-bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 220ms ease, transform 220ms var(--talos-ease-glass);
+  z-index: 3;
+}
+.hud-bracket--tl {
+  top: 6px;
+  left: 6px;
+  border-top: 1px solid var(--talos-bracket);
+  border-left: 1px solid var(--talos-bracket);
+}
+.hud-bracket--br {
+  bottom: 6px;
+  right: 6px;
+  border-bottom: 1px solid var(--talos-bracket);
+  border-right: 1px solid var(--talos-bracket);
+}
+.hud-bracket--tr,
+.hud-bracket--bl {
+  display: none;
+}
+.interactive-panel:hover .hud-bracket {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ----------------------------------------------------------------------------
+   CHAMFER UTILITIES — single-corner clip-path cuts for pills / flags / CTAs.
+   Pair with a host/inset pseudo pair for a hairline border (see .talos-button).
+   -------------------------------------------------------------------------- */
+.chamfer-tr {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--talos-chamfer-flag)) 0,
+    100% var(--talos-chamfer-flag),
+    100% 100%,
+    0 100%
+  );
+}
+.chamfer-br {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--talos-chamfer-btn)),
+    calc(100% - var(--talos-chamfer-btn)) 100%,
+    0 100%
+  );
+}
+
+/* ----------------------------------------------------------------------------
+   BUTTON — chamfered (bottom-right) CTA. De-Tailwinded: all layout, type, and
+   state is plain CSS so markup needs only class="talos-button [--variant/size]".
+   -------------------------------------------------------------------------- */
+.talos-button {
+  --_chamfer: var(--talos-chamfer-btn);
+  --_fill: hsl(0 0% 8%);
+  --_edge: hsl(0 0% 100% / 0.32);
+
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  font-family: var(--talos-font-display);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  text-decoration: none;
+  color: hsl(0 0% 100% / 0.9);
+
+  /* default size = md */
+  height: 2.5rem;
+  padding-inline: 1.25rem;
+  font-size: 0.75rem;
+
+  cursor: pointer;
+  background: var(--_edge);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--_chamfer)),
+    calc(100% - var(--_chamfer)) 100%,
+    0 100%
+  );
+  transition: background 200ms ease, color 200ms ease;
+}
+.talos-button::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: var(--_fill);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - (var(--_chamfer) - 1px)),
+    calc(100% - (var(--_chamfer) - 1px)) 100%,
+    0 100%
+  );
+  z-index: -1;
+}
+.talos-button:hover { background: hsl(0 0% 100% / 0.7); color: hsl(0 0% 100%); }
+.talos-button:focus-visible { outline: none; background: hsl(0 0% 100% / 0.9); }
+.talos-button[disabled],
+.talos-button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Sizes. */
+.talos-button--sm { height: 2.25rem; padding-inline: 1rem; font-size: 0.7rem; gap: 0.375rem; }
+.talos-button--lg { height: 3rem; padding-inline: 2rem; font-size: 0.875rem; }
+
+/* Variants (text emphasis only — monochrome). */
+.talos-button--secondary { color: hsl(0 0% 100% / 0.75); }
+.talos-button--ghost { color: hsl(0 0% 100% / 0.7); background: transparent; }
+.talos-button--ghost::before { background: transparent; }
+
+/* ----------------------------------------------------------------------------
+   AMBIENT GRID + CURSOR CROSSHAIR — fixed full-viewport overlay. JS writes
+   --talos-cursor-x / --talos-cursor-y on a root element (see README snippet).
+   -------------------------------------------------------------------------- */
+.ambient-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+
+  background-image:
+    linear-gradient(to right,
+      transparent calc(var(--talos-cursor-x, 50vw) - 0.5px),
+      var(--talos-crosshair) calc(var(--talos-cursor-x, 50vw) - 0.5px),
+      var(--talos-crosshair) calc(var(--talos-cursor-x, 50vw) + 0.5px),
+      transparent calc(var(--talos-cursor-x, 50vw) + 0.5px)
+    ),
+    linear-gradient(to bottom,
+      transparent calc(var(--talos-cursor-y, 50vh) - 0.5px),
+      var(--talos-crosshair) calc(var(--talos-cursor-y, 50vh) - 0.5px),
+      var(--talos-crosshair) calc(var(--talos-cursor-y, 50vh) + 0.5px),
+      transparent calc(var(--talos-cursor-y, 50vh) + 0.5px)
+    ),
+    radial-gradient(circle at 1px 1px, var(--talos-grid-dot) 1px, transparent 1.5px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    var(--talos-grid-cell) var(--talos-grid-cell);
+  background-repeat: no-repeat, no-repeat, repeat;
+
+  -webkit-mask: radial-gradient(
+    120vmax circle at 50% 50%,
+    black 0%, black 40%,
+    rgba(0, 0, 0, 0.55) 80%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
+          mask: radial-gradient(
+    120vmax circle at 50% 50%,
+    black 0%, black 40%,
+    rgba(0, 0, 0, 0.55) 80%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
+}
+@media (hover: none) {
+  .ambient-overlay {
+    --talos-crosshair: transparent;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   BENTO CASCADE — staggered entrance for children of .bento-stagger, plus a
+   standalone .cascade-in. Keyframe touches opacity + filter only so element
+   :hover transforms keep working.
+   -------------------------------------------------------------------------- */
+.bento-stagger > * {
+  animation: talos-cascade-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
+  animation-delay: calc(var(--talos-bento-i, 0) * 60ms);
+}
+.bento-stagger > *:nth-child(1) { --talos-bento-i: 0; }
+.bento-stagger > *:nth-child(2) { --talos-bento-i: 1; }
+.bento-stagger > *:nth-child(3) { --talos-bento-i: 2; }
+.bento-stagger > *:nth-child(4) { --talos-bento-i: 3; }
+.bento-stagger > *:nth-child(5) { --talos-bento-i: 4; }
+.bento-stagger > *:nth-child(6) { --talos-bento-i: 5; }
+.bento-stagger > *:nth-child(7) { --talos-bento-i: 6; }
+.bento-stagger > *:nth-child(8) { --talos-bento-i: 7; }
+.bento-stagger > *:nth-child(9) { --talos-bento-i: 8; }
+.bento-stagger > *:nth-child(10) { --talos-bento-i: 9; }
+.bento-stagger > *:nth-child(11) { --talos-bento-i: 10; }
+.bento-stagger > *:nth-child(12) { --talos-bento-i: 11; }
+.bento-stagger > *:nth-child(n + 13) { --talos-bento-i: 12; }
+
+.cascade-in {
+  animation: talos-cascade-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
+  animation-delay: var(--talos-cascade-delay, 0ms);
+}
+
+@keyframes talos-cascade-in {
+  0%   { opacity: 0; filter: blur(10px) brightness(0.9); }
+  60%  { opacity: 1; filter: blur(2px) brightness(1.02); }
+  100% { opacity: 1; filter: blur(0) brightness(1); }
+}
+
+/* ----------------------------------------------------------------------------
+   Reduced-motion + touch fallbacks.
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .glass-panel::after { display: none; }
+  .interactive-panel:hover { --talos-lift: 0px; }
+}
+@media (hover: none) {
+  .glass-panel::after { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glass-panel { transition: none; }
+  .interactive-panel:hover { --talos-lift: 0px; }
+  .bento-stagger > *,
+  .cascade-in { animation: none; }
+}

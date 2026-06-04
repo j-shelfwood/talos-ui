@@ -1,0 +1,49 @@
+---
+/**
+ * GlassPanel — ergonomic Astro wrapper around the .glass-panel CSS.
+ * Requires the consumer to import "@shelfwood/talos-ui/talos.css" once.
+ * Pointer-sheen binding ships inline (idempotent, view-transition aware).
+ */
+interface Props {
+  class?: string;
+  as?: "div" | "button" | "a";
+  href?: string;
+  [key: string]: any;
+}
+
+const { as: Element = "div", class: className, ...rest } = Astro.props;
+const isInteractive = Element === "a" || Element === "button";
+const cls = ["glass-panel", isInteractive && "interactive-panel", className]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<Element class={cls} {...rest}>
+  {isInteractive && (
+    <>
+      <span class="hud-bracket hud-bracket--tl" aria-hidden="true"></span>
+      <span class="hud-bracket hud-bracket--tr" aria-hidden="true"></span>
+      <span class="hud-bracket hud-bracket--bl" aria-hidden="true"></span>
+      <span class="hud-bracket hud-bracket--br" aria-hidden="true"></span>
+    </>
+  )}
+  <div class="glass-panel-content"><slot /></div>
+</Element>
+
+<script>
+  function bindSheen() {
+    document
+      .querySelectorAll<HTMLElement>(".interactive-panel")
+      .forEach((panel) => {
+        if (panel.dataset.talosSheen) return;
+        panel.dataset.talosSheen = "1";
+        panel.addEventListener("pointermove", (e) => {
+          const r = panel.getBoundingClientRect();
+          panel.style.setProperty("--talos-mx", `${((e.clientX - r.left) / r.width) * 100}%`);
+          panel.style.setProperty("--talos-my", `${((e.clientY - r.top) / r.height) * 100}%`);
+        });
+      });
+  }
+  bindSheen();
+  document.addEventListener("astro:page-load", bindSheen);
+</script>

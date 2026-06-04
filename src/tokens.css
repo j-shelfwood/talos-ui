@@ -1,0 +1,91 @@
+/* ============================================================================
+   @shelfwood/talos-ui — TOKENS
+   Plain-CSS custom properties. No Tailwind required.
+   Import this once at the root of a project (or import talos.css, which
+   includes it). Self-hosted Oxanium variable font, two unicode-range subsets.
+   Font files resolve relative to THIS stylesheet (./fonts/*).
+   ========================================================================== */
+
+@font-face {
+  font-family: "Oxanium";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("./fonts/oxanium-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Oxanium";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("./fonts/oxanium-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  /* --- Typography -------------------------------------------------------- */
+  /* Display face for HUD/sci-fi headings (anti.space lineage). */
+  --talos-font-display: "Oxanium", "Eurostile", "Bank Gothic", system-ui, sans-serif;
+  --talos-font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --talos-tracking-hud: 0.18em;
+  --talos-tracking-hud-tight: 0.08em;
+
+  /* --- Color system ------------------------------------------------------ */
+  /* HSL *channel* vars so any layer can compose opacity via hsl(var() / a). */
+  --talos-background-hsl: 0 0% 0%;
+  --talos-foreground-hsl: 0 0% 100%;
+  --talos-primary-hsl: 0 0% 100%;
+  --talos-primary-foreground-hsl: 0 0% 0%;
+  --talos-muted-hsl: 0 0% 10%;
+  --talos-muted-foreground-hsl: 0 0% 60%;
+  --talos-border-hsl: 0 0% 20%;
+  /* Single semantic accent — monochrome direction keeps this minimal. */
+  --talos-accent-hsl: 140 90% 60%;
+
+  /* Resolved convenience colors. */
+  --talos-background: hsl(var(--talos-background-hsl));
+  --talos-foreground: hsl(var(--talos-foreground-hsl));
+  --talos-primary: hsl(var(--talos-primary-hsl));
+  --talos-primary-foreground: hsl(var(--talos-primary-foreground-hsl));
+  --talos-muted: hsl(var(--talos-muted-hsl));
+  --talos-muted-foreground: hsl(var(--talos-muted-foreground-hsl));
+  --talos-border: hsl(var(--talos-border-hsl));
+  --talos-accent: hsl(var(--talos-accent-hsl));
+
+  /* --- HUD chrome -------------------------------------------------------- */
+  --talos-hud-fill: hsl(0 0% 5%);
+  --talos-hud-edge: hsl(0 0% 100% / 0.28);
+  --talos-hud-edge-hot: hsl(0 0% 100% / 0.7);
+  --talos-bracket: hsl(0 0% 100% / 0.85);
+
+  /* --- Chamfer geometry -------------------------------------------------- */
+  --talos-chamfer: 14px;
+  --talos-chamfer-btn: 10px;
+  --talos-chamfer-flag: 8px;
+
+  /* --- Surfaces & shadows ------------------------------------------------ */
+  --talos-shadow: 0 8px 32px hsl(0 0% 0% / 0.28);
+  --talos-shadow-float: 0 18px 48px hsl(0 0% 0% / 0.36),
+    0 4px 16px hsl(0 0% 0% / 0.2);
+
+  /* --- Motion ------------------------------------------------------------ */
+  /* --talos-ease-glass: gentle overshoot for hover/lift
+     --talos-ease-liquid: stronger overshoot for entrance
+     --talos-ease-out: deceleration only */
+  --talos-ease-glass: cubic-bezier(0.22, 0.68, 0, 1.2);
+  --talos-ease-liquid: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --talos-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --talos-dur-fast: 180ms;
+  --talos-dur-mid: 360ms;
+  --talos-dur-slow: 600ms;
+
+  /* --- Ambient grid ------------------------------------------------------ */
+  --talos-grid-cell: 32px;
+  --talos-grid-dot: hsl(0 0% 100% / 0.07);
+  --talos-crosshair: hsl(0 0% 100% / 0.22);
+}
