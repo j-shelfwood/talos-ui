@@ -1,0 +1,580 @@
+/* ============================================================================
+   @shelfwood/talos-ui — TALOS-FEEDBACK.CSS  (opt-in module)
+   HUD feedback chrome: badges, alerts, toasts, tooltips, progress, spinner,
+   skeleton, empty state, and the status legend. Plain CSS so it works in
+   Blade / plain HTML as well as Astro. Import AFTER talos.css.
+
+     <link rel="stylesheet" href=".../talos-ui/talos.css" />
+     <link rel="stylesheet" href=".../talos-ui/talos-feedback.css" />
+
+   Class-based, token-driven. Assumes talos.css (tokens + fonts) is loaded.
+   Status colour is the ONLY chroma — used as edge/text accents and faint
+   tints, never as a large solid fill (except the explicit --solid variants).
+   ========================================================================== */
+
+/* @property registrations — animatable custom props. Smooth `width` interp on
+   the progress bar; safe no-op where @property is unsupported. */
+@property --talos-value {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+/* Per-component status-channel plumbing. Every status modifier just rebinds
+   --_status-hsl (a bare `H S% L%` channel triplet); the base rules build the
+   tint/border/text from it. One source of truth per component, four colours. */
+
+/* --- Badge / Tag / Chip ----------------------------------------------------- */
+.talos-badge {
+  /* default = neutral (foreground), overridden by status modifiers */
+  --_status-hsl: var(--talos-foreground-hsl);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  padding: 0.2em 0.6em;
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-2xs);
+  font-weight: 300;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  white-space: nowrap;
+  color: hsl(var(--_status-hsl));
+  background: hsl(var(--_status-hsl) / 0.1);
+  border: 1px solid hsl(var(--_status-hsl) / 0.45);
+  border-radius: 0;
+}
+
+.talos-badge--sm {
+  padding: 0.12em 0.45em;
+  font-size: calc(var(--talos-text-2xs) - 1px);
+  letter-spacing: var(--talos-tracking-hud-tight);
+}
+
+.talos-badge--neutral { --_status-hsl: var(--talos-foreground-hsl); }
+.talos-badge--success { --_status-hsl: var(--talos-success-hsl); }
+.talos-badge--warning { --_status-hsl: var(--talos-warning-hsl); }
+.talos-badge--danger  { --_status-hsl: var(--talos-danger-hsl); }
+.talos-badge--info    { --_status-hsl: var(--talos-info-hsl); }
+
+/* Leading dot — the status colour distilled to a 6px point. */
+.talos-badge--dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(var(--_status-hsl));
+  box-shadow: 0 0 6px hsl(var(--_status-hsl) / 0.7);
+}
+
+/* Solid — the loud variant. Filled background, contrast text. Neutral solid
+   stays monochrome (light fill / black text); status solids keep their hue. */
+.talos-badge--solid {
+  color: var(--talos-background);
+  background: hsl(var(--_status-hsl));
+  border-color: hsl(var(--_status-hsl));
+}
+
+/* --- Alert / Callout -------------------------------------------------------- */
+.talos-alert {
+  --_status-hsl: var(--talos-foreground-hsl);
+  --_ch: var(--talos-chamfer);
+  --_edge: hsl(var(--_status-hsl) / 0.4);
+  --_fill: var(--talos-surface-2);
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "icon title close"
+    "icon body  close";
+  gap: var(--talos-space-1) var(--talos-space-3);
+  padding: var(--talos-space-4) var(--talos-space-5);
+  /* Two-layer chamfer hairline: host carries the edge colour + outer cut,
+     ::before insets 1px with the fill + a 1px-smaller cut, leaving a uniform
+     1px line that follows the chamfered corners too. */
+  background: var(--_edge);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--_ch)) 0,
+    100% var(--_ch),
+    100% 100%,
+    var(--_ch) 100%,
+    0 calc(100% - var(--_ch))
+  );
+}
+.talos-alert::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  background: var(--_fill);
+  clip-path: polygon(
+    0 0,
+    calc(100% - (var(--_ch) - 1px)) 0,
+    100% calc(var(--_ch) - 1px),
+    100% 100%,
+    calc(var(--_ch) - 1px) 100%,
+    0 calc(100% - (var(--_ch) - 1px))
+  );
+}
+/* Left status accent edge — a 2px bar of the status colour on the inner fill. */
+.talos-alert::after {
+  content: "";
+  position: absolute;
+  inset: 1px auto 1px 1px;
+  width: 2px;
+  background: hsl(var(--_status-hsl));
+}
+
+.talos-alert__icon {
+  grid-area: icon;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  color: hsl(var(--_status-hsl));
+  font-size: var(--talos-text-lg);
+}
+.talos-alert__title {
+  grid-area: title;
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-sm);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: hsl(var(--_status-hsl));
+}
+.talos-alert__body {
+  grid-area: body;
+  font-family: var(--talos-font-body);
+  font-size: var(--talos-text-sm);
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--talos-text-secondary);
+}
+.talos-alert__close {
+  grid-area: close;
+  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 1.5em;
+  padding: 0;
+  font-size: var(--talos-text-md);
+  line-height: 1;
+  color: var(--talos-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--talos-dur-fast) var(--talos-ease-out);
+}
+.talos-alert__close:hover { color: var(--talos-text-primary); }
+.talos-alert__close:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
+}
+
+.talos-alert--success { --_status-hsl: var(--talos-success-hsl); }
+.talos-alert--warning { --_status-hsl: var(--talos-warning-hsl); }
+.talos-alert--danger  { --_status-hsl: var(--talos-danger-hsl); }
+.talos-alert--info    { --_status-hsl: var(--talos-info-hsl); }
+
+/* Bare — drop the chamfer machinery, keep just a left status border. */
+.talos-alert--bare {
+  background: var(--talos-surface-1);
+  clip-path: none;
+  border-left: 2px solid hsl(var(--_status-hsl));
+}
+.talos-alert--bare::before,
+.talos-alert--bare::after { display: none; }
+
+/* --- Toast ------------------------------------------------------------------ */
+.talos-toast-region {
+  position: fixed;
+  right: var(--talos-space-5);
+  bottom: var(--talos-space-5);
+  z-index: var(--talos-z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--talos-space-3);
+  width: min(360px, calc(100vw - var(--talos-space-8)));
+  pointer-events: none; /* region is inert; toasts re-enable below */
+}
+
+.talos-toast {
+  --_status-hsl: var(--talos-foreground-hsl);
+  --_ch: var(--talos-chamfer);
+  --_edge: hsl(var(--_status-hsl) / 0.4);
+  --_fill: var(--talos-surface-3);
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "icon title close"
+    "icon body  close";
+  gap: var(--talos-space-1) var(--talos-space-3);
+  padding: var(--talos-space-3) var(--talos-space-4);
+  pointer-events: auto;
+  box-shadow: var(--talos-shadow-float);
+  background: var(--_edge);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--_ch)) 0,
+    100% var(--_ch),
+    100% 100%,
+    var(--_ch) 100%,
+    0 calc(100% - var(--_ch))
+  );
+  animation: talos-toast-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
+}
+.talos-toast::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  background: var(--_fill);
+  clip-path: polygon(
+    0 0,
+    calc(100% - (var(--_ch) - 1px)) 0,
+    100% calc(var(--_ch) - 1px),
+    100% 100%,
+    calc(var(--_ch) - 1px) 100%,
+    0 calc(100% - (var(--_ch) - 1px))
+  );
+}
+.talos-toast::after {
+  content: "";
+  position: absolute;
+  inset: 1px auto 1px 1px;
+  width: 2px;
+  background: hsl(var(--_status-hsl));
+}
+
+.talos-toast__icon {
+  grid-area: icon;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  color: hsl(var(--_status-hsl));
+}
+.talos-toast__title {
+  grid-area: title;
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-xs);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: hsl(var(--_status-hsl));
+}
+.talos-toast__body {
+  grid-area: body;
+  font-family: var(--talos-font-body);
+  font-size: var(--talos-text-xs);
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--talos-text-secondary);
+}
+.talos-toast__close {
+  grid-area: close;
+  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4em;
+  height: 1.4em;
+  padding: 0;
+  line-height: 1;
+  color: var(--talos-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--talos-dur-fast) var(--talos-ease-out);
+}
+.talos-toast__close:hover { color: var(--talos-text-primary); }
+.talos-toast__close:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
+}
+
+.talos-toast--success { --_status-hsl: var(--talos-success-hsl); }
+.talos-toast--warning { --_status-hsl: var(--talos-warning-hsl); }
+.talos-toast--danger  { --_status-hsl: var(--talos-danger-hsl); }
+.talos-toast--info    { --_status-hsl: var(--talos-info-hsl); }
+
+@keyframes talos-toast-in {
+  from { opacity: 0; transform: translateX(calc(100% + var(--talos-space-5))); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talos-toast { animation: none; }
+}
+
+/* --- Tooltip ---------------------------------------------------------------- */
+/* Pure-CSS pattern: a wrapper with `data-tooltip="..."` reveals its ::after
+   (content drawn from the attribute) on hover/focus. `position: above`. */
+.talos-has-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Shared chip styling — both the standalone element and the generated ::after. */
+.talos-tooltip,
+.talos-has-tooltip[data-tooltip]::after {
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-2xs);
+  font-weight: 300;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-primary);
+  background: var(--talos-surface-4);
+  border: 1px solid var(--talos-edge-default);
+  border-radius: var(--talos-radius-sm);
+  padding: var(--talos-space-1) var(--talos-space-2);
+  white-space: nowrap;
+}
+
+.talos-tooltip {
+  display: inline-block;
+  z-index: var(--talos-z-tooltip);
+}
+
+.talos-has-tooltip[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + var(--talos-space-2));
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  z-index: var(--talos-z-tooltip);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--talos-dur-fast) var(--talos-ease-out),
+    transform var(--talos-dur-fast) var(--talos-ease-out);
+}
+.talos-has-tooltip[data-tooltip]:hover::after,
+.talos-has-tooltip[data-tooltip]:focus-visible::after,
+.talos-has-tooltip[data-tooltip]:focus-within::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .talos-has-tooltip[data-tooltip]::after { transition: none; }
+}
+
+/* --- Progress --------------------------------------------------------------- */
+.talos-progress {
+  --talos-value: 0;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 8px;
+  background: var(--talos-surface-1);
+  border: 1px solid var(--talos-border);
+  border-radius: 0;
+}
+.talos-progress--sm { height: 4px; }
+.talos-progress--lg { height: 14px; }
+
+.talos-progress__bar {
+  height: 100%;
+  width: calc(var(--talos-value) * 1%);
+  background: var(--talos-accent);
+  box-shadow: 0 0 8px hsl(var(--talos-accent-hsl) / 0.5);
+  transition: width var(--talos-dur-mid) var(--talos-ease-out);
+}
+
+/* Indeterminate — a bright HUD segment scanning left→right; bar width is
+   ignored, the ::after pseudo carries the sweep. */
+.talos-progress--indeterminate .talos-progress__bar {
+  width: 100%;
+  background: none;
+  box-shadow: none;
+}
+.talos-progress--indeterminate .talos-progress__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--talos-accent-hsl) / 0.15) 40%,
+    var(--talos-accent) 50%,
+    hsl(var(--talos-accent-hsl) / 0.15) 60%,
+    transparent 100%
+  );
+  width: 40%;
+  animation: talos-scan 1.4s var(--talos-ease-glass) infinite;
+}
+@keyframes talos-scan {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(350%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talos-progress--indeterminate .talos-progress__bar::after {
+    animation: none;
+    /* park a static centred segment so state stays legible */
+    transform: translateX(75%);
+  }
+}
+
+/* --- Spinner / Loader ------------------------------------------------------- */
+/* HUD bracket loader: a square showing only its top+right hairlines, spinning.
+   Reads as a rotating viewfinder corner rather than a generic ring. */
+.talos-spinner {
+  --talos-spinner-size: 20px;
+  display: inline-block;
+  width: var(--talos-spinner-size);
+  height: var(--talos-spinner-size);
+  border: 1px solid transparent;
+  border-top-color: var(--talos-accent);
+  border-right-color: var(--talos-accent);
+  border-radius: 0;
+  animation: talos-spin 0.9s linear infinite;
+}
+.talos-spinner--sm { --talos-spinner-size: 14px; }
+.talos-spinner--md { --talos-spinner-size: 20px; }
+.talos-spinner--lg { --talos-spinner-size: 32px; }
+
+@keyframes talos-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talos-spinner { animation: none; }
+}
+
+/* --- Skeleton --------------------------------------------------------------- */
+.talos-skeleton {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  width: 100%;
+  height: 1.5rem;
+  background: var(--talos-surface-2);
+  border-radius: 0;
+}
+/* Shimmer sweep — a faint light band passing across the block. */
+.talos-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(0 0% 100% / 0.06) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: talos-shimmer 1.6s var(--talos-ease-glass) infinite;
+}
+
+.talos-skeleton--text {
+  height: 0.8em;
+  /* stack several of these for a paragraph; --talos-skeleton-lines is a hint
+     for consumers generating the markup, last line typically narrower. */
+  --talos-skeleton-lines: 3;
+  margin-bottom: var(--talos-space-2);
+}
+.talos-skeleton--circle {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+}
+
+@keyframes talos-shimmer {
+  to { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talos-skeleton::after { animation: none; }
+}
+
+/* --- Empty state ------------------------------------------------------------ */
+.talos-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--talos-space-3);
+  padding: var(--talos-space-8) var(--talos-space-5);
+  text-align: center;
+  color: var(--talos-text-tertiary);
+  background: var(--talos-surface-0);
+  border: 1px dashed var(--talos-edge-default);
+  border-radius: 0;
+}
+.talos-empty__icon {
+  display: inline-flex;
+  font-size: var(--talos-text-2xl);
+  color: var(--talos-text-disabled);
+}
+.talos-empty__title {
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-md);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-secondary);
+}
+.talos-empty__body {
+  max-width: 42ch;
+  font-family: var(--talos-font-body);
+  font-size: var(--talos-text-sm);
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--talos-text-tertiary);
+}
+
+/* --- Status legend ---------------------------------------------------------- */
+.talos-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--talos-space-2) var(--talos-space-4);
+}
+.talos-status__item {
+  --_status-hsl: var(--talos-foreground-hsl);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-2xs);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-secondary);
+}
+/* Leading dot — same pulse cadence as .talos-dot but per-status coloured. */
+.talos-status__item::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: hsl(var(--_status-hsl));
+  box-shadow: 0 0 8px hsl(var(--_status-hsl) / 0.8);
+  animation: talos-pulse 2.4s ease-in-out infinite;
+}
+
+.talos-status__item--online   { --_status-hsl: var(--talos-success-hsl); }
+.talos-status__item--degraded { --_status-hsl: var(--talos-warning-hsl); }
+.talos-status__item--offline  { --_status-hsl: var(--talos-danger-hsl); }
+/* Idle = neutral, and a steady (non-pulsing) dot reads as "nothing happening". */
+.talos-status__item--idle {
+  --_status-hsl: var(--talos-muted-foreground-hsl);
+}
+.talos-status__item--idle::before {
+  animation: none;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talos-status__item::before { animation: none; }
+}

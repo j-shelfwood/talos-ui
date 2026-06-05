@@ -1,0 +1,464 @@
+/* ============================================================================
+   @shelfwood/talos-ui — TALOS-DATA.CSS  (opt-in module)
+   Data-display chrome for dashboards & content: tables, stat/KPI cards,
+   definition lists, code blocks + kbd, log feeds, avatars, meters, telemetry
+   readouts. Plain CSS; import AFTER talos.css. Numbers are tabular throughout;
+   status colour is the only chroma (deltas / levels), never a large fill.
+
+     <link rel="stylesheet" href=".../talos-ui/talos.css" />
+     <link rel="stylesheet" href=".../talos-ui/talos-data.css" />
+   ========================================================================== */
+
+/* Animatable fill ratio for meters (0–100). Idempotent re-declare; matches the
+   registration in talos-feedback.css. */
+@property --talos-value {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+/* --- Table ------------------------------------------------------------------ */
+.talos-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+.talos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-sm);
+  font-weight: 300;
+  color: var(--talos-text-primary);
+}
+.talos-table thead th {
+  padding: var(--talos-space-3) var(--talos-space-4);
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  font-size: var(--talos-text-xs);
+  color: var(--talos-text-secondary);
+  border-bottom: 1px solid var(--talos-edge-default);
+  white-space: nowrap;
+}
+.talos-table tbody td {
+  padding: var(--talos-space-3) var(--talos-space-4);
+  border-bottom: 1px solid var(--talos-edge-subtle);
+}
+.talos-table tbody tr {
+  transition: background var(--talos-dur-fast) ease;
+}
+.talos-table tbody tr:hover {
+  background: hsl(0 0% 100% / 0.03);
+}
+/* Numeric cells right-align and lock to tabular figures so columns line up. */
+.talos-table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.talos-table--zebra tbody tr:nth-child(even) {
+  background: var(--talos-surface-1);
+}
+.talos-table--dense thead th,
+.talos-table--dense tbody td {
+  padding: var(--talos-space-2) var(--talos-space-3);
+}
+
+/* Sortable header — a chevron that rotates with [aria-sort]. */
+.talos-table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  cursor: pointer;
+  user-select: none;
+}
+.talos-table__sort::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 4px solid currentColor;
+  opacity: 0.3;
+  transition: transform var(--talos-dur-fast) ease, opacity var(--talos-dur-fast) ease;
+}
+.talos-table th[aria-sort="ascending"] .talos-table__sort::after { opacity: 1; transform: rotate(180deg); }
+.talos-table th[aria-sort="descending"] .talos-table__sort::after { opacity: 1; transform: rotate(0deg); }
+
+/* --- Stat / KPI card -------------------------------------------------------- */
+/* Chamfered container (two-layer hairline): host paints the edge + outer cut,
+   ::before insets 1px with the fill + a 1px-smaller cut, so the diagonal keeps
+   a uniform 1px border. Content rides above on z:1. */
+.talos-stat {
+  --_ch: var(--talos-chamfer);
+  --_edge: var(--talos-edge-default);
+  --_fill: var(--talos-surface-1);
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: var(--talos-space-2);
+  padding: var(--talos-space-5);
+  background: var(--_edge);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--_ch)) 0,
+    100% var(--_ch),
+    100% 100%,
+    var(--_ch) 100%,
+    0 calc(100% - var(--_ch))
+  );
+}
+.talos-stat::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  background: var(--_fill);
+  clip-path: polygon(
+    0 0,
+    calc(100% - (var(--_ch) - 1px)) 0,
+    100% calc(var(--_ch) - 1px),
+    100% 100%,
+    calc(var(--_ch) - 1px) 100%,
+    0 calc(100% - (var(--_ch) - 1px))
+  );
+}
+.talos-stat__label {
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-secondary);
+}
+.talos-stat__value {
+  font-family: var(--talos-font-display);
+  font-weight: 300;
+  font-size: var(--talos-text-2xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--talos-text-primary);
+}
+.talos-stat__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--talos-space-1);
+  font-size: var(--talos-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--talos-text-tertiary);
+}
+.talos-stat__delta--up   { color: var(--talos-success); }
+.talos-stat__delta--down { color: var(--talos-danger); }
+.talos-stat__delta--up::before   { content: "▲"; font-size: 0.7em; }
+.talos-stat__delta--down::before { content: "▼"; font-size: 0.7em; }
+.talos-stat__sub {
+  font-size: var(--talos-text-xs);
+  color: var(--talos-text-tertiary);
+}
+
+/* --- Definition list / spec sheet ------------------------------------------- */
+.talos-dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0;
+}
+.talos-dl > dt,
+.talos-dl > dd {
+  padding: var(--talos-space-2) 0;
+  border-bottom: 1px solid var(--talos-edge-subtle);
+}
+.talos-dl > dt {
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-tertiary);
+  padding-right: var(--talos-space-5);
+}
+.talos-dl > dd {
+  margin: 0;
+  font-size: var(--talos-text-sm);
+  color: var(--talos-text-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+/* Inline variant — flat key/value rows, value pushed right. */
+.talos-dl--inline {
+  display: flex;
+  flex-direction: column;
+}
+.talos-dl--inline > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--talos-space-4);
+  padding: var(--talos-space-2) 0;
+  border-bottom: 1px solid var(--talos-edge-subtle);
+}
+
+/* --- Code block + kbd + inline code ----------------------------------------- */
+.talos-code {
+  border: 1px solid var(--talos-edge-default);
+  border-radius: var(--talos-radius-sm);
+  overflow: hidden;
+  background: var(--talos-surface-1);
+}
+.talos-code__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--talos-space-3);
+  padding: var(--talos-space-2) var(--talos-space-3);
+  border-bottom: 1px solid var(--talos-edge-subtle);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-text-tertiary);
+  background: var(--talos-surface-2);
+}
+.talos-code__copy {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--talos-edge-subtle);
+  border-radius: var(--talos-radius-sm);
+  color: var(--talos-text-secondary);
+  font-family: inherit;
+  font-size: var(--talos-text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  padding: 0.2em 0.5em;
+  cursor: pointer;
+  transition: color var(--talos-dur-fast) ease, border-color var(--talos-dur-fast) ease;
+}
+.talos-code__copy:hover { color: var(--talos-text-primary); border-color: var(--talos-edge-strong); }
+.talos-code__copy:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
+}
+.talos-code__body {
+  margin: 0;
+  padding: var(--talos-space-4);
+  overflow-x: auto;
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  font-size: var(--talos-text-sm);
+  line-height: 1.55;
+  color: var(--talos-text-primary);
+}
+
+.talos-kbd {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0.1em 0.4em;
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-2xs);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.4;
+  color: var(--talos-text-secondary);
+  background: var(--talos-surface-3);
+  border: 1px solid var(--talos-edge-default);
+  border-bottom-width: 2px;
+  border-radius: var(--talos-radius-sm);
+}
+.talos-inline-code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+  padding: 0.1em 0.4em;
+  background: var(--talos-surface-2);
+  border-radius: var(--talos-radius-sm);
+  color: var(--talos-text-primary);
+}
+
+/* --- Log feed / timeline ---------------------------------------------------- */
+.talos-log {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: var(--talos-text-xs);
+  line-height: 1.6;
+  color: var(--talos-text-secondary);
+}
+.talos-log--feed {
+  max-height: 18rem;
+  overflow-y: auto;
+  border: 1px solid var(--talos-edge-subtle);
+  border-radius: var(--talos-radius-sm);
+  background: var(--talos-surface-1);
+  padding: var(--talos-space-3);
+}
+.talos-log__row {
+  position: relative;
+  display: flex;
+  gap: var(--talos-space-3);
+  padding: var(--talos-space-1) 0 var(--talos-space-1) var(--talos-space-3);
+}
+/* Leading level tick — a vertical bar coloured by row level. */
+.talos-log__row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.35em;
+  bottom: 0.35em;
+  width: 2px;
+  background: var(--talos-edge-subtle);
+}
+.talos-log__ts {
+  flex: none;
+  color: var(--talos-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.talos-log__msg { color: var(--talos-text-primary); }
+.talos-log__row--info::before    { background: var(--talos-info); }
+.talos-log__row--warn::before    { background: var(--talos-warning); }
+.talos-log__row--error::before   { background: var(--talos-danger); }
+.talos-log__row--success::before { background: var(--talos-success); }
+
+/* --- Avatar ----------------------------------------------------------------- */
+.talos-avatar {
+  --talos-avatar-size: 2.5rem;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--talos-avatar-size);
+  height: var(--talos-avatar-size);
+  font-family: var(--talos-font-display);
+  font-size: calc(var(--talos-avatar-size) * 0.36);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-text-secondary);
+  background: var(--talos-surface-2);
+  border: 1px solid var(--talos-edge-default);
+  overflow: hidden;
+  /* small top-right chamfer — the square-with-a-cut house silhouette */
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+.talos-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.talos-avatar--sm { --talos-avatar-size: 1.75rem; }
+.talos-avatar--lg { --talos-avatar-size: 3.5rem; }
+.talos-avatar--ring { border-color: var(--talos-edge-strong); }
+.talos-avatar__status {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  background: var(--talos-muted-foreground);
+  box-shadow: 0 0 0 2px var(--talos-surface-0);
+}
+.talos-avatar__status--online   { background: var(--talos-success); }
+.talos-avatar__status--warning  { background: var(--talos-warning); }
+.talos-avatar__status--offline  { background: var(--talos-danger); }
+
+.talos-avatar-group {
+  display: inline-flex;
+}
+.talos-avatar-group .talos-avatar:not(:first-child) {
+  margin-left: -0.6rem;
+  box-shadow: -2px 0 0 var(--talos-surface-0);
+}
+
+/* --- Meter / gauge (linear) ------------------------------------------------- */
+/* Distinct from progress: segmented tick texture over the fill = telemetry. */
+.talos-meter {
+  --talos-value: 0;
+  --_fill: var(--talos-accent);
+  position: relative;
+  width: 100%;
+  height: 12px;
+  background: var(--talos-surface-1);
+  border: 1px solid var(--talos-edge-subtle);
+  border-radius: 0;
+  overflow: hidden;
+}
+.talos-meter__fill {
+  height: 100%;
+  width: calc(var(--talos-value) * 1%);
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--_fill) 0,
+      var(--_fill) 3px,
+      hsl(0 0% 0% / 0.35) 3px,
+      hsl(0 0% 0% / 0.35) 5px
+    );
+  transition: width var(--talos-dur-mid) var(--talos-ease-out);
+}
+.talos-meter--ok   { --_fill: var(--talos-success); }
+.talos-meter--warn { --_fill: var(--talos-warning); }
+.talos-meter--crit { --_fill: var(--talos-danger); }
+
+/* --- Readout / telemetry block ---------------------------------------------- */
+/* Chamfered (two-layer) panel preset for a system-status widget. */
+.talos-readout {
+  --_ch: var(--talos-chamfer);
+  --_edge: var(--talos-edge-default);
+  --_fill: var(--talos-surface-1);
+
+  position: relative;
+  isolation: isolate;
+  padding: var(--talos-space-4) var(--talos-space-5);
+  background: var(--_edge);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--_ch)) 0,
+    100% var(--_ch),
+    100% 100%,
+    var(--_ch) 100%,
+    0 calc(100% - var(--_ch))
+  );
+}
+.talos-readout::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  background: var(--_fill);
+  clip-path: polygon(
+    0 0,
+    calc(100% - (var(--_ch) - 1px)) 0,
+    100% calc(var(--_ch) - 1px),
+    100% 100%,
+    calc(var(--_ch) - 1px) 100%,
+    0 calc(100% - (var(--_ch) - 1px))
+  );
+}
+.talos-readout__head {
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  margin-bottom: var(--talos-space-3);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-secondary);
+}
+.talos-readout__live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--talos-accent);
+  box-shadow: 0 0 8px var(--talos-accent);
+  animation: talos-pulse 2.4s ease-in-out infinite;
+}
+.talos-readout__rows {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: var(--talos-text-xs);
+  color: var(--talos-text-primary);
+}
+.talos-readout__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--talos-space-4);
+  padding: var(--talos-space-1) 0;
+}
+.talos-readout__row > span:first-child { color: var(--talos-text-tertiary); }
+.talos-readout__row > span:last-child { font-variant-numeric: tabular-nums; }
+
+/* --- Reduced motion --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .talos-meter__fill { transition: none; }
+  .talos-readout__live { animation: none; }
+  .talos-table tbody tr { transition: none; }
+}

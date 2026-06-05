@@ -88,4 +88,102 @@
   --talos-grid-cell: 32px;
   --talos-grid-dot: hsl(0 0% 100% / 0.07);
   --talos-crosshair: hsl(0 0% 100% / 0.22);
+
+  /* ======================================================================
+     SEMANTIC TIER — role tokens consumers theme against, NOT raw palette.
+     Components reference these (--talos-surface-2, --talos-danger), so a
+     project re-skins by overriding roles, never by editing component CSS.
+     ====================================================================== */
+
+  /* --- Status channels (HSL channels for opacity composition) ----------- */
+  /* Monochrome direction keeps hues desaturated/utility-only — these light up
+     alerts, badges, validation, progress. Accent stays the brand green. */
+  --talos-success-hsl: 140 90% 60%;
+  --talos-warning-hsl: 38 92% 60%;
+  --talos-danger-hsl: 0 80% 62%;
+  --talos-info-hsl: 205 90% 62%;
+
+  --talos-success: hsl(var(--talos-success-hsl));
+  --talos-warning: hsl(var(--talos-warning-hsl));
+  --talos-danger: hsl(var(--talos-danger-hsl));
+  --talos-info: hsl(var(--talos-info-hsl));
+
+  /* --- Surface elevation ladder ----------------------------------------- */
+  /* surface-0 = page bg; each step lifts toward light. Cards, popovers,
+     menus, modals climb the ladder. */
+  --talos-surface-0: hsl(0 0% 0%);
+  --talos-surface-1: hsl(0 0% 4%);
+  --talos-surface-2: hsl(0 0% 7%);
+  --talos-surface-3: hsl(0 0% 10%);
+  --talos-surface-4: hsl(0 0% 14%);
+  --talos-overlay-scrim: hsl(0 0% 0% / 0.66);
+
+  /* --- Text roles ------------------------------------------------------- */
+  --talos-text-primary: hsl(0 0% 100% / 0.92);
+  --talos-text-secondary: hsl(0 0% 100% / 0.62);
+  --talos-text-tertiary: hsl(0 0% 100% / 0.4);
+  --talos-text-disabled: hsl(0 0% 100% / 0.28);
+  --talos-text-on-accent: hsl(0 0% 0%);
+
+  /* --- Edge roles ------------------------------------------------------- */
+  --talos-edge-subtle: hsl(0 0% 100% / 0.12);
+  --talos-edge-default: hsl(0 0% 100% / 0.2);
+  --talos-edge-strong: hsl(0 0% 100% / 0.4);
+
+  /* --- Focus ring (one system for every interactive) -------------------- */
+  --talos-focus-ring: hsl(0 0% 100% / 0.9);
+  --talos-focus-ring-width: 1px;
+  --talos-focus-ring-offset: 2px;
+
+  /* --- Radius scale (chamfer is the brand; radius for non-cut elements) -- */
+  --talos-radius-sm: 2px;
+  --talos-radius-md: 4px;
+  --talos-radius-lg: 8px;
+
+  /* --- Spacing scale (density-aware) ------------------------------------ */
+  --talos-space-1: 0.25rem;
+  --talos-space-2: 0.5rem;
+  --talos-space-3: 0.75rem;
+  --talos-space-4: 1rem;
+  --talos-space-5: 1.5rem;
+  --talos-space-6: 2rem;
+  --talos-space-8: 3rem;
+
+  /* --- Type scale ------------------------------------------------------- */
+  --talos-text-2xs: 0.625rem;
+  --talos-text-xs: 0.7rem;
+  --talos-text-sm: 0.8rem;
+  --talos-text-base: 0.9rem;
+  --talos-text-md: 1rem;
+  --talos-text-lg: 1.25rem;
+  --talos-text-xl: 1.75rem;
+  --talos-text-2xl: 2.5rem;
+
+  /* --- z-index ladder --------------------------------------------------- */
+  --talos-z-base: 0;
+  --talos-z-sticky: 100;
+  --talos-z-overlay: 1000;
+  --talos-z-modal: 1100;
+  --talos-z-toast: 1200;
+  --talos-z-tooltip: 1300;
+
+  /* --- Control sizing (density-aware via --talos-density-scale) ---------- */
+  --talos-density-scale: 1;
+  --talos-control-h-sm: calc(2.25rem * var(--talos-density-scale));
+  --talos-control-h-md: calc(2.5rem * var(--talos-density-scale));
+  --talos-control-h-lg: calc(3rem * var(--talos-density-scale));
+}
+
+/* Density mode — set [data-talos-density="compact"] on a container/root. */
+[data-talos-density="compact"] {
+  --talos-density-scale: 0.85;
+  --talos-space-4: 0.75rem;
+  --talos-space-5: 1rem;
+  --talos-space-6: 1.5rem;
+}
+
+/* Shared focus-ring utility — every interactive opts in via :focus-visible. */
+.talos-focus-ring:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
 }

@@ -26,10 +26,14 @@
   ],
   "files": [
     "dist",
+    "src/all.css",
     "src/tokens.css",
     "src/talos.css",
     "src/talos-blog.css",
     "src/talos-forms.css",
+    "src/talos-feedback.css",
+    "src/talos-data.css",
+    "src/talos-nav.css",
     "src/fonts",
     "src/astro",
     "DESIGN.md",
@@ -40,10 +44,14 @@
       "types": "./dist/wc/index.d.ts",
       "import": "./dist/wc/index.js"
     },
+    "./all.css": "./src/all.css",
     "./tokens.css": "./src/tokens.css",
     "./talos.css": "./src/talos.css",
     "./talos-blog.css": "./src/talos-blog.css",
     "./talos-forms.css": "./src/talos-forms.css",
+    "./talos-feedback.css": "./src/talos-feedback.css",
+    "./talos-data.css": "./src/talos-data.css",
+    "./talos-nav.css": "./src/talos-nav.css",
     "./wc": {
       "types": "./dist/wc/index.d.ts",
       "import": "./dist/wc/index.js"

@@ -1,0 +1,347 @@
+/* ============================================================================
+   @shelfwood/talos-ui — TALOS-NAV.CSS  (opt-in module)
+   App/site navigation chrome: tabs, breadcrumbs, pagination, menus, sidebar
+   nav, stepper, toolbar. Plain CSS; import AFTER talos.css. The marketing
+   navbar/footer live in talos-blog.css — this file is the application surface
+   and deliberately uses distinct class names.
+
+     <link rel="stylesheet" href=".../talos-ui/talos.css" />
+     <link rel="stylesheet" href=".../talos-ui/talos-nav.css" />
+
+   Active/selected reads via a bright hairline edge or an accent tick, never a
+   heavy fill. Sliding indicators use --talos-ease-glass; all gated in RM.
+   ========================================================================== */
+
+/* --- Tabs ------------------------------------------------------------------- */
+.talos-tabs {
+  display: flex;
+  gap: var(--talos-space-5);
+  border-bottom: 1px solid var(--talos-edge-subtle);
+}
+.talos-tab {
+  position: relative;
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: var(--talos-space-3) 0;
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-xs);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-secondary);
+  cursor: pointer;
+  transition: color var(--talos-dur-fast) ease;
+}
+.talos-tab:hover { color: var(--talos-text-primary); }
+/* Active underline tick rides the shared bottom border. */
+.talos-tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--talos-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--talos-dur-fast) var(--talos-ease-glass);
+}
+.talos-tab[aria-selected="true"] {
+  color: var(--talos-text-primary);
+}
+.talos-tab[aria-selected="true"]::after { transform: scaleX(1); }
+.talos-tab:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
+}
+.talos-tabpanel { padding-top: var(--talos-space-5); }
+
+/* Segmented variant — boxed segments sharing a border; active = filled edge. */
+.talos-tabs--segmented {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--talos-edge-default);
+  border-radius: 0;
+}
+.talos-tabs--segmented .talos-tab {
+  padding: var(--talos-space-2) var(--talos-space-4);
+  border-right: 1px solid var(--talos-edge-subtle);
+}
+.talos-tabs--segmented .talos-tab:last-child { border-right: 0; }
+.talos-tabs--segmented .talos-tab::after { display: none; }
+.talos-tabs--segmented .talos-tab[aria-selected="true"] {
+  background: var(--talos-surface-3);
+  color: var(--talos-text-primary);
+}
+
+/* --- Breadcrumbs ------------------------------------------------------------ */
+.talos-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--talos-space-2);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+}
+.talos-breadcrumb {
+  color: var(--talos-text-secondary);
+  text-decoration: none;
+  transition: color var(--talos-dur-fast) ease;
+}
+.talos-breadcrumb:hover { color: var(--talos-text-primary); }
+.talos-breadcrumb:not(:last-child)::after {
+  content: "›";
+  margin-left: var(--talos-space-2);
+  color: var(--talos-text-tertiary);
+}
+.talos-breadcrumb[aria-current="page"] {
+  color: var(--talos-text-primary);
+  pointer-events: none;
+}
+
+/* --- Pagination ------------------------------------------------------------- */
+.talos-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--talos-space-1);
+  font-family: var(--talos-font-display);
+}
+.talos-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 var(--talos-space-2);
+  font-size: var(--talos-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--talos-text-secondary);
+  background: none;
+  border: 1px solid var(--talos-edge-subtle);
+  border-radius: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--talos-dur-fast) ease, border-color var(--talos-dur-fast) ease;
+}
+.talos-page:hover { color: var(--talos-text-primary); border-color: var(--talos-edge-default); }
+.talos-page--active {
+  color: var(--talos-text-primary);
+  background: var(--talos-surface-3);
+  border-color: var(--talos-edge-strong);
+}
+.talos-page--ellipsis {
+  border-color: transparent;
+  color: var(--talos-text-tertiary);
+  cursor: default;
+  pointer-events: none;
+}
+.talos-page--nav { letter-spacing: 0; }
+.talos-page:disabled { opacity: 0.4; pointer-events: none; }
+.talos-page:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
+}
+
+/* --- Menu / Dropdown -------------------------------------------------------- */
+.talos-menu {
+  min-width: 12rem;
+  padding: var(--talos-space-2);
+  background: var(--talos-surface-3);
+  border: 1px solid var(--talos-edge-default);
+  border-radius: var(--talos-radius-md);
+  box-shadow: var(--talos-shadow);
+  z-index: var(--talos-z-overlay);
+}
+.talos-menu__label {
+  padding: var(--talos-space-2) var(--talos-space-3) var(--talos-space-1);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-tertiary);
+}
+.talos-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-3);
+  width: 100%;
+  padding: var(--talos-space-2) var(--talos-space-3);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-sm);
+  font-weight: 300;
+  color: var(--talos-text-primary);
+  background: none;
+  border: 0;
+  border-radius: var(--talos-radius-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--talos-dur-fast) ease;
+}
+.talos-menu__item:hover { background: var(--talos-surface-4); }
+.talos-menu__item:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: calc(var(--talos-focus-ring-offset) * -1);
+}
+.talos-menu__item[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+.talos-menu__item--danger { color: var(--talos-danger); }
+.talos-menu__shortcut {
+  margin-left: auto;
+  font-size: var(--talos-text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--talos-text-tertiary);
+  letter-spacing: var(--talos-tracking-hud-tight);
+}
+.talos-menu__sep {
+  height: 1px;
+  margin: var(--talos-space-2) 0;
+  background: var(--talos-edge-subtle);
+  border: 0;
+}
+
+/* --- Sidebar / app nav ------------------------------------------------------ */
+.talos-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--talos-space-5);
+  width: 15rem;
+  padding: var(--talos-space-5) var(--talos-space-3);
+  background: var(--talos-surface-0);
+  border-right: 1px solid var(--talos-edge-subtle);
+  transition: width var(--talos-dur-mid) var(--talos-ease-glass);
+}
+.talos-sidebar--collapsed { width: 3.5rem; }
+.talos-nav-group { display: flex; flex-direction: column; gap: var(--talos-space-1); }
+.talos-nav-group__label {
+  padding: 0 var(--talos-space-3) var(--talos-space-1);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-tertiary);
+}
+.talos-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-3);
+  padding: var(--talos-space-2) var(--talos-space-3);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-sm);
+  font-weight: 300;
+  color: var(--talos-text-secondary);
+  text-decoration: none;
+  border-radius: var(--talos-radius-sm);
+  white-space: nowrap;
+  transition: background var(--talos-dur-fast) ease, color var(--talos-dur-fast) ease;
+}
+.talos-nav-item__icon { flex: none; display: inline-flex; width: 1.1rem; }
+.talos-nav-item:hover { background: var(--talos-surface-2); color: var(--talos-text-primary); }
+.talos-nav-item--active {
+  background: var(--talos-surface-2);
+  color: var(--talos-text-primary);
+}
+/* Left accent tick marks the current section. */
+.talos-nav-item--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  bottom: 0.4em;
+  width: 2px;
+  background: var(--talos-accent);
+}
+.talos-nav-item:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: calc(var(--talos-focus-ring-offset) * -1);
+}
+/* Collapsed: labels fold away, icons remain. */
+.talos-sidebar--collapsed .talos-nav-item__label,
+.talos-sidebar--collapsed .talos-nav-group__label { display: none; }
+
+/* --- Stepper / wizard ------------------------------------------------------- */
+.talos-steps {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+.talos-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--talos-space-2);
+  flex: 1;
+  text-align: center;
+}
+.talos-step__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--talos-text-tertiary);
+  background: var(--talos-surface-1);
+  border: 1px solid var(--talos-edge-default);
+  border-radius: 0;
+  z-index: 1;
+}
+.talos-step__label {
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-text-tertiary);
+}
+/* Connector — a hairline from this node's centre to the next. */
+.talos-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 0.875rem;
+  left: 50%;
+  width: 100%;
+  height: 1px;
+  background: var(--talos-edge-subtle);
+}
+.talos-step--done .talos-step__index {
+  color: var(--talos-background);
+  background: var(--talos-foreground);
+  border-color: var(--talos-foreground);
+}
+.talos-step--done::after { background: var(--talos-edge-strong); }
+.talos-step--current .talos-step__index {
+  color: var(--talos-text-primary);
+  border-color: var(--talos-accent);
+  box-shadow: 0 0 0 1px var(--talos-accent);
+}
+.talos-step--current .talos-step__label { color: var(--talos-text-primary); }
+
+/* --- Toolbar ---------------------------------------------------------------- */
+.talos-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  padding: var(--talos-space-2) var(--talos-space-3);
+  background: var(--talos-surface-1);
+  border: 1px solid var(--talos-edge-subtle);
+  border-radius: 0;
+}
+.talos-toolbar__sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 0 var(--talos-space-1);
+  background: var(--talos-edge-subtle);
+}
+.talos-toolbar__spacer { flex: 1; }
+
+/* --- Reduced motion --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .talos-tab::after,
+  .talos-sidebar { transition: none; }
+}

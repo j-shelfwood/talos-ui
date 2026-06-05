@@ -102,11 +102,321 @@
   border: 0;
   border-top: 1px solid hsl(0 0% 100% / 0.1);
 }
-.talos-fieldset > legend {
+.talos-fieldset > legend,
+.talos-fieldset__legend {
   font-family: var(--talos-font-display);
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud);
   color: hsl(0 0% 100% / 0.4);
   padding: 0;
+}
+
+/* ============================================================================
+   EXPANSION — full control set + field metadata + validation. Built on the
+   semantic tokens; the originals above predate them but stay backward-compat.
+   ========================================================================== */
+
+/* --- Field metadata --------------------------------------------------------- */
+.talos-field__help {
+  font-size: var(--talos-text-xs);
+  font-family: var(--talos-font-body);
+  color: var(--talos-text-tertiary);
+  line-height: 1.4;
+}
+.talos-field__error {
+  font-size: var(--talos-text-xs);
+  font-family: var(--talos-font-body);
+  color: var(--talos-danger);
+  line-height: 1.4;
+}
+.talos-field__counter {
+  align-self: flex-end;
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--talos-text-tertiary);
+}
+.talos-label--required::after {
+  content: " *";
+  color: var(--talos-danger);
+}
+
+/* --- Validation states ------------------------------------------------------ */
+/* Field-level: recolour the contained control + messages. */
+.talos-field--error .talos-input,
+.talos-field--error .talos-textarea,
+.talos-field--error .talos-select,
+.talos-input--error,
+.talos-textarea--error {
+  border-color: hsl(var(--talos-danger-hsl) / 0.7);
+}
+.talos-field--error .talos-input:focus,
+.talos-input--error:focus {
+  box-shadow: 0 0 0 1px hsl(var(--talos-danger-hsl) / 0.5);
+  border-color: var(--talos-danger);
+}
+.talos-field--success .talos-input,
+.talos-field--success .talos-select,
+.talos-input--success {
+  border-color: hsl(var(--talos-success-hsl) / 0.6);
+}
+
+/* --- Input group + addons --------------------------------------------------- */
+/* The group owns the border; the inner input goes borderless so a $-prefix or
+   .com-suffix reads as one continuous control. */
+.talos-input-group {
+  display: flex;
+  align-items: stretch;
+  background: hsl(0 0% 100% / 0.04);
+  border: 1px solid var(--talos-edge-default);
+  transition: border-color var(--talos-dur-fast) ease, box-shadow var(--talos-dur-fast) ease;
+}
+.talos-input-group:focus-within {
+  border-color: var(--talos-edge-strong);
+  box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.18);
+}
+.talos-input-group .talos-input {
+  border: 0;
+  background: none;
+  clip-path: none;
+  flex: 1;
+  min-width: 0;
+}
+.talos-input-group .talos-input:focus { box-shadow: none; background: none; }
+.talos-input-addon {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--talos-space-3);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-text-tertiary);
+  background: var(--talos-surface-2);
+  white-space: nowrap;
+}
+.talos-input-addon--leading { border-right: 1px solid var(--talos-edge-subtle); }
+.talos-input-addon--trailing { border-left: 1px solid var(--talos-edge-subtle); }
+
+/* --- Search ----------------------------------------------------------------- */
+.talos-search { position: relative; }
+.talos-search .talos-input {
+  padding-left: 2.4rem;
+  padding-right: 2.2rem;
+}
+/* Magnifier glyph, drawn with a background data-URI in the edge colour. */
+.talos-search__icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--talos-text-tertiary);
+  pointer-events: none;
+}
+.talos-search__clear {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--talos-text-tertiary);
+  font-size: var(--talos-text-md);
+  line-height: 1;
+  cursor: pointer;
+}
+.talos-search__clear:hover { color: var(--talos-text-primary); }
+
+/* --- Select ----------------------------------------------------------------- */
+/* Native <select> restyled to match inputs; chevron is a background SVG. */
+.talos-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: var(--talos-font-body);
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--talos-text-primary);
+  background-color: hsl(0 0% 100% / 0.04);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23ffffff' stroke-opacity='0.5' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  border: 1px solid var(--talos-edge-default);
+  border-radius: 0;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  cursor: pointer;
+  transition: border-color var(--talos-dur-fast) ease, background-color var(--talos-dur-fast) ease;
+}
+.talos-select:hover { border-color: var(--talos-edge-strong); }
+.talos-select:focus {
+  outline: none;
+  border-color: var(--talos-edge-strong);
+  box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.18);
+}
+.talos-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.talos-select option { background: var(--talos-surface-3); color: var(--talos-text-primary); }
+
+/* --- Checkbox + Radio ------------------------------------------------------- */
+/* Style the native control directly via appearance:none so focus rings + form
+   semantics survive. Square checkbox, circular radio. */
+.talos-checkbox,
+.talos-radio {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  background: var(--talos-surface-1);
+  border: 1px solid var(--talos-edge-strong);
+  cursor: pointer;
+  position: relative;
+  transition: background var(--talos-dur-fast) ease, border-color var(--talos-dur-fast) ease;
+}
+.talos-checkbox { border-radius: 0; }
+.talos-radio { border-radius: 50%; }
+.talos-checkbox:hover,
+.talos-radio:hover { border-color: var(--talos-foreground); }
+.talos-checkbox:checked,
+.talos-radio:checked { background: var(--talos-foreground); border-color: var(--talos-foreground); }
+/* Checkmark — a rotated open corner drawn on the filled box. */
+.talos-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 0.28rem;
+  height: 0.55rem;
+  border: solid var(--talos-background);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.talos-radio:checked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--talos-background);
+}
+.talos-checkbox:focus-visible,
+.talos-radio:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
+}
+.talos-checkbox:disabled,
+.talos-radio:disabled { opacity: 0.45; cursor: not-allowed; }
+/* Inline label row for a checkbox/radio + text. */
+.talos-check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  font-family: var(--talos-font-body);
+  font-size: var(--talos-text-sm);
+  color: var(--talos-text-primary);
+  cursor: pointer;
+}
+
+/* --- Switch / Toggle -------------------------------------------------------- */
+/* HUD toggle — a SQUARE thumb sliding in a SQUARE track. Mechanical, not iOS.
+   Native checkbox styled directly so it stays keyboard/form accessible. */
+.talos-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 2.6rem;
+  height: 1.3rem;
+  margin: 0;
+  position: relative;
+  background: var(--talos-surface-1);
+  border: 1px solid var(--talos-edge-strong);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background var(--talos-dur-fast) ease, border-color var(--talos-dur-fast) ease;
+}
+.talos-switch::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: calc(1.3rem - 4px);
+  height: calc(1.3rem - 4px);
+  background: var(--talos-edge-strong);
+  transition: transform var(--talos-dur-fast) var(--talos-ease-glass), background var(--talos-dur-fast) ease;
+}
+.talos-switch:checked {
+  background: hsl(var(--talos-accent-hsl) / 0.2);
+  border-color: var(--talos-accent);
+}
+.talos-switch:checked::after {
+  transform: translateX(calc(2.6rem - 1.3rem));
+  background: var(--talos-accent);
+}
+.talos-switch:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
+}
+.talos-switch:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* --- Range / Slider --------------------------------------------------------- */
+/* Square HUD thumb (not round) on a hairline track. Cross-browser pseudos. */
+.talos-range {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 1.5rem;
+  background: none;
+  cursor: pointer;
+}
+.talos-range::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--talos-edge-default);
+}
+.talos-range::-moz-range-track {
+  height: 2px;
+  background: var(--talos-edge-default);
+}
+.talos-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 0.7rem;
+  height: 0.9rem;
+  margin-top: calc((2px - 0.9rem) / 2);
+  background: var(--talos-foreground);
+  border: 0;
+  border-radius: 0;
+}
+.talos-range::-moz-range-thumb {
+  width: 0.7rem;
+  height: 0.9rem;
+  background: var(--talos-foreground);
+  border: 0;
+  border-radius: 0;
+}
+.talos-range:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
+}
+
+/* --- Form layout helpers ---------------------------------------------------- */
+.talos-field-row {
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-4);
+}
+.talos-field-row .talos-label { flex: none; min-width: 8rem; }
+.talos-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--talos-space-5);
+}
+
+/* --- Reduced motion --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .talos-switch::after { transition: none; }
 }

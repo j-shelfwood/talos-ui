@@ -1,0 +1,18 @@
+/* ============================================================================
+   @shelfwood/talos-ui — ALL.CSS  (convenience barrel)
+   One-line import of the entire CSS surface, in dependency order. Reach for
+   this in a showcase/app where you want everything; import the individual
+   modules instead when you care about payload.
+
+     <link rel="stylesheet" href=".../talos-ui/all.css" />
+     // or:  import "@shelfwood/talos-ui/all.css";
+
+   tokens.css is pulled in transitively by talos.css, so it is not re-imported.
+   ========================================================================== */
+
+@import "./talos.css";        /* tokens + core: panels, button, grid, ambient */
+@import "./talos-forms.css";  /* inputs, select, checkbox/radio/switch, range */
+@import "./talos-feedback.css"; /* badges, alerts, toasts, progress, spinner…  */
+@import "./talos-data.css";   /* tables, stats, code, log, avatar, meter        */
+@import "./talos-nav.css";    /* tabs, breadcrumbs, menu, sidebar, stepper      */
+@import "./talos-blog.css";   /* prose, marketing navbar/footer, tags           */
