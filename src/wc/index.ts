@@ -8,8 +8,11 @@ import { TalosPanel } from "./talos-panel";
 import { TalosCorner } from "./talos-corner";
 import { TalosNotch } from "./talos-notch";
 import { TalosGauge } from "./talos-gauge";
+import { TalosTrend } from "./talos-trend";
+import { TalosMeter } from "./talos-meter";
+import { TalosFlow } from "./talos-flow";
 
-export { TalosPanel, TalosCorner, TalosNotch, TalosGauge };
+export { TalosPanel, TalosCorner, TalosNotch, TalosGauge, TalosTrend, TalosMeter, TalosFlow };
 export { PanelShapeBuilder } from "./PanelShapeBuilder";
 export type { Segment, Edge, CornerEdge, PanelShapeOptions } from "./PanelShapeBuilder";
 
@@ -22,4 +25,7 @@ if (typeof customElements !== "undefined") {
   define("talos-notch", TalosNotch);
   define("talos-panel", TalosPanel);
   define("talos-gauge", TalosGauge);
+  define("talos-trend", TalosTrend);
+  define("talos-meter", TalosMeter);
+  define("talos-flow", TalosFlow);
 }

@@ -246,12 +246,16 @@ export class TalosGauge extends HTMLElement {
     this.arc.setAttribute("d", this.arcPath(cx, cy, r, start, valAngle));
     this.arc.setAttribute("stroke-width", String(stroke));
 
-    // Needle from hub toward the value angle, a touch shorter than the arc.
-    const [nx, ny] = this.point(cx, cy, r - stroke, valAngle);
-    this.needle.setAttribute("x1", String(cx));
-    this.needle.setAttribute("y1", String(cy));
-    this.needle.setAttribute("x2", String(nx));
-    this.needle.setAttribute("y2", String(ny));
+    // Needle as a short hub-anchored marker pointing at the arc, NOT a full
+    // clock hand — a long needle sweeps through the centred readout and reads as
+    // a glitch. It starts just outside the readout radius and stops short of the
+    // arc, so the number stays clear at every angle.
+    const [nx0, ny0] = this.point(cx, cy, r * 0.52, valAngle);
+    const [nx1, ny1] = this.point(cx, cy, r - stroke, valAngle);
+    this.needle.setAttribute("x1", String(nx0));
+    this.needle.setAttribute("y1", String(ny0));
+    this.needle.setAttribute("x2", String(nx1));
+    this.needle.setAttribute("y2", String(ny1));
 
     const hub = this.root.querySelector(".hub")!;
     hub.setAttribute("cx", String(cx));
