@@ -227,21 +227,18 @@
 }
 
 /* ----------------------------------------------------------------------------
-   BUTTON — chamfered (bottom-right cut), two-layer clip hairline.
-   Host = edge color clipped to the cut. ::before = fill, inset 0, with every
-   edge offset 1px INSIDE the polygon (straight edges 1px; the 45° cut endpoints
-   offset by √2−1 ≈ 0.414px so the diagonal band is a true 1px perpendicular).
-   Verified uniform in real Chrome at zoom across all variants — straight edges
-   and the cut read the same weight. (Earlier SVG-stroke attempt rendered the
-   bottom/diagonal faint because the host clip-path also clipped the SVG.)
-   ::before is z-index:-1 so raw slotted text stays on top with no wrapper. */
+   BUTTON — chamfered (bottom-right cut), FILL-ONLY chip (anti.space style).
+   A single clipped fill = exactly ONE diagonal edge, so the cut anti-aliases
+   cleanly with no penumbra. An outlined hairline would stack two diagonal AA
+   edges (host cut + inner-fill cut) ~1px apart, which read as a muddy
+   "shadow" on the cut — verified in real Chrome. Fill-only avoids it entirely.
+   The chip is a touch lighter than the page so its silhouette reads as the
+   button; emphasis comes from fill brightness, not a border. */
 .talos-button {
   --_chamfer: 10px;
-  --_fill: hsl(0 0% 8%);
-  --_edge: hsl(0 0% 100% / 0.5);
+  --_fill: hsl(0 0% 13%);
 
   position: relative;
-  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -260,7 +257,7 @@
   font-size: 0.75rem;
 
   cursor: pointer;
-  background: var(--_edge);
+  background: var(--_fill);
   clip-path: polygon(
     0 0,
     100% 0,
@@ -270,23 +267,8 @@
   );
   transition: background 200ms ease, color 200ms ease;
 }
-.talos-button::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--_fill);
-  clip-path: polygon(
-    1px 1px,
-    calc(100% - 1px) 1px,
-    calc(100% - 1px) calc(100% - var(--_chamfer) + 0.414px),
-    calc(100% - var(--_chamfer) + 0.414px) calc(100% - 1px),
-    1px calc(100% - 1px)
-  );
-}
-.talos-button:hover { background: var(--talos-hud-edge-hot); color: hsl(0 0% 100%); }
-.talos-button:hover::before { background: hsl(0 0% 12%); }
-.talos-button:focus-visible { outline: none; background: hsl(0 0% 100% / 0.9); }
+.talos-button:hover { background: hsl(0 0% 20%); color: hsl(0 0% 100%); }
+.talos-button:focus-visible { outline: none; background: hsl(0 0% 26%); }
 .talos-button[disabled],
 .talos-button:disabled {
   opacity: 0.5;
@@ -297,12 +279,12 @@
 .talos-button--sm { height: 2.25rem; padding-inline: 1rem; font-size: 0.7rem; gap: 0.375rem; }
 .talos-button--lg { height: 3rem; padding-inline: 2rem; font-size: 0.875rem; }
 
-/* Variants (text emphasis only — monochrome). */
-.talos-button--secondary { color: hsl(0 0% 100% / 0.75); }
-/* Ghost: near-void fill so it reads as a barely-there button on the dark page,
-   while keeping the working two-layer border (a truly transparent interior is
-   impossible with the opaque-::before fill technique). */
-.talos-button--ghost { --_fill: hsl(0 0% 4%); color: hsl(0 0% 100% / 0.7); }
+/* Variants — fill brightness sets the emphasis (monochrome). */
+.talos-button--secondary { --_fill: hsl(0 0% 10%); color: hsl(0 0% 100% / 0.8); }
+.talos-button--secondary:hover { background: hsl(0 0% 16%); }
+/* Ghost: barely-there chip, just above the page void. */
+.talos-button--ghost { --_fill: hsl(0 0% 7%); color: hsl(0 0% 100% / 0.7); }
+.talos-button--ghost:hover { background: hsl(0 0% 13%); }
 
 /* ----------------------------------------------------------------------------
    AMBIENT GRID + CURSOR CROSSHAIR — fixed full-viewport overlay. JS writes
