@@ -8,22 +8,35 @@
 
 ## The thesis
 
-**The interface is an instrument, not a document.**
+**Live, not static.** The interface depicts a *running system*, not an authored
+snapshot.
 
-A document presents information that was true when it was authored. You *read*
-it, top to bottom, and then you are done. The web inherited this from print —
-the scrolling page, the A4/Letter column, the margins, the reading line — and
-most "UI kits" are still, underneath the styling, decorated documents.
+A precise word first, because the easy version of this thesis is wrong. A
+*document* is just information presented — and information presented says nothing
+about layout. Documents are already multi-column, landscape, varied in
+proportion: a newspaper, a broadsheet, a foldout map, a dense financial
+statement. "Document" is not the enemy, and it never was. Anyone who tells you
+the alternative to a boring interface is "not a document" is fighting a
+strawman.
 
-An instrument is different. It depicts a **live system** and lets you
-**operate** it. A speedometer, an oscilloscope, a mixing console, a flight HUD,
-a synth, a reactor panel — these earn their density because every glowing thing
-is bound to something real and present. You don't read an instrument. You
-*monitor* it and you *act* on it.
+The real distinction is **static vs. live**:
 
-**Talos UI is the toolkit for building instruments.** Consoles, monitors,
-control panels, dashboards that are actually dashes-of-board — not prettier
-versions of document-shaped pages.
+- A *static* presentation — any layout, however beautiful or spatial — shows
+  information that was **true when it was authored**. Read it twice, see the same
+  thing. It is a snapshot.
+- A *live* presentation shows information that is **true now** and changes as the
+  system does. Read it twice, see different things, because it is bound to a
+  live source.
+
+We call a live, operable interface an **instrument** — a speedometer, an
+oscilloscope, a mixing console, a flight HUD, a synth, a reactor panel. The word
+is a metaphor for *live + operable*, not a claim about shape. These earn their
+density because every glowing thing is bound to something real and *present*.
+You don't read an instrument once and finish; you **monitor** it and you **act**
+on it.
+
+**Talos UI is the toolkit for building instruments** — consoles, monitors,
+control panels, live dashboards. Not prettier static snapshots.
 
 ---
 
@@ -55,12 +68,15 @@ animation, every accent, in code review and in design.
 
 ## The five principles
 
-### 1. Reject the page, embrace the panel
-The document metaphor — a tall scrolling rectangle you consume linearly —
-assumes content is finite, authored, and read once. Instruments are spatial,
-not linear; monitored, not read. Prefer viewport-native **zones** over scrolling
-columns. Persistent ambient context over page-by-page navigation. Update in
-place over reflow. A cockpit does not scroll.
+### 1. Reject the default reading-line, use the whole field
+This is a layout belief, and it is **not** about documents — print solved
+spatial layout a century ago (newspapers, broadsheets, foldout plans). The
+target is narrower and more specific: **the web's lazy default** — the single
+tall portrait column you scroll top-to-bottom, the reading-line inherited not
+from documents in general but from the *blandest* one. Reject that default. Use
+the full 2D field: viewport-native **zones**, multiple columns, varied
+proportion, persistent ambient context, update-in-place over reflow. A cockpit
+does not scroll — but neither does a well-set broadsheet pretend it is a phone.
 
 ### 2. Form encodes function
 The law, restated as a principle so it sits in the list where it belongs. It is
@@ -106,7 +122,7 @@ when motion is off was decoration wearing a function's coat.
 > Talos UI is a component system for building **functional instruments** —
 > dashboards, control panels, monitors, consoles — where color, motion, and
 > form are bound to live domain state. It is the toolkit for interfaces that
-> *visualize a running system*, not interfaces that *present a document*.
+> *visualize a running system*, not interfaces that present an authored snapshot.
 
 ---
 
