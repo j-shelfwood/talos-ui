@@ -227,15 +227,23 @@
 }
 
 /* ----------------------------------------------------------------------------
-   BUTTON — square 1px hairline. Buttons stay rectangular (the chamfer is a
-   panel/card motif); a plain border renders a crisp, perfectly-uniform edge at
-   any DPR with no clip-path or diagonal-AA quirks. The HUD voice comes from the
-   Oxanium uppercase tracking, not corner geometry.
-   -------------------------------------------------------------------------- */
-.talos-button {
-  --_fill: hsl(0 0% 8%);
-  --_edge: hsl(0 0% 100% / 0.32);
+   BUTTON — chamfered (bottom-right cut). The border is a 1px SVG VECTOR STROKE
+   (non-scaling), which is the only technique that stays uniform on the 45° cut
+   at any width — clip-path / mask hairlines always anti-alias heavier on a
+   diagonal. The host paints the fill (clipped to the cut so the fill respects
+   the corner); the inline <svg class="talos-button__edge"> draws the outline.
 
+   PLAIN-CSS / Blade fallback: a .talos-button WITHOUT the SVG child still gets a
+   clean look via the two-layer clip below (good at button scale, the diagonal
+   is marginally softer than the SVG — acceptable where adding an SVG isn't
+   practical). The SVG, when present, overrides it. */
+.talos-button {
+  --_chamfer: 10px;
+  --_fill: hsl(0 0% 8%);
+  --_edge: hsl(0 0% 100% / 0.45);
+
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -254,19 +262,73 @@
   font-size: 0.75rem;
 
   cursor: pointer;
+  /* Fill only, clipped to the cut. (Edge comes from the SVG / fallback below.) */
   background: var(--_fill);
-  border: 1px solid var(--_edge);
-  transition: border-color 200ms ease, background 200ms ease, color 200ms ease;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--_chamfer)),
+    calc(100% - var(--_chamfer)) 100%,
+    0 100%
+  );
+  transition: background 200ms ease, color 200ms ease;
 }
-.talos-button:hover {
-  background: hsl(0 0% 12%);
-  border-color: var(--talos-hud-edge-hot);
-  color: hsl(0 0% 100%);
+
+/* SVG vector-stroke border — the crisp, uniform-on-the-diagonal outline. */
+.talos-button__edge {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  color: var(--_edge);            /* path stroke = currentColor */
+  transition: color 200ms ease;
 }
-.talos-button:focus-visible {
-  outline: none;
-  border-color: hsl(0 0% 100% / 0.9);
+.talos-button__label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: inherit;
 }
+
+/* Fallback border for a bare .talos-button (no SVG child, e.g. Blade markup):
+   two-layer clip hairline. Suppressed when the SVG edge is present. */
+.talos-button:not(:has(.talos-button__edge))::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--_edge);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--_chamfer)),
+    calc(100% - var(--_chamfer)) 100%,
+    0 100%
+  );
+}
+.talos-button:not(:has(.talos-button__edge)) {
+  background: var(--_edge);
+}
+.talos-button:not(:has(.talos-button__edge))::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  background: var(--_fill);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - (var(--_chamfer) - 1px)),
+    calc(100% - (var(--_chamfer) - 1px)) 100%,
+    0 100%
+  );
+}
+
+.talos-button:hover { background: hsl(0 0% 12%); color: hsl(0 0% 100%); --_edge: var(--talos-hud-edge-hot); }
+.talos-button:focus-visible { outline: none; --_edge: hsl(0 0% 100% / 0.9); }
 .talos-button[disabled],
 .talos-button:disabled {
   opacity: 0.5;
