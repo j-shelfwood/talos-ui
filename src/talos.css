@@ -227,16 +227,15 @@
 }
 
 /* ----------------------------------------------------------------------------
-   BUTTON — chamfered (bottom-right) CTA. De-Tailwinded: all layout, type, and
-   state is plain CSS so markup needs only class="talos-button [--variant/size]".
+   BUTTON — square 1px hairline. Buttons stay rectangular (the chamfer is a
+   panel/card motif); a plain border renders a crisp, perfectly-uniform edge at
+   any DPR with no clip-path or diagonal-AA quirks. The HUD voice comes from the
+   Oxanium uppercase tracking, not corner geometry.
    -------------------------------------------------------------------------- */
 .talos-button {
-  --_chamfer: var(--talos-chamfer-btn);
   --_fill: hsl(0 0% 8%);
   --_edge: hsl(0 0% 100% / 0.32);
 
-  position: relative;
-  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -255,56 +254,19 @@
   font-size: 0.75rem;
 
   cursor: pointer;
-  /* Outer shape = edge (border) color. */
-  background: var(--_edge);
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - var(--_chamfer)),
-    calc(100% - var(--_chamfer)) 100%,
-    0 100%
-  );
-  transition: background 200ms ease, color 200ms ease;
-}
-/* Inner fill drawn BEHIND the button (z-index:-1) so slotted text — which has
-   no wrapper to position — stays on top in normal flow.
-
-   Uniform-hairline geometry. The bug in the old technique was `inset: 1px` on
-   the ::before: insetting the *box* shifts the diagonal 1px in X **and** 1px in
-   Y, i.e. √2 ≈ 1.41px PERPENDICULAR — so the diagonal border read ~1.4× too
-   thick (a light wedge) while the straight edges stayed a crisp 1px, and no
-   single chamfer tweak could fix both because the box inset distorts the cut
-   non-linearly.
-
-   Fix: keep the ::before in the SAME coordinate box as the host (inset: 0) and
-   offset every edge perpendicular by exactly 1px inside the clip-path itself:
-     • straight edges → 1px / (100% − 1px)
-     • the 45° cut x+y = W+H−C → x+y = W+H−C−√2, whose endpoints land at
-       (100% − 1px, 100% − C − (√2−1)) and (100% − C − (√2−1), 100% − 1px).
-   √2−1 ≈ 0.414px. Every edge is now a true 1px hairline, diagonal included. */
-/* Inner fill. With the box inset 1px, the straight edges already give a clean
-   1px hairline. The 45° cut needs the inner chamfer reduced by only (√2−1)·1px
-   ≈ 0.414px — NOT a full 1px. Reducing by 1px (the panel formula) over-thickened
-   the diagonal into a bright wedge; reducing by 0px erased it. 0.414px yields a
-   border whose PERPENDICULAR width on the diagonal equals the 1px straight edges.
-   Sits behind the host so raw slotted text stays on top. */
-.talos-button::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
   background: var(--_fill);
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - (var(--_chamfer) - 0.414px)),
-    calc(100% - (var(--_chamfer) - 0.414px)) 100%,
-    0 100%
-  );
-  z-index: -1;
+  border: 1px solid var(--_edge);
+  transition: border-color 200ms ease, background 200ms ease, color 200ms ease;
 }
-.talos-button:hover { background: var(--talos-hud-edge-hot); color: hsl(0 0% 100%); }
-.talos-button:hover::before { background: hsl(0 0% 12%); }
-.talos-button:focus-visible { outline: none; background: hsl(0 0% 100% / 0.9); }
+.talos-button:hover {
+  background: hsl(0 0% 12%);
+  border-color: var(--talos-hud-edge-hot);
+  color: hsl(0 0% 100%);
+}
+.talos-button:focus-visible {
+  outline: none;
+  border-color: hsl(0 0% 100% / 0.9);
+}
 .talos-button[disabled],
 .talos-button:disabled {
   opacity: 0.5;
@@ -317,8 +279,7 @@
 
 /* Variants (text emphasis only — monochrome). */
 .talos-button--secondary { color: hsl(0 0% 100% / 0.75); }
-.talos-button--ghost { color: hsl(0 0% 100% / 0.7); background: transparent; }
-.talos-button--ghost::before { background: transparent; }
+.talos-button--ghost { --_fill: transparent; color: hsl(0 0% 100% / 0.7); }
 
 /* ----------------------------------------------------------------------------
    AMBIENT GRID + CURSOR CROSSHAIR — fixed full-viewport overlay. JS writes
