@@ -313,9 +313,15 @@
 .talos-log__row--success::before { background: var(--talos-success); }
 
 /* --- Avatar ----------------------------------------------------------------- */
+/* Chamfered like the HUD panel: host carries the edge colour + clip-path,
+   a 1px-inset ::before carries the fill — so the hairline border follows
+   every edge INCLUDING the top-right cut. A plain `border` would be sliced
+   off along the diagonal by clip-path (see talos.css .glass-panel). */
 .talos-avatar {
   --talos-avatar-size: 2.5rem;
+  --_avatar-edge: var(--talos-edge-default);
   position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -326,36 +332,50 @@
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud-tight);
   color: var(--talos-text-secondary);
-  background: var(--talos-surface-2);
-  border: 1px solid var(--talos-edge-default);
-  overflow: hidden;
+  background: var(--_avatar-edge);
   /* small top-right chamfer — the square-with-a-cut house silhouette */
   clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
 }
-.talos-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.talos-avatar::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  background: var(--talos-surface-2);
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+}
+.talos-avatar img {
+  position: relative;
+  z-index: 0;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  object-fit: cover;
+}
 .talos-avatar--sm { --talos-avatar-size: 1.75rem; }
 .talos-avatar--lg { --talos-avatar-size: 3.5rem; }
-.talos-avatar--ring { border-color: var(--talos-edge-strong); }
+.talos-avatar--ring { --_avatar-edge: var(--talos-edge-strong); }
+/* Status dot sits just inside the un-chamfered bottom-right corner so the
+   clip-path (which clips all descendants) does not shave it off. */
 .talos-avatar__status {
   position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 0.6em;
-  height: 0.6em;
+  right: 2px;
+  bottom: 2px;
+  z-index: 1;
+  width: 0.55em;
+  height: 0.55em;
   border-radius: 50%;
   background: var(--talos-muted-foreground);
-  box-shadow: 0 0 0 2px var(--talos-surface-0);
+  box-shadow: 0 0 0 2px var(--talos-surface-2);
 }
 .talos-avatar__status--online   { background: var(--talos-success); }
 .talos-avatar__status--warning  { background: var(--talos-warning); }
 .talos-avatar__status--offline  { background: var(--talos-danger); }
 
+/* Distinct examples, not a collaborator stack — space them so each chamfer
+   reads on its own rather than bleeding into its neighbour. */
 .talos-avatar-group {
   display: inline-flex;
-}
-.talos-avatar-group .talos-avatar:not(:first-child) {
-  margin-left: -0.6rem;
-  box-shadow: -2px 0 0 var(--talos-surface-0);
+  gap: 0.4rem;
 }
 
 /* --- Meter / gauge (linear) ------------------------------------------------- */
