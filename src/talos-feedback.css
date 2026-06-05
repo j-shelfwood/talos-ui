@@ -428,17 +428,19 @@
 }
 
 /* --- Spinner / Loader ------------------------------------------------------- */
-/* HUD bracket loader: a square showing only its top+right hairlines, spinning.
-   Reads as a rotating viewfinder corner rather than a generic ring. */
+/* HUD ring loader: a faint full ring with a bright accent arc (top+right) that
+   sweeps around. The arc — not a sharp square corner — is what reads as motion.
+   A square box (border-radius: 0) collapsed the two hairlines into a static
+   right-angle that looked like a stray line rather than a loader. */
 .talos-spinner {
   --talos-spinner-size: 20px;
   display: inline-block;
   width: var(--talos-spinner-size);
   height: var(--talos-spinner-size);
-  border: 1px solid transparent;
+  border: 2px solid hsl(var(--talos-accent-hsl) / 0.22);
   border-top-color: var(--talos-accent);
   border-right-color: var(--talos-accent);
-  border-radius: 0;
+  border-radius: 50%;
   animation: talos-spin 0.9s linear infinite;
 }
 .talos-spinner--sm { --talos-spinner-size: 14px; }
