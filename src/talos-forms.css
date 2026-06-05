@@ -32,9 +32,18 @@
 }
 
 /* ----------------------------------------------------------------------------
-   INPUT / TEXTAREA — subtle fill, hairline border, small bottom-right chamfer
-   echoing the buttons. Focus brightens the border and lifts the fill.
-   -------------------------------------------------------------------------- */
+   INPUT / TEXTAREA — subtle fill, hairline border, bottom-right chamfer.
+   THE CHAMFER: drawn as a single SVG <path> (fill + 1px non-scaling stroke)
+   painted as background-image, NOT clip-path. clip-path slices the border off
+   the diagonal (a bare "chopped corner"); one SVG path is the single source of
+   truth for the cut, so the diagonal carries the same clean 1px line as the
+   straight edges — the exact technique that fixed the button, adapted for leaf
+   controls (an <input> can't host a child <svg>, but background-image paints
+   reliably where ::before does not). State = rebind --_edge; the SVG reads it
+   via a CSS var injected into the data-URI is not possible, so each state
+   declares its own background with the right stroke colour. The viewBox is a
+   nominal 240×44 stretched to fit (non-scaling-stroke keeps the line at 1px);
+   the cut is 10 units deep at bottom-right. */
 .talos-input,
 .talos-textarea {
   width: 100%;
@@ -46,21 +55,12 @@
   font-weight: 300;
   line-height: 1.5;
   color: hsl(var(--talos-foreground-hsl));
-  background: hsl(0 0% 100% / 0.04);
-  border: 1px solid hsl(0 0% 100% / 0.15);
+  border: 0;
   border-radius: 0;
   padding: 0.75rem 1rem;
-  /* Small bottom-right cut — kept modest so the control stays usable. */
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - var(--talos-chamfer-flag)),
-    calc(100% - var(--talos-chamfer-flag)) 100%,
-    0 100%
-  );
-  transition: border-color var(--talos-dur-fast) ease,
-    background var(--talos-dur-fast) ease,
-    box-shadow var(--talos-dur-fast) ease;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='44' viewBox='0 0 240 44' preserveAspectRatio='none'%3E%3Cpath d='M0.5 0.5 H239.5 V33.5 L229.5 43.5 H0.5 Z' fill='rgba(255,255,255,0.04)' stroke='rgba(255,255,255,0.2)' stroke-width='1' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat;
+  background-size: 100% 100%;
+  transition: background var(--talos-dur-fast) ease;
 }
 
 .talos-textarea {
@@ -75,15 +75,15 @@
 
 .talos-input:hover,
 .talos-textarea:hover {
-  border-color: hsl(0 0% 100% / 0.28);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='44' viewBox='0 0 240 44' preserveAspectRatio='none'%3E%3Cpath d='M0.5 0.5 H239.5 V33.5 L229.5 43.5 H0.5 Z' fill='rgba(255,255,255,0.04)' stroke='rgba(255,255,255,0.32)' stroke-width='1' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat;
+  background-size: 100% 100%;
 }
 
 .talos-input:focus,
 .talos-textarea:focus {
   outline: none;
-  border-color: hsl(0 0% 100% / 0.45);
-  background: hsl(0 0% 100% / 0.07);
-  box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.18);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='44' viewBox='0 0 240 44' preserveAspectRatio='none'%3E%3Cpath d='M0.5 0.5 H239.5 V33.5 L229.5 43.5 H0.5 Z' fill='rgba(255,255,255,0.07)' stroke='rgba(255,255,255,0.55)' stroke-width='1' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat;
+  background-size: 100% 100%;
 }
 
 .talos-input:disabled,
@@ -146,22 +146,28 @@
 }
 
 /* --- Validation states ------------------------------------------------------ */
-/* Field-level: recolour the contained control + messages. */
+/* Field-level: recolour the contained control + messages. The chamfered
+   inputs/textareas carry their outline in the SVG background, so error/success
+   swap the whole background (red/green stroke); the select keeps a real border
+   so border-color suffices for it. */
 .talos-field--error .talos-input,
 .talos-field--error .talos-textarea,
-.talos-field--error .talos-select,
 .talos-input--error,
 .talos-textarea--error {
-  border-color: hsl(var(--talos-danger-hsl) / 0.7);
-}
-.talos-field--error .talos-input:focus,
-.talos-input--error:focus {
-  box-shadow: 0 0 0 1px hsl(var(--talos-danger-hsl) / 0.5);
-  border-color: var(--talos-danger);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='44' viewBox='0 0 240 44' preserveAspectRatio='none'%3E%3Cpath d='M0.5 0.5 H239.5 V33.5 L229.5 43.5 H0.5 Z' fill='rgba(255,80,80,0.06)' stroke='rgba(255,80,80,0.7)' stroke-width='1' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat;
+  background-size: 100% 100%;
 }
 .talos-field--success .talos-input,
-.talos-field--success .talos-select,
 .talos-input--success {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='44' viewBox='0 0 240 44' preserveAspectRatio='none'%3E%3Cpath d='M0.5 0.5 H239.5 V33.5 L229.5 43.5 H0.5 Z' fill='rgba(255,255,255,0.04)' stroke='rgba(70,230,130,0.6)' stroke-width='1' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat;
+  background-size: 100% 100%;
+}
+.talos-field--error .talos-select,
+.talos-select--error {
+  border-color: hsl(var(--talos-danger-hsl) / 0.7);
+}
+.talos-field--success .talos-select,
+.talos-select--success {
   border-color: hsl(var(--talos-success-hsl) / 0.6);
 }
 
