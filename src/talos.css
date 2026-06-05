@@ -227,20 +227,18 @@
 }
 
 /* ----------------------------------------------------------------------------
-   BUTTON — chamfered (bottom-right cut). The border is a 1px SVG VECTOR STROKE
-   (non-scaling), which is the only technique that stays uniform on the 45° cut
-   at any width — clip-path / mask hairlines always anti-alias heavier on a
-   diagonal. The host paints the fill (clipped to the cut so the fill respects
-   the corner); the inline <svg class="talos-button__edge"> draws the outline.
-
-   PLAIN-CSS / Blade fallback: a .talos-button WITHOUT the SVG child still gets a
-   clean look via the two-layer clip below (good at button scale, the diagonal
-   is marginally softer than the SVG — acceptable where adding an SVG isn't
-   practical). The SVG, when present, overrides it. */
+   BUTTON — chamfered (bottom-right cut), two-layer clip hairline.
+   Host = edge color clipped to the cut. ::before = fill, inset 0, with every
+   edge offset 1px INSIDE the polygon (straight edges 1px; the 45° cut endpoints
+   offset by √2−1 ≈ 0.414px so the diagonal band is a true 1px perpendicular).
+   Verified uniform in real Chrome at zoom across all variants — straight edges
+   and the cut read the same weight. (Earlier SVG-stroke attempt rendered the
+   bottom/diagonal faint because the host clip-path also clipped the SVG.)
+   ::before is z-index:-1 so raw slotted text stays on top with no wrapper. */
 .talos-button {
   --_chamfer: 10px;
   --_fill: hsl(0 0% 8%);
-  --_edge: hsl(0 0% 100% / 0.45);
+  --_edge: hsl(0 0% 100% / 0.5);
 
   position: relative;
   isolation: isolate;
@@ -262,8 +260,7 @@
   font-size: 0.75rem;
 
   cursor: pointer;
-  /* Fill only, clipped to the cut. (Edge comes from the SVG / fallback below.) */
-  background: var(--_fill);
+  background: var(--_edge);
   clip-path: polygon(
     0 0,
     100% 0,
@@ -273,62 +270,23 @@
   );
   transition: background 200ms ease, color 200ms ease;
 }
-
-/* SVG vector-stroke border — the crisp, uniform-on-the-diagonal outline. */
-.talos-button__edge {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  color: var(--_edge);            /* path stroke = currentColor */
-  transition: color 200ms ease;
-}
-.talos-button__label {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: inherit;
-}
-
-/* Fallback border for a bare .talos-button (no SVG child, e.g. Blade markup):
-   two-layer clip hairline. Suppressed when the SVG edge is present. */
-.talos-button:not(:has(.talos-button__edge))::before {
+.talos-button::before {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
-  background: var(--_edge);
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - var(--_chamfer)),
-    calc(100% - var(--_chamfer)) 100%,
-    0 100%
-  );
-}
-.talos-button:not(:has(.talos-button__edge)) {
-  background: var(--_edge);
-}
-.talos-button:not(:has(.talos-button__edge))::after {
-  content: "";
-  position: absolute;
-  inset: 1px;
   z-index: -1;
   background: var(--_fill);
   clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - (var(--_chamfer) - 1px)),
-    calc(100% - (var(--_chamfer) - 1px)) 100%,
-    0 100%
+    1px 1px,
+    calc(100% - 1px) 1px,
+    calc(100% - 1px) calc(100% - var(--_chamfer) + 0.414px),
+    calc(100% - var(--_chamfer) + 0.414px) calc(100% - 1px),
+    1px calc(100% - 1px)
   );
 }
-
-.talos-button:hover { background: hsl(0 0% 12%); color: hsl(0 0% 100%); --_edge: var(--talos-hud-edge-hot); }
-.talos-button:focus-visible { outline: none; --_edge: hsl(0 0% 100% / 0.9); }
+.talos-button:hover { background: var(--talos-hud-edge-hot); color: hsl(0 0% 100%); }
+.talos-button:hover::before { background: hsl(0 0% 12%); }
+.talos-button:focus-visible { outline: none; background: hsl(0 0% 100% / 0.9); }
 .talos-button[disabled],
 .talos-button:disabled {
   opacity: 0.5;
@@ -341,7 +299,10 @@
 
 /* Variants (text emphasis only — monochrome). */
 .talos-button--secondary { color: hsl(0 0% 100% / 0.75); }
-.talos-button--ghost { --_fill: transparent; color: hsl(0 0% 100% / 0.7); }
+/* Ghost: near-void fill so it reads as a barely-there button on the dark page,
+   while keeping the working two-layer border (a truly transparent interior is
+   impossible with the opaque-::before fill technique). */
+.talos-button--ghost { --_fill: hsl(0 0% 4%); color: hsl(0 0% 100% / 0.7); }
 
 /* ----------------------------------------------------------------------------
    AMBIENT GRID + CURSOR CROSSHAIR — fixed full-viewport overlay. JS writes

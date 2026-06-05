@@ -23,28 +23,6 @@ const cls = [
   .filter(Boolean)
   .join(" ");
 const elementProps = href ? { href, ...rest } : rest;
-
-// Chamfer depth in px (matches --talos-chamfer-btn default of 10).
-// The SVG draws the border as a 1px non-scaling vector stroke — uniform on the
-// diagonal cut at any width (a clip-path/mask hairline can't be on a 45° edge).
-const C = 10;
 ---
 
-<Element class={cls} {...elementProps} data-talos-chamfer>
-  <svg
-    class="talos-button__edge"
-    viewBox={`0 0 200 40`}
-    preserveAspectRatio="none"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path
-      d={`M0.5 0.5 H199.5 V${40 - C + 0.5} L${200 - C + 0.5} 39.5 H0.5 Z`}
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1"
-      vector-effect="non-scaling-stroke"
-    />
-  </svg>
-  <span class="talos-button__label"><slot /></span>
-</Element>
+<Element class={cls} {...elementProps}><slot /></Element>
