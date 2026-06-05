@@ -15,4 +15,5 @@
 @import "./talos-feedback.css"; /* badges, alerts, toasts, progress, spinner…  */
 @import "./talos-data.css";   /* tables, stats, code, log, avatar, meter        */
 @import "./talos-nav.css";    /* tabs, breadcrumbs, menu, sidebar, stepper      */
+@import "./talos-console.css"; /* non-document layout: zoned fixed-viewport shell */
 @import "./talos-blog.css";   /* prose, marketing navbar/footer, tags           */

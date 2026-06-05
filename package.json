@@ -34,9 +34,11 @@
     "src/talos-feedback.css",
     "src/talos-data.css",
     "src/talos-nav.css",
+    "src/talos-console.css",
     "src/fonts",
     "src/astro",
     "DESIGN.md",
+    "PHILOSOPHY.md",
     "README.md"
   ],
   "exports": {
@@ -52,6 +54,7 @@
     "./talos-feedback.css": "./src/talos-feedback.css",
     "./talos-data.css": "./src/talos-data.css",
     "./talos-nav.css": "./src/talos-nav.css",
+    "./talos-console.css": "./src/talos-console.css",
     "./wc": {
       "types": "./dist/wc/index.d.ts",
       "import": "./dist/wc/index.js"

@@ -1,0 +1,204 @@
+/* ============================================================================
+   @shelfwood/talos-ui — TALOS-CONSOLE.CSS  (opt-in module)
+   The non-document layout. PHILOSOPHY.md principle 1: reject the web's lazy
+   default — the single tall portrait column you scroll top-to-bottom. A console
+   fills the viewport and is divided into ZONES; it does not scroll as a page.
+   Content that overflows scrolls WITHIN its zone, so the frame (rail, status
+   bar, side telemetry) stays fixed and always visible — the way an instrument
+   panel stays put while one readout updates.
+
+     <link rel="stylesheet" href=".../talos-ui/talos.css" />
+     <link rel="stylesheet" href=".../talos-ui/talos-console.css" />
+
+   Default grid:
+     ┌───────────────────────────────────────────────┐
+     │ rail  (header: identity, mode, clock)          │  auto
+     ├──────────────────────────────────┬────────────┤
+     │ scope (main instrument area)      │ aside      │  1fr
+     │   scrolls internally             │ telemetry  │
+     ├──────────────────────────────────┴────────────┤
+     │ status (footer status bar)                     │  auto
+     └───────────────────────────────────────────────┘
+
+   Compose with the data-binding instruments (<talos-gauge> etc.) inside .console-scope
+   and .console-aside. Drop the aside (.talos-console--no-aside) for a 3-row stack.
+   ========================================================================== */
+
+.talos-console {
+  /* Fills its container; on a bare page set height:100dvh on a parent or use
+     .talos-console--viewport which pins to the viewport. */
+  display: grid;
+  grid-template-areas:
+    "rail   rail"
+    "scope  aside"
+    "status status";
+  grid-template-columns: minmax(0, 1fr) clamp(15rem, 22vw, 22rem);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  background: var(--talos-surface-0);
+  color: var(--talos-foreground);
+  font-family: var(--talos-font-display);
+}
+
+/* Pin to the viewport — the common case for a full-screen console page. */
+.talos-console--viewport {
+  height: 100dvh;
+  width: 100%;
+}
+
+/* No side telemetry column: a clean three-row stack. */
+.talos-console--no-aside {
+  grid-template-areas:
+    "rail"
+    "scope"
+    "status";
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* --- Header rail ------------------------------------------------------------ */
+.console-rail {
+  grid-area: rail;
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-5);
+  padding: var(--talos-space-3) var(--talos-space-5);
+  border-bottom: 1px solid var(--talos-edge-subtle);
+  background: var(--talos-surface-1);
+}
+.console-rail__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  font-size: var(--talos-text-xs, 0.72rem);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-primary, var(--talos-foreground));
+}
+.console-rail__spacer { flex: 1; }
+.console-rail__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-4);
+  font-size: var(--talos-text-2xs, 0.62rem);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Main scope (instrument area) ------------------------------------------ */
+.console-scope {
+  grid-area: scope;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--talos-space-5);
+  /* A scope is a field, not a column: default to a responsive instrument grid
+     so children lay out spatially instead of stacking. Opt out with
+     .console-scope--free and position children yourself. */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-auto-rows: min-content;
+  gap: var(--talos-space-5);
+  align-content: start;
+}
+.console-scope--free {
+  display: block;
+}
+
+/* --- Side telemetry -------------------------------------------------------- */
+.console-aside {
+  grid-area: aside;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--talos-space-4);
+  padding: var(--talos-space-5);
+  border-left: 1px solid var(--talos-edge-subtle);
+  background: var(--talos-surface-1);
+}
+.console-aside__label {
+  font-size: var(--talos-text-2xs, 0.62rem);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-tertiary, var(--talos-muted-foreground));
+}
+
+/* --- Footer status bar ----------------------------------------------------- */
+.console-status {
+  grid-area: status;
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-5);
+  padding: var(--talos-space-2) var(--talos-space-5);
+  border-top: 1px solid var(--talos-edge-subtle);
+  background: var(--talos-surface-1);
+  font-size: var(--talos-text-2xs, 0.62rem);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.console-status__spacer { flex: 1; }
+/* A status segment whose colour encodes aggregate health (form encodes
+   function): set --_status to a status token on the element. */
+.console-status__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  color: hsl(var(--_status, var(--talos-foreground-hsl)));
+}
+.console-status__stat::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* A panel inside a zone — a titled box for grouping instruments. Hairline,
+   square-cornered; lighter than glass-panel since it lives inside the frame. */
+.console-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--talos-space-3);
+  padding: var(--talos-space-4);
+  background: var(--talos-surface-1);
+  border: 1px solid var(--talos-edge-subtle);
+}
+.console-cell__title {
+  font-size: var(--talos-text-2xs, 0.62rem);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-tertiary, var(--talos-muted-foreground));
+}
+/* Span helpers for the scope grid. */
+.console-cell--wide { grid-column: span 2; }
+.console-cell--full { grid-column: 1 / -1; }
+
+/* --- Responsive: below a threshold the aside folds under, and the whole thing
+   is allowed to scroll as one column. We reject the document column by DEFAULT,
+   not dogmatically — on a phone, a single column is the honest layout. -------- */
+@media (max-width: 720px) {
+  .talos-console,
+  .talos-console--viewport {
+    grid-template-areas:
+      "rail"
+      "scope"
+      "aside"
+      "status";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto;
+    height: auto;
+    min-height: 100dvh;
+  }
+  .console-scope { overflow: visible; }
+  .console-aside {
+    border-left: 0;
+    border-top: 1px solid var(--talos-edge-subtle);
+  }
+  .console-cell--wide,
+  .console-cell--full { grid-column: auto; }
+}
