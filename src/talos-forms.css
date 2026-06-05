@@ -38,6 +38,9 @@
 .talos-input,
 .talos-textarea {
   width: 100%;
+  /* border-box so width:100% + padding + border stays within a rigid grid
+     track — without it the control is (track + 34px) and overflows the cell. */
+  box-sizing: border-box;
   font-family: var(--talos-font-body);
   font-size: 0.9rem;
   font-weight: 300;
@@ -167,6 +170,8 @@
    .com-suffix reads as one continuous control. */
 .talos-input-group {
   display: flex;
+  box-sizing: border-box;
+  width: 100%;
   align-items: stretch;
   background: hsl(0 0% 100% / 0.04);
   border: 1px solid var(--talos-edge-default);
@@ -235,6 +240,7 @@
 /* Native <select> restyled to match inputs; chevron is a background SVG. */
 .talos-select {
   width: 100%;
+  box-sizing: border-box;
   appearance: none;
   -webkit-appearance: none;
   font-family: var(--talos-font-body);
@@ -370,6 +376,8 @@
   appearance: none;
   -webkit-appearance: none;
   width: 100%;
+  box-sizing: border-box;
+  margin: 0; /* zero the UA-default 2px so the track aligns to its grid cell */
   height: 1.5rem;
   background: none;
   cursor: pointer;
