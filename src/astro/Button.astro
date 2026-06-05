@@ -23,6 +23,18 @@ const cls = [
   .filter(Boolean)
   .join(" ");
 const elementProps = href ? { href, ...rest } : rest;
+
+// The chamfer outline is a single SVG <path> (fill + 1px non-scaling stroke).
+// One path = one source of truth for the cut, so the diagonal gets a clean,
+// uniform border with no doubled-edge "shadow" and no "chopped corner". The
+// host carries NO background/clip-path so the SVG isn't clipped. Nominal
+// 200×40 viewBox stretched to fit (non-scaling-stroke keeps the line 1px);
+// the cut is 10 units deep.
 ---
 
-<Element class={cls} {...elementProps}><slot /></Element>
+<Element class={cls} {...elementProps}>
+  <svg class="talos-button__shape" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path d="M0.5 0.5 H199.5 V29.5 L189.5 39.5 H0.5 Z" vector-effect="non-scaling-stroke" />
+  </svg>
+  <span class="talos-button__label"><slot /></span>
+</Element>
