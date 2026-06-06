@@ -12,8 +12,10 @@ import { TalosTrend } from "./talos-trend";
 import { TalosMeter } from "./talos-meter";
 import { TalosFlow } from "./talos-flow";
 import { TalosOrbital } from "./talos-orbital";
+import { TalosSheen } from "./talos-sheen";
+import { TalosReadout } from "./talos-readout";
 
-export { TalosPanel, TalosCorner, TalosNotch, TalosGauge, TalosTrend, TalosMeter, TalosFlow, TalosOrbital };
+export { TalosPanel, TalosCorner, TalosNotch, TalosGauge, TalosTrend, TalosMeter, TalosFlow, TalosOrbital, TalosSheen, TalosReadout };
 export type { OrbitalNode } from "./talos-orbital";
 export { PanelShapeBuilder } from "./PanelShapeBuilder";
 export type { Segment, Edge, CornerEdge, PanelShapeOptions } from "./PanelShapeBuilder";
@@ -31,4 +33,6 @@ if (typeof customElements !== "undefined") {
   define("talos-meter", TalosMeter);
   define("talos-flow", TalosFlow);
   define("talos-orbital", TalosOrbital);
+  define("talos-sheen", TalosSheen);
+  define("talos-readout", TalosReadout);
 }

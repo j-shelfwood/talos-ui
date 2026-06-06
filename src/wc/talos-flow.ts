@@ -98,7 +98,9 @@ export class TalosFlow extends HTMLElement {
   connectedCallback(): void {
     this.render();
     this.tick(performance.now());
-    // MutationObserver, not attributeChangedCallback — see .REACTIVITY-BUG.md.
+    // MutationObserver, not attributeChangedCallback: the latter did not fire
+    // for these elements after esbuild's class transform; the filtered observer
+    // is reliable.
     // (Dash speed already updates live in the rAF tick; this keeps the band
     // colour / geometry in sync when attributes change.)
     this.observer = new MutationObserver(() => this.render());

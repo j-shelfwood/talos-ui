@@ -140,7 +140,9 @@ export class TalosTrend extends HTMLElement {
       this.lastValueAttr = this.getAttribute("value");
     }
     this.render();
-    // MutationObserver, not attributeChangedCallback — see .REACTIVITY-BUG.md.
+    // MutationObserver, not attributeChangedCallback: the latter did not fire
+    // for these elements after esbuild's class transform; the filtered observer
+    // is reliable.
     // (Streams should prefer the imperative push(); the attr path is a
     // convenience for declarative one-value updates.)
     this.observer = new MutationObserver((records) => {

@@ -21,6 +21,8 @@
  *   ticks          if present, draw warn/crit tick marks (default on when
  *                  warn/crit set; pass ticks="off" to suppress)
  */
+import { bandOf, type Band } from "./bands";
+
 export class TalosMeter extends HTMLElement {
   static observedAttributes = [
     "value",
@@ -134,7 +136,9 @@ export class TalosMeter extends HTMLElement {
   connectedCallback(): void {
     this.shown = this.num("value", 0);
     this.render();
-    // MutationObserver, not attributeChangedCallback — see .REACTIVITY-BUG.md.
+    // MutationObserver, not attributeChangedCallback: the latter did not fire
+    // for these elements after esbuild's class transform; the filtered observer
+    // is reliable (the mechanism <talos-panel> already uses in this build).
     this.observer = new MutationObserver(() => this.update());
     // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
     // unfiltered observer would loop on its own write-backs.
@@ -187,12 +191,8 @@ export class TalosMeter extends HTMLElement {
     this.frame = requestAnimationFrame(loop);
   }
 
-  private band(value: number): "nominal" | "warning" | "critical" {
-    const crit = this.getAttribute("crit");
-    const warn = this.getAttribute("warn");
-    if (crit !== null && value >= parseFloat(crit)) return "critical";
-    if (warn !== null && value >= parseFloat(warn)) return "warning";
-    return "nominal";
+  private band(value: number): Band {
+    return bandOf(this, value);
   }
 
   private render(): void {

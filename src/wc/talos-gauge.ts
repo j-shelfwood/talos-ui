@@ -30,6 +30,8 @@
  * Bands are inclusive-from: value >= crit → critical; else value >= warn →
  * warning; else nominal. `warn`/`crit` may be omitted for a single-band gauge.
  */
+import { bandOf, type Band } from "./bands";
+
 export class TalosGauge extends HTMLElement {
   // A static GETTER, not a class field: tsup/esbuild can emit a `static`
   // field as a post-class assignment (`TalosGauge.observedAttributes = …`),
@@ -142,7 +144,9 @@ export class TalosGauge extends HTMLElement {
     // does not fire for these elements after esbuild's class transform/minify
     // (observedAttributes + the callback look correct but the browser never
     // invokes it). The observer is the mechanism <talos-panel> already uses
-    // reliably in this build. See .REACTIVITY-BUG.md.
+    // reliably in this build. The observe() call below uses an explicit
+    // attributeFilter (an unfiltered observer loops on render()'s aria/role
+    // write-backs and freezes the renderer).
     this.observer = new MutationObserver(() => this.update());
     // Drive a continuous needle ease independent of the observer, so the
     // displayed value always converges to the attribute even if a mutation
@@ -203,12 +207,8 @@ export class TalosGauge extends HTMLElement {
   }
 
   /** Which band the value falls in — this is the state, and it drives colour. */
-  private band(value: number): "nominal" | "warning" | "critical" {
-    const crit = this.getAttribute("crit");
-    const warn = this.getAttribute("warn");
-    if (crit !== null && value >= parseFloat(crit)) return "critical";
-    if (warn !== null && value >= parseFloat(warn)) return "warning";
-    return "nominal";
+  private band(value: number): Band {
+    return bandOf(this, value);
   }
 
   /** Polar→cartesian on the dial circle, angle in degrees (0 = right, CW). */
