@@ -90,7 +90,6 @@ export class TalosTrend extends HTMLElement {
           font-variant-numeric: tabular-nums;
           line-height: 1;
           color: var(--_c);
-          transition: color var(--talos-dur-fast, 180ms) ease;
         }
         .unit {
           font-size: 0.6em;
@@ -99,10 +98,10 @@ export class TalosTrend extends HTMLElement {
         }
         svg { display: block; overflow: visible; }
         .baseline { stroke: var(--_grid); stroke-width: 1; }
+        /* Band colour snaps (state must not lag the data). */
         .area {
           fill: var(--_c);
           opacity: 0.12;
-          transition: fill var(--talos-dur-fast, 180ms) ease;
         }
         .line {
           fill: none;
@@ -111,9 +110,8 @@ export class TalosTrend extends HTMLElement {
           stroke-linejoin: round;
           stroke-linecap: round;
           vector-effect: non-scaling-stroke;
-          transition: stroke var(--talos-dur-fast, 180ms) ease;
         }
-        .dot { fill: var(--_c); transition: fill var(--talos-dur-fast, 180ms) ease; }
+        .dot { fill: var(--_c); }
       </style>
       <div class="head">
         <span class="caption" part="caption"></span>
@@ -133,21 +131,40 @@ export class TalosTrend extends HTMLElement {
     this.caption = this.root.querySelector(".caption")!;
   }
 
+  private observer?: MutationObserver;
+  private lastValueAttr: string | null = null;
+
   connectedCallback(): void {
     if (this.hasAttribute("value") && this.buf.length === 0) {
       this.buf.push(this.num("value", 0));
+      this.lastValueAttr = this.getAttribute("value");
     }
     this.render();
+    // MutationObserver, not attributeChangedCallback — see .REACTIVITY-BUG.md.
+    // (Streams should prefer the imperative push(); the attr path is a
+    // convenience for declarative one-value updates.)
+    this.observer = new MutationObserver((records) => {
+      const valueChanged = records.some((r) => r.attributeName === "value");
+      if (valueChanged) {
+        const v = this.getAttribute("value");
+        if (v !== this.lastValueAttr) {
+          this.lastValueAttr = v;
+          this.push(this.num("value", 0));
+        }
+      } else {
+        this.scheduleRender();
+      }
+    });
+    // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
+    // unfiltered observer would loop on its own write-backs.
+    this.observer.observe(this, {
+      attributeFilter: ["value", "points", "min", "max", "warn", "crit", "width", "height", "fill", "label", "unit"],
+    });
   }
 
   disconnectedCallback(): void {
     cancelAnimationFrame(this.frame);
-  }
-
-  attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null): void {
-    if (oldVal === newVal) return;
-    if (name === "value") this.push(this.num("value", 0));
-    else this.scheduleRender();
+    this.observer?.disconnect();
   }
 
   /** Append a sample and scroll the window. Preferred entry for streams. */

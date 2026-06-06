@@ -22,7 +22,9 @@
   ],
   "type": "module",
   "sideEffects": [
-    "*.css"
+    "*.css",
+    "./dist/wc/index.js",
+    "./src/wc/index.ts"
   ],
   "files": [
     "dist",

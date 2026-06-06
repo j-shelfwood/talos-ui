@@ -78,7 +78,7 @@ export class TalosFlow extends HTMLElement {
           stroke-linecap: round;
           stroke-dasharray: 6 10;
           vector-effect: non-scaling-stroke;
-          transition: stroke var(--talos-dur-fast, 180ms) ease;
+          /* colour snaps to band (state must not lag); speed conveys rate */
         }
         .chev { fill: none; stroke: var(--_c); stroke-width: 1.5; display: none; }
       </style>
@@ -93,17 +93,25 @@ export class TalosFlow extends HTMLElement {
     this.chevrons = this.root.querySelector(".chev")!;
   }
 
+  private observer?: MutationObserver;
+
   connectedCallback(): void {
     this.render();
     this.tick(performance.now());
+    // MutationObserver, not attributeChangedCallback — see .REACTIVITY-BUG.md.
+    // (Dash speed already updates live in the rAF tick; this keeps the band
+    // colour / geometry in sync when attributes change.)
+    this.observer = new MutationObserver(() => this.render());
+    // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
+    // unfiltered observer would loop on its own write-backs.
+    this.observer.observe(this, {
+      attributeFilter: ["rate", "max", "warn", "crit", "x1", "y1", "x2", "y2", "curve", "reverse", "width", "height"],
+    });
   }
 
   disconnectedCallback(): void {
     cancelAnimationFrame(this.raf);
-  }
-
-  attributeChangedCallback(): void {
-    this.render();
+    this.observer?.disconnect();
   }
 
   private num(attr: string, fallback: number): number {

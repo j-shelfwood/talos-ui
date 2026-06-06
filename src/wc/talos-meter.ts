@@ -80,7 +80,6 @@ export class TalosMeter extends HTMLElement {
           font-variant-numeric: tabular-nums;
           line-height: 1;
           color: var(--_c);
-          transition: color var(--talos-dur-fast, 180ms) ease;
         }
         .unit {
           font-size: 0.62em;
@@ -99,7 +98,7 @@ export class TalosMeter extends HTMLElement {
           inset: 0;
           transform-origin: left center;
           background: var(--_c);
-          transition: background var(--talos-dur-fast, 180ms) ease;
+          /* colour snaps (state must not lag); the LENGTH tweens via rAF in JS */
         }
         .ticks {
           position: absolute;
@@ -130,19 +129,27 @@ export class TalosMeter extends HTMLElement {
     this.caption = this.root.querySelector(".caption")!;
   }
 
+  private observer?: MutationObserver;
+
   connectedCallback(): void {
     this.shown = this.num("value", 0);
     this.render();
+    // MutationObserver, not attributeChangedCallback — see .REACTIVITY-BUG.md.
+    this.observer = new MutationObserver((records) => {
+      const changedValue = records.some((r) => r.attributeName === "value");
+      if (changedValue) this.tweenTo(this.num("value", this.shown));
+      else this.render();
+    });
+    // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
+    // unfiltered observer would loop on its own write-backs.
+    this.observer.observe(this, {
+      attributeFilter: ["value", "min", "max", "warn", "crit", "label", "unit", "width", "ticks"],
+    });
   }
 
   disconnectedCallback(): void {
     cancelAnimationFrame(this.frame);
-  }
-
-  attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null): void {
-    if (oldVal === newVal) return;
-    if (name === "value") this.tweenTo(this.num("value", 0));
-    else this.render();
+    this.observer?.disconnect();
   }
 
   private num(attr: string, fallback: number): number {
@@ -191,10 +198,13 @@ export class TalosMeter extends HTMLElement {
     const max = this.num("max", 100);
     this.style.width = `${width}px`;
 
+    // LENGTH uses the tweening `shown`; COLOUR + readout use the true value so
+    // the band never lags the data (see talos-gauge for the rationale).
     const clamped = Math.max(min, Math.min(max, this.shown));
     const frac = max > min ? (clamped - min) / (max - min) : 0;
+    const target = Math.max(min, Math.min(max, this.num("value", this.shown)));
 
-    const band = this.band(clamped);
+    const band = this.band(target);
     const bandVar =
       band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
     this.style.setProperty("--_c", `var(${bandVar})`);
@@ -220,7 +230,7 @@ export class TalosMeter extends HTMLElement {
 
     const unit = this.getAttribute("unit") ?? "";
     this.readout.innerHTML =
-      `${Math.round(clamped)}${unit ? `<span class="unit">${unit}</span>` : ""}`;
+      `${Math.round(target)}${unit ? `<span class="unit">${unit}</span>` : ""}`;
     this.caption.textContent = this.getAttribute("label") ?? "";
 
     this.setAttribute("role", "meter");

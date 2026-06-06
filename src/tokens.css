@@ -86,8 +86,14 @@
 
   /* --- Ambient grid ------------------------------------------------------ */
   --talos-grid-cell: 32px;
-  --talos-grid-dot: hsl(0 0% 100% / 0.07);
-  --talos-crosshair: hsl(0 0% 100% / 0.22);
+  /* The grid/crosshair derive from --talos-ambient-hsl, a neutral white channel
+     by default. Bind it to a status channel (e.g. var(--talos-warning-hsl)) to
+     make the ambient layer encode aggregate system health — principle 5, the
+     system has a state and it shows. Kept low-alpha so the tint is a *mood*, not
+     a flood; the monochrome default is restored by leaving the var untouched. */
+  --talos-ambient-hsl: 0 0% 100%;
+  --talos-grid-dot: hsl(var(--talos-ambient-hsl) / 0.07);
+  --talos-crosshair: hsl(var(--talos-ambient-hsl) / 0.22);
 
   /* ======================================================================
      SEMANTIC TIER — role tokens consumers theme against, NOT raw palette.

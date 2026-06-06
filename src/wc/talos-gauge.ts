@@ -31,17 +31,14 @@
  * warning; else nominal. `warn`/`crit` may be omitted for a single-band gauge.
  */
 export class TalosGauge extends HTMLElement {
-  static observedAttributes = [
-    "value",
-    "min",
-    "max",
-    "warn",
-    "crit",
-    "label",
-    "unit",
-    "sweep",
-    "size",
-  ];
+  // A static GETTER, not a class field: tsup/esbuild can emit a `static`
+  // field as a post-class assignment (`TalosGauge.observedAttributes = …`),
+  // which runs AFTER customElements.define() has already read the property as
+  // undefined — so the browser observes nothing and attributeChangedCallback
+  // never fires. A getter is present on the constructor before define() reads it.
+  static get observedAttributes(): string[] {
+    return ["value", "min", "max", "warn", "crit", "label", "unit", "sweep", "size"];
+  }
 
   private root: ShadowRoot;
   private arc!: SVGPathElement;
@@ -82,19 +79,21 @@ export class TalosGauge extends HTMLElement {
           stroke: var(--_track);
           stroke-linecap: butt;
         }
+        /* Band colour is the STATE — it must not lag behind the value (a CSS
+           colour transition under fast updates renders a stroke that disagrees
+           with the readout). So colour snaps; only the needle POSITION tweens
+           (via rAF in JS). */
         .value-arc {
           fill: none;
           stroke: var(--_c);
           stroke-linecap: butt;
-          transition: stroke var(--talos-dur-fast, 180ms) ease;
         }
         .needle {
           stroke: var(--_c);
           stroke-width: 2;
           stroke-linecap: round;
-          transition: stroke var(--talos-dur-fast, 180ms) ease;
         }
-        .hub { fill: var(--_c); transition: fill var(--talos-dur-fast, 180ms) ease; }
+        .hub { fill: var(--_c); }
         .readout {
           position: absolute;
           left: 0; right: 0;
@@ -105,7 +104,6 @@ export class TalosGauge extends HTMLElement {
           letter-spacing: 0.02em;
           line-height: 1;
           color: var(--_c);
-          transition: color var(--talos-dur-fast, 180ms) ease;
         }
         .unit {
           font-size: 0.5em;
@@ -137,19 +135,32 @@ export class TalosGauge extends HTMLElement {
     this.caption = this.root.querySelector(".caption")!;
   }
 
+  private observer?: MutationObserver;
+
   connectedCallback(): void {
     this.shown = this.num("value", 0);
     this.render();
+    // Reactivity via MutationObserver, NOT attributeChangedCallback: the latter
+    // does not fire for these elements after esbuild's class transform/minify
+    // (observedAttributes + the callback look correct but the browser never
+    // invokes it). The observer is the mechanism <talos-panel> already uses
+    // reliably in this build. See .REACTIVITY-BUG.md.
+    this.observer = new MutationObserver((records) => {
+      const changedValue = records.some((r) => r.attributeName === "value");
+      if (changedValue) this.tweenTo(this.num("value", this.shown));
+      else this.render();
+    });
+    // attributeFilter is REQUIRED: render() writes role/aria-* on the host, and
+    // an unfiltered observer would catch its own write-backs → infinite loop /
+    // frozen renderer. Only observe the real inputs.
+    this.observer.observe(this, {
+      attributeFilter: ["value", "min", "max", "warn", "crit", "label", "unit", "sweep", "size"],
+    });
   }
 
   disconnectedCallback(): void {
     cancelAnimationFrame(this.frame);
-  }
-
-  attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null): void {
-    if (oldVal === newVal) return;
-    if (name === "value") this.tweenTo(this.num("value", 0));
-    else this.render();
+    this.observer?.disconnect();
   }
 
   private num(attr: string, fallback: number): number {
@@ -227,11 +238,16 @@ export class TalosGauge extends HTMLElement {
     const start = 90 + sweep / 2;
     const end = 90 - sweep / 2;
 
+    // POSITION uses the tweening `shown` (smooth needle motion); COLOUR uses the
+    // true target value so the band never lags the data — the needle may still
+    // be sweeping toward 80 while the colour already says "warning", which is
+    // correct: the state changed the moment the value did.
     const clamped = Math.max(min, Math.min(max, this.shown));
     const frac = max > min ? (clamped - min) / (max - min) : 0;
     const valAngle = start + (end - start) * frac;
 
-    const band = this.band(clamped);
+    const target = Math.max(min, Math.min(max, this.num("value", this.shown)));
+    const band = this.band(target);
     const bandVar =
       band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
     this.style.setProperty("--_c", `var(${bandVar})`);
@@ -263,7 +279,9 @@ export class TalosGauge extends HTMLElement {
     hub.setAttribute("r", String(Math.max(2.5, size * 0.025)));
 
     const unit = this.getAttribute("unit") ?? "";
-    const display = Math.round(clamped).toString();
+    // Readout shows the true value (the number is the state, like the colour);
+    // the needle eases toward it. Digital-exact + analog-smooth, as instruments do.
+    const display = Math.round(target).toString();
     this.readout.innerHTML = `${display}${unit ? `<span class="unit">${unit}</span>` : ""}`;
     this.readout.style.fontSize = `${size * 0.22}px`;
 
