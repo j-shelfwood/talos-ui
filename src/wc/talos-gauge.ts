@@ -47,9 +47,7 @@ export class TalosGauge extends HTMLElement {
   private caption!: HTMLElement;
 
   private frame = 0;
-  private shown = 0; // the currently-rendered (animated) value
-  private tweenFrom = 0;
-  private tweenStart = 0;
+  private shown = 0; // the currently-displayed (eased) value
 
   constructor() {
     super();
@@ -145,11 +143,12 @@ export class TalosGauge extends HTMLElement {
     // (observedAttributes + the callback look correct but the browser never
     // invokes it). The observer is the mechanism <talos-panel> already uses
     // reliably in this build. See .REACTIVITY-BUG.md.
-    this.observer = new MutationObserver((records) => {
-      const changedValue = records.some((r) => r.attributeName === "value");
-      if (changedValue) this.tweenTo(this.num("value", this.shown));
-      else this.render();
-    });
+    this.observer = new MutationObserver(() => this.update());
+    // Drive a continuous needle ease independent of the observer, so the
+    // displayed value always converges to the attribute even if a mutation
+    // batch is coalesced. rAF reads the live target each frame — no per-change
+    // tween bookkeeping to deadlock.
+    this.startEase();
     // attributeFilter is REQUIRED: render() writes role/aria-* on the host, and
     // an unfiltered observer would catch its own write-backs → infinite loop /
     // frozen renderer. Only observe the real inputs.
@@ -175,27 +174,32 @@ export class TalosGauge extends HTMLElement {
     );
   }
 
-  /** Tween the rendered value toward a target — or snap, honestly, if motion
-   *  is reduced. Either way the final frame carries the full information. */
-  private tweenTo(target: number): void {
-    if (this.reducedMotion) {
-      this.shown = target;
-      this.render();
-      return;
-    }
+  /** Render immediately from the true value (colour + readout are exact at once);
+   *  the needle position eases toward it via startEase(). */
+  private update(): void {
+    if (this.reducedMotion) this.shown = this.num("value", this.shown);
+    this.render();
+  }
+
+  /** A single persistent rAF that eases `shown` toward the live target each
+   *  frame. Self-contained — it reads the attribute live, so no per-mutation
+   *  tween state to cancel/restart (the old approach deadlocked under rapid
+   *  updates). Runs until disconnect. */
+  private startEase(): void {
     cancelAnimationFrame(this.frame);
-    this.tweenFrom = this.shown;
-    this.tweenStart = performance.now();
-    const dur = this.num("animation-duration", 420);
-    const step = (t: number) => {
-      const p = Math.min((t - this.tweenStart) / dur, 1);
-      // easeOutCubic — decelerate into the new reading, like a real needle.
-      const e = 1 - Math.pow(1 - p, 3);
-      this.shown = this.tweenFrom + (target - this.tweenFrom) * e;
-      this.render();
-      if (p < 1) this.frame = requestAnimationFrame(step);
+    const loop = () => {
+      const target = this.num("value", this.shown);
+      const diff = target - this.shown;
+      if (Math.abs(diff) > 0.5) {
+        this.shown += diff * 0.18; // exponential approach, ~frame-rate stable
+        this.render();
+      } else if (this.shown !== target) {
+        this.shown = target;
+        this.render();
+      }
+      this.frame = requestAnimationFrame(loop);
     };
-    this.frame = requestAnimationFrame(step);
+    this.frame = requestAnimationFrame(loop);
   }
 
   /** Which band the value falls in — this is the state, and it drives colour. */

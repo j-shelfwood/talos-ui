@@ -135,16 +135,15 @@ export class TalosMeter extends HTMLElement {
     this.shown = this.num("value", 0);
     this.render();
     // MutationObserver, not attributeChangedCallback — see .REACTIVITY-BUG.md.
-    this.observer = new MutationObserver((records) => {
-      const changedValue = records.some((r) => r.attributeName === "value");
-      if (changedValue) this.tweenTo(this.num("value", this.shown));
-      else this.render();
-    });
+    this.observer = new MutationObserver(() => this.update());
     // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
     // unfiltered observer would loop on its own write-backs.
     this.observer.observe(this, {
       attributeFilter: ["value", "min", "max", "warn", "crit", "label", "unit", "width", "ticks"],
     });
+    // Single persistent rAF eases the fill toward the live target (see
+    // talos-gauge: per-mutation tweens deadlocked under rapid updates).
+    this.startEase();
   }
 
   disconnectedCallback(): void {
@@ -164,24 +163,28 @@ export class TalosMeter extends HTMLElement {
     );
   }
 
-  private tweenTo(target: number): void {
-    if (this.reducedMotion) {
-      this.shown = target;
-      this.render();
-      return;
-    }
+  /** Render immediately from the true value (colour + readout exact at once). */
+  private update(): void {
+    if (this.reducedMotion) this.shown = this.num("value", this.shown);
+    this.render();
+  }
+
+  /** Persistent rAF easing `shown` toward the live target each frame. */
+  private startEase(): void {
     cancelAnimationFrame(this.frame);
-    const from = this.shown;
-    const start = performance.now();
-    const dur = this.num("animation-duration", 360);
-    const step = (t: number) => {
-      const p = Math.min((t - start) / dur, 1);
-      const e = 1 - Math.pow(1 - p, 3);
-      this.shown = from + (target - from) * e;
-      this.render();
-      if (p < 1) this.frame = requestAnimationFrame(step);
+    const loop = () => {
+      const target = this.num("value", this.shown);
+      const diff = target - this.shown;
+      if (Math.abs(diff) > 0.5) {
+        this.shown += diff * 0.18;
+        this.render();
+      } else if (this.shown !== target) {
+        this.shown = target;
+        this.render();
+      }
+      this.frame = requestAnimationFrame(loop);
     };
-    this.frame = requestAnimationFrame(step);
+    this.frame = requestAnimationFrame(loop);
   }
 
   private band(value: number): "nominal" | "warning" | "critical" {

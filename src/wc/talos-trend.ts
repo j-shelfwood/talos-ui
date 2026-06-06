@@ -172,12 +172,15 @@ export class TalosTrend extends HTMLElement {
     const cap = Math.max(2, this.num("points", 48));
     this.buf.push(value);
     while (this.buf.length > cap) this.buf.shift();
-    this.scheduleRender();
+    // Render synchronously. A one-shot requestAnimationFrame coalesce
+    // (cancel + reschedule) was getting starved under the stream cadence and
+    // never painted — the same failure that broke the gauge tween. A trend has
+    // no value to ease, so a direct render per sample is correct and cheap.
+    this.render();
   }
 
   private scheduleRender(): void {
-    cancelAnimationFrame(this.frame);
-    this.frame = requestAnimationFrame(() => this.render());
+    this.render();
   }
 
   private num(attr: string, fallback: number): number {
