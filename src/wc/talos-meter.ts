@@ -30,6 +30,7 @@ export class TalosMeter extends HTMLElement {
     "max",
     "warn",
     "crit",
+    "invert",
     "label",
     "unit",
     "width",
@@ -64,6 +65,16 @@ export class TalosMeter extends HTMLElement {
           font-family: var(--talos-font-display, system-ui);
           color: var(--talos-foreground, #e7e9ec);
         }
+        /* Compact / inline variant — a bare micro-bar with no caption/readout
+           chrome, sized to sit inside a dense readout row. The honest, real-
+           ceiling replacement for hand-rolled mini "progress" bars. */
+        :host([compact]) {
+          --_h: 3px;
+          gap: 0;
+          width: var(--talos-meter-w, 100%);
+          vertical-align: middle;
+        }
+        :host([compact]) .head { display: none; }
         .head {
           display: flex;
           align-items: baseline;

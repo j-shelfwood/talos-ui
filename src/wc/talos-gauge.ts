@@ -39,7 +39,7 @@ export class TalosGauge extends HTMLElement {
   // undefined — so the browser observes nothing and attributeChangedCallback
   // never fires. A getter is present on the constructor before define() reads it.
   static get observedAttributes(): string[] {
-    return ["value", "min", "max", "warn", "crit", "label", "unit", "sweep", "size"];
+    return ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "sweep", "size"];
   }
 
   private root: ShadowRoot;

@@ -4,6 +4,26 @@ All notable changes to `@shelfwood/talos-ui` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/); this package is
 pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
+## [Unreleased]
+
+### Added
+- **Tier-1 micro-instruments** — four new web components, the honest forms the
+  literature (Cleveland-McGill effectiveness, Mackinlay expressiveness) favours
+  over gauges/bars for their respective signal natures:
+  - `<talos-spark>` — inline sparkline (rate/shape; `.push()` stream API).
+  - `<talos-dots>` — dot-matrix (discrete countable quantity; no fake ceiling).
+  - `<talos-delta>` — direction + magnitude of change (`good="up|down"`).
+  - `<talos-stat>` — labelled stat cell with count-up animation; the wall atom.
+  All band-aware (share `bandOf`, honour `invert`) and reduced-motion honest.
+- `talos-meter` **`compact`** variant — a bare inline micro-bar (real-ceiling
+  replacement for hand-rolled mini progress bars).
+
+### Changed
+- **Band model now supports `invert`** (low = bad) on `bandOf` — fixes
+  "low is dangerous" signals (frame rate, coolant reserve, battery, signal) that
+  previously needed reframing hacks. `talos-gauge` / `talos-meter` observe it.
+  Backward-compatible: absent `invert` = unchanged high-bad behaviour.
+
 ## [0.1.0] — 2026-06-06
 
 First published release. The CSS layer, web-component instruments, Astro wrappers,
