@@ -31,6 +31,7 @@
     "src/all.css",
     "src/tokens.css",
     "src/talos.css",
+    "src/talos-layout.css",
     "src/talos-blog.css",
     "src/talos-forms.css",
     "src/talos-feedback.css",
@@ -41,7 +42,8 @@
     "src/astro",
     "DESIGN.md",
     "PHILOSOPHY.md",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {
@@ -51,6 +53,7 @@
     "./all.css": "./src/all.css",
     "./tokens.css": "./src/tokens.css",
     "./talos.css": "./src/talos.css",
+    "./talos-layout.css": "./src/talos-layout.css",
     "./talos-blog.css": "./src/talos-blog.css",
     "./talos-forms.css": "./src/talos-forms.css",
     "./talos-feedback.css": "./src/talos-feedback.css",
@@ -61,12 +64,25 @@
       "types": "./dist/wc/index.d.ts",
       "import": "./dist/wc/index.js"
     },
+    "./ambient": {
+      "types": "./dist/ambient.d.ts",
+      "import": "./dist/ambient.js"
+    },
     "./astro/*": "./src/astro/*",
     "./fonts/*": "./src/fonts/*"
   },
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "test": "bun test"
+  },
+  "peerDependencies": {
+    "astro": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "tsup": "^8.3.0",

@@ -10,7 +10,8 @@
    tokens.css is pulled in transitively by talos.css, so it is not re-imported.
    ========================================================================== */
 
-@import "./talos.css";        /* tokens + core: panels, button, grid, ambient */
+@import "./talos.css";        /* tokens + core: panels, button, ambient        */
+@import "./talos-layout.css"; /* grid + spans, padding, flex, eyebrow, dot      */
 @import "./talos-forms.css";  /* inputs, select, checkbox/radio/switch, range */
 @import "./talos-feedback.css"; /* badges, alerts, toasts, progress, spinner…  */
 @import "./talos-data.css";   /* tables, stats, code, log, avatar, meter        */

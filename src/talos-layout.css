@@ -1,0 +1,145 @@
+/* ============================================================================
+   @shelfwood/talos-ui — TALOS-LAYOUT.CSS
+   Layout utilities: bento grid + spans, panel padding, flex primitives, and the
+   HUD eyebrow / status-dot vocabulary. Extracted from talos.css (which now holds
+   components only) and the showcase app layouts (which used to hand-roll
+   unprefixed .grid/.row/.stack/.muted/.eyebrow/.dot). All exported as .talos-*
+   so snippets copied from the docs work as-is against the published package.
+   ========================================================================== */
+
+/* Bento grid — 4 cols (mobile) → 8 (md) → 12 (lg). Pair children with
+   .col-span-* / .row-span-*. Wrap in .bento-stagger for the cascade entrance. */
+.talos-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+@media (min-width: 768px) {
+  .talos-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .talos-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+}
+
+/* Column spans. On mobile everything is full-width (4 cols); md/lg honor the
+   responsive variants. Mirrors Tailwind's col-span-N / md:/lg: prefixes. */
+.col-span-1  { grid-column: span 1; }
+.col-span-2  { grid-column: span 2; }
+.col-span-3  { grid-column: span 3; }
+.col-span-4  { grid-column: span 4; }
+.col-span-full,
+.col-span-12 { grid-column: 1 / -1; }
+
+@media (min-width: 768px) {
+  .md\:col-span-2 { grid-column: span 2; }
+  .md\:col-span-3 { grid-column: span 3; }
+  .md\:col-span-4 { grid-column: span 4; }
+  .md\:col-span-6 { grid-column: span 6; }
+  .md\:col-span-8 { grid-column: span 8; }
+}
+@media (min-width: 1024px) {
+  .lg\:col-span-3  { grid-column: span 3; }
+  .lg\:col-span-4  { grid-column: span 4; }
+  .lg\:col-span-6  { grid-column: span 6; }
+  .lg\:col-span-8  { grid-column: span 8; }
+  .lg\:col-span-9  { grid-column: span 9; }
+  .lg\:col-span-12 { grid-column: 1 / -1; }
+  .lg\:row-span-2  { grid-row: span 2; }
+}
+
+/* Panel padding helper — panels carry their own padding rather than baking it
+   into .glass-panel (which must stay layout-neutral for the navbar/reading
+   variants). */
+.talos-pad   { padding: 1.5rem; }
+@media (min-width: 768px) {
+  .talos-pad   { padding: 2rem; }
+}
+.talos-pad-lg { padding: 2rem; }
+@media (min-width: 768px) {
+  .talos-pad-lg { padding: 3rem; }
+}
+
+/* Auto-fit grid — drops columns to fit, no explicit span vocabulary. Use this
+   for "lay these cards out responsively" without the bento 4/8/12 ceremony of
+   .talos-grid. (This is the grid the showcase/gallery card sections use.) */
+.talos-grid-auto {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* Flex primitives — the unprefixed .stack / .row the showcase layouts used to
+   redeclare per-file now live here once, prefixed. */
+.talos-stack { display: flex; flex-direction: column; gap: 1rem; }
+.talos-row   { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+
+/* Secondary text role. */
+.talos-muted { color: var(--talos-muted-foreground); }
+
+/* Section + label vocabulary — the HUD eyebrow label. */
+.talos-eyebrow {
+  font-family: var(--talos-font-display);
+  font-size: 0.7rem;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-muted-foreground);
+}
+
+/* Status dot — the single accent. */
+.talos-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--talos-accent);
+  box-shadow: 0 0 8px var(--talos-accent);
+  animation: talos-pulse 2.4s ease-in-out infinite;
+}
+@keyframes talos-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talos-dot { animation: none; }
+}
+
+/* Animation-replay control — a small icon button affordance for re-running an
+   inline animation (terminal demos, file-tree builds, scramble-in sequences).
+   One visual + one ARIA contract for every replay trigger. Tokenized (the
+   reference consumer hardcoded greys) so it rethemes with the rest of the pack. */
+.anim-replay {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--talos-muted-foreground);
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.anim-replay:hover {
+  color: var(--talos-foreground);
+  border-color: hsl(var(--talos-foreground-hsl) / 0.12);
+}
+.anim-replay:focus-visible {
+  outline: none;
+  color: var(--talos-foreground);
+  border-color: hsl(var(--talos-foreground-hsl) / 0.4);
+}
+.anim-replay svg { width: 14px; height: 14px; display: block; stroke-width: 2; }
+
+/* Subtle film-grain overlay for non-bento pages — apply to a positioned element
+   (it paints via ::before). A static turbulence texture at very low opacity. */
+.noise-overlay-subtle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><filter id='subtle'><feTurbulence type='turbulence' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23subtle)' opacity='1'/></svg>");
+  background-size: 200px 200px;
+  mix-blend-mode: multiply;
+}

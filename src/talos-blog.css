@@ -17,12 +17,17 @@
    copy stays comfortable. Colors are opacity-composed off the foreground.
    -------------------------------------------------------------------------- */
 .talos-prose {
-  --_body: hsl(var(--talos-foreground-hsl) / 0.82);
-  --_heading: hsl(var(--talos-foreground-hsl));
-  --_muted: hsl(var(--talos-muted-foreground-hsl));
-  --_link: hsl(var(--talos-primary-hsl));
-  --_border: hsl(var(--talos-border-hsl));
-  --_code-bg: hsl(0 0% 10%);
+  /* Public prose tokens — override any on :root (or a scope) to retheme prose
+     INDEPENDENTLY of the global palette, e.g. `--talos-prose-link: …`. Each
+     defaults to a palette token so prose still tracks the theme out of the box.
+     (Previously the prose colours lived only in private --_* vars, so prose was
+     the one surface you couldn't retheme via :root — this closes that gap.) */
+  --_body: var(--talos-prose-body, hsl(var(--talos-foreground-hsl) / 0.82));
+  --_heading: var(--talos-prose-heading, hsl(var(--talos-foreground-hsl)));
+  --_muted: var(--talos-prose-muted, hsl(var(--talos-muted-foreground-hsl)));
+  --_link: var(--talos-prose-link, hsl(var(--talos-primary-hsl)));
+  --_border: var(--talos-prose-border, hsl(var(--talos-border-hsl)));
+  --_code-bg: var(--talos-prose-code-bg, hsl(0 0% 10%));
 
   color: var(--_body);
   font-weight: 300;

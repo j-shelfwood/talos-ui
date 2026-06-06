@@ -204,6 +204,100 @@
 }
 
 /* ----------------------------------------------------------------------------
+   ACTIVITY EDGE — a conic ring that travels around a panel's border, whose
+   SPEED encodes a rate. This is the reference pen's animated-conic-border trick
+   rebound to the library's law: the spin is not decoration, it is throughput.
+     --talos-rate: 0   → ring parked (no activity, no motion).
+     --talos-rate: 1   → one revolution per --talos-rate-period (default 4s).
+   Bind --talos-rate to a real signal (requests/s, queue drain, build progress)
+   the same way <talos-flow> binds its dash travel. At rate 0 the panel is a
+   still frame that still reads correctly — the law holds.
+   Opt-in via .activity-edge; layers UNDER the fill (z-index -1 via ::before of
+   the host's stacking context), so it haloes the chamfered silhouette.
+   -------------------------------------------------------------------------- */
+@property --talos-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.activity-edge {
+  --talos-rate: 0;
+  --talos-rate-period: 4s;
+  /* Width of the traveling edge band. */
+  --talos-edge-w: 1.5px;
+  position: relative;
+  isolation: isolate;
+}
+
+/* A bright segment that travels ALONG the panel's border line — speed = rate.
+   Earlier this was a wide conic gradient sitting BEHIND the panel, so only a
+   soft wedge leaked past one corner (read as a smudge, not a ring). Now the
+   conic gradient is MASKED to a thin perimeter band (border-box minus the inner
+   box, composited out), so a crisp lit segment rides the edge itself. */
+.activity-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: var(--talos-edge-w);
+  /* hug the chamfered silhouette like .glass-panel */
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--_chamfer, var(--talos-chamfer))) 0,
+    100% var(--_chamfer, var(--talos-chamfer)),
+    100% 100%,
+    var(--_chamfer, var(--talos-chamfer)) 100%,
+    0 calc(100% - var(--_chamfer, var(--talos-chamfer)))
+  );
+  /* A narrow hot segment + short falloff = a moving stroke, not a wedge. A dim
+     baseline keeps the whole edge faintly lit so "there is a track" reads even
+     between sweeps. */
+  background:
+    conic-gradient(
+      from var(--talos-angle),
+      transparent 0deg,
+      var(--talos-accent, hsl(140 90% 60%)) 8deg,
+      transparent 34deg,
+      transparent 360deg
+    ),
+    linear-gradient(hsl(var(--talos-accent-hsl, 140 90% 60%) / 0.12) 0 0);
+  /* Keep only the perimeter band: paint the whole box, subtract the inner box. */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  /* Period scales INVERSELY with rate, but is FLOORED so it can never strobe:
+     a caller passing a large rate still can't drive it below ~1.2s/rev (well
+     under the 3Hz photosensitivity threshold). Strobe-safe by construction. */
+  animation: talos-activity-spin
+    max(1.2s, calc(var(--talos-rate-period) / max(var(--talos-rate), 0.0001)))
+    linear infinite;
+  opacity: calc(0.25 + min(var(--talos-rate), 1) * 0.75);
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+@keyframes talos-activity-spin {
+  to {
+    --talos-angle: 360deg;
+  }
+}
+
+/* Honest motion: at rate 0 there is nothing to animate; under reduced-motion we
+   hold the segment static but KEEP the lit band, so "there is activity" still
+   reads as a lit edge even with the sweep suppressed. */
+@media (prefers-reduced-motion: reduce) {
+  .activity-edge::before {
+    animation: none;
+  }
+}
+
+/* ----------------------------------------------------------------------------
    CHAMFER UTILITIES — single-corner clip-path cuts for pills / flags / CTAs.
    Pair with a host/inset pseudo pair for a hairline border (see .talos-button).
    -------------------------------------------------------------------------- */
@@ -400,58 +494,9 @@
    compose without a Tailwind toolchain.
    ========================================================================== */
 
-/* Bento grid — 4 cols (mobile) → 8 (md) → 12 (lg). Pair children with
-   .col-span-* / .row-span-*. Wrap in .bento-stagger for the cascade entrance. */
-.talos-grid {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.5rem;
-}
-@media (min-width: 768px) {
-  .talos-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-}
-@media (min-width: 1024px) {
-  .talos-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-}
-
-/* Column spans. On mobile everything is full-width (4 cols); md/lg honor the
-   responsive variants. Mirrors Tailwind's col-span-N / md:/lg: prefixes. */
-.col-span-1  { grid-column: span 1; }
-.col-span-2  { grid-column: span 2; }
-.col-span-3  { grid-column: span 3; }
-.col-span-4  { grid-column: span 4; }
-.col-span-full,
-.col-span-12 { grid-column: 1 / -1; }
-
-@media (min-width: 768px) {
-  .md\:col-span-2 { grid-column: span 2; }
-  .md\:col-span-3 { grid-column: span 3; }
-  .md\:col-span-4 { grid-column: span 4; }
-  .md\:col-span-6 { grid-column: span 6; }
-  .md\:col-span-8 { grid-column: span 8; }
-}
-@media (min-width: 1024px) {
-  .lg\:col-span-3  { grid-column: span 3; }
-  .lg\:col-span-4  { grid-column: span 4; }
-  .lg\:col-span-6  { grid-column: span 6; }
-  .lg\:col-span-8  { grid-column: span 8; }
-  .lg\:col-span-9  { grid-column: span 9; }
-  .lg\:col-span-12 { grid-column: 1 / -1; }
-  .lg\:row-span-2  { grid-row: span 2; }
-}
-
-/* Panel padding helper — panels carry their own padding rather than baking it
-   into .glass-panel (which must stay layout-neutral for the navbar/reading
-   variants). */
-.talos-pad   { padding: 1.5rem; }
-@media (min-width: 768px) {
-  .talos-pad   { padding: 2rem; }
-}
-.talos-pad-lg { padding: 2rem; }
-@media (min-width: 768px) {
-  .talos-pad-lg { padding: 3rem; }
-}
+/* Layout utilities (.talos-grid, .col-span-*, .talos-pad, .talos-eyebrow,
+   .talos-dot, .talos-stack/.talos-row/.talos-muted) live in talos-layout.css —
+   imported alongside this file via all.css, or on its own. */
 
 /* The .glass-panel content wrapper should fill + stack by default so padded
    cards lay out predictably (matches shelfwood.co's w-full flex-col). */
@@ -465,15 +510,8 @@
 a.glass-panel,
 a.glass-panel .glass-panel-content { text-decoration: none; color: inherit; }
 
-/* Section + label vocabulary — the HUD eyebrow / slug / gradient rule. */
-.talos-eyebrow {
-  font-family: var(--talos-font-display);
-  font-size: 0.7rem;
-  font-weight: 300;
-  text-transform: uppercase;
-  letter-spacing: var(--talos-tracking-hud);
-  color: var(--talos-muted-foreground);
-}
+/* Section + label vocabulary — slug + gradient rule (the eyebrow moved to
+   talos-layout.css). */
 .talos-slug {
   font-family: var(--talos-font-display);
   font-size: 0.68rem;
@@ -492,23 +530,6 @@ a.glass-panel .glass-panel-content { text-decoration: none; color: inherit; }
     transparent 100%
   );
 }
-/* Status dot — the single accent. */
-.talos-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--talos-accent);
-  box-shadow: 0 0 8px var(--talos-accent);
-  animation: talos-pulse 2.4s ease-in-out infinite;
-}
-@keyframes talos-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .talos-dot { animation: none; }
-}
-
 /* ----------------------------------------------------------------------------
    Reduced-motion + touch fallbacks.
    -------------------------------------------------------------------------- */

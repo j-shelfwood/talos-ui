@@ -44,6 +44,21 @@ const cls = ["glass-panel", isInteractive && "interactive-panel", className]
         });
       });
   }
+  // Re-paint workaround for Astro view-transitions: after a client-side swap,
+  // some Chromium builds keep a stale clip-path paint cache on persisted panels,
+  // so chamfered corners render as rectangles until a reflow. Force a synchronous
+  // read + write to invalidate the cache on every swapped panel. (Ported from the
+  // reference consumer; without it, view-transition nav regresses on Chromium.)
+  function repaintPanels() {
+    document.querySelectorAll<HTMLElement>(".glass-panel").forEach((p) => {
+      void p.offsetWidth; // read forces layout
+      const cp = p.style.clipPath;
+      p.style.clipPath = "none";
+      requestAnimationFrame(() => { p.style.clipPath = cp; });
+    });
+  }
+
   bindSheen();
   document.addEventListener("astro:page-load", bindSheen);
+  document.addEventListener("astro:after-swap", repaintPanels);
 </script>

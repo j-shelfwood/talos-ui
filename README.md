@@ -15,6 +15,11 @@ Framework-agnostic by design — three layers, take what you need:
 No Tailwind, no build step required for the CSS layer. Works in Astro,
 Laravel/Blade, or plain HTML.
 
+> **Layout is out of scope.** Talos ships the HUD *chrome* and the *instruments*,
+> plus a handful of layout utilities (`talos-layout.css`: `.talos-grid`,
+> `.talos-pad`, `.talos-stack`/`.talos-row`, …). It is **not** a layout framework —
+> bring your own (Tailwind, a grid system, or hand-rolled) for page structure.
+
 ## Install
 
 ```sh

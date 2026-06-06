@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: { "wc/index": "src/wc/index.ts" },
+  entry: { "wc/index": "src/wc/index.ts", "ambient": "src/ambient.ts" },
   format: ["esm"],
   dts: true,
   clean: true,
