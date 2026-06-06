@@ -4,10 +4,14 @@ All notable changes to `@shelfwood/talos-ui` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/); this package is
 pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
-## [Unreleased]
+## [0.1.0] — 2026-06-07
+
+First published release. The CSS layer, web-component instruments (incl. the
+Tier-1 micro-instruments below), Astro wrappers, and the ambient export are all
+shipped and built.
 
 ### Added
-- **Tier-1 micro-instruments** — four new web components, the honest forms the
+- **Tier-1 micro-instruments** — four web components, the honest forms the
   literature (Cleveland-McGill effectiveness, Mackinlay expressiveness) favours
   over gauges/bars for their respective signal natures:
   - `<talos-spark>` — inline sparkline (rate/shape; `.push()` stream API).
@@ -17,19 +21,9 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
   All band-aware (share `bandOf`, honour `invert`) and reduced-motion honest.
 - `talos-meter` **`compact`** variant — a bare inline micro-bar (real-ceiling
   replacement for hand-rolled mini progress bars).
-
-### Changed
-- **Band model now supports `invert`** (low = bad) on `bandOf` — fixes
-  "low is dangerous" signals (frame rate, coolant reserve, battery, signal) that
-  previously needed reframing hacks. `talos-gauge` / `talos-meter` observe it.
-  Backward-compatible: absent `invert` = unchanged high-bad behaviour.
-
-## [0.1.0] — 2026-06-06
-
-First published release. The CSS layer, web-component instruments, Astro wrappers,
-and the new ambient export are all shipped and built.
-
-### Added
+- **Band model `invert`** (low = bad) on `bandOf` — fixes "low is dangerous"
+  signals (frame rate, coolant, battery, signal) without reframing hacks;
+  `talos-gauge` / `talos-meter` observe it. Backward-compatible.
 - **`@shelfwood/talos-ui/ambient`** — opt-in cursor-tracking module
   (`initAmbientCursor()`) that drives the `.ambient-overlay` grid. Smooth-lerped,
   idempotent across view-transition swaps, and capability-honest (parked at
