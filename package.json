@@ -7,7 +7,7 @@
   "homepage": "https://talos-ui.shelfwood.co",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shelfwood/talos-ui.shelfwood.co.git",
+    "url": "git+https://github.com/j-shelfwood/talos-ui.shelfwood.co.git",
     "directory": "packages/talos-ui"
   },
   "keywords": [
