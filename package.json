@@ -1,6 +1,6 @@
 {
   "name": "@shelfwood/talos-ui",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Dark-monochrome HUD design system — chamfered panels, Oxanium type, ambient grid, and composable notched-panel web components. Framework-agnostic CSS + opt-in web components + Astro wrappers.",
   "license": "MIT",
   "author": "Joris Schelfhout <joris@shelfwood.co>",

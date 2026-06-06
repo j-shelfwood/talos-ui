@@ -4,7 +4,10 @@ All notable changes to `@shelfwood/talos-ui` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/); this package is
 pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
-## [Unreleased]
+## [0.1.0] — 2026-06-06
+
+First published release. The CSS layer, web-component instruments, Astro wrappers,
+and the new ambient export are all shipped and built.
 
 ### Added
 - **`@shelfwood/talos-ui/ambient`** — opt-in cursor-tracking module
