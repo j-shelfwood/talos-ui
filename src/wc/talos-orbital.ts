@@ -44,7 +44,7 @@ interface NodeState extends OrbitalNode {
 
 export class TalosOrbital extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ["rings", "warn", "crit", "size", "core-label"];
+    return ["rings", "warn", "crit", "size", "core-label", "core-sub"];
   }
 
   private root: ShadowRoot;
@@ -116,7 +116,7 @@ export class TalosOrbital extends HTMLElement {
     this.startLoop();
     this.observer = new MutationObserver(() => this.layout());
     this.observer.observe(this, {
-      attributeFilter: ["rings", "warn", "crit", "size", "core-label"],
+      attributeFilter: ["rings", "warn", "crit", "size", "core-label", "core-sub"],
     });
   }
 
@@ -198,12 +198,13 @@ export class TalosOrbital extends HTMLElement {
 
     // Core
     const label = this.getAttribute("core-label") ?? "CORE";
+    const sub = this.getAttribute("core-sub") ?? "SYS://ATLAS";
     this.core.innerHTML =
       `<circle class="core-fill" cx="${this.cx}" cy="${this.cy}" r="${this.coreR}"></circle>` +
       `<circle class="core-ring" cx="${this.cx}" cy="${this.cy}" r="${this.coreR}"></circle>` +
       `<circle class="core-ring" cx="${this.cx}" cy="${this.cy}" r="${(this.coreR * 0.7).toFixed(1)}"></circle>` +
       `<text class="core-label" x="${this.cx}" y="${this.cy - 4}">${label}</text>` +
-      `<text class="core-sub" x="${this.cx}" y="${this.cy + 9}">SYS://ATLAS</text>`;
+      `<text class="core-sub" x="${this.cx}" y="${this.cy + 9}">${sub}</text>`;
 
     this.renderNodes();
   }
