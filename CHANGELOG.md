@@ -4,6 +4,16 @@ All notable changes to `@shelfwood/talos-ui` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/); this package is
 pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
+## [Unreleased]
+
+### Fixed
+- **`<talos-gauge>` readout/needle overlap.** The readout was placed at a fixed
+  `bottom:18%` and the needle reached in to a fixed `r*0.52`, so at low values
+  the marker and the arc shoulder crossed the number. The needle's inner radius
+  is now clamped outside a keep-out circle computed from the rendered readout
+  box (size/sweep-aware), and the hub anchors at the needle's inner end — so the
+  number stays clear at every value, sweep, and size.
+
 ## [0.1.0] — 2026-06-07
 
 First published release. The CSS layer, web-component instruments (incl. the

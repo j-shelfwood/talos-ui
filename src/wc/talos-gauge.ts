@@ -94,11 +94,19 @@ export class TalosGauge extends HTMLElement {
           stroke-linecap: round;
         }
         .hub { fill: var(--_c); }
+        /* The readout is the only text *inside* the dial, so it owns a reserved
+           keep-out zone the arc and needle must never enter (see render(): the
+           needle's inner radius is clamped outside this box's circumscribed
+           radius). It is centred on the arc's enclosed centroid — NOT a magic
+           bottom-% — and that centre + size are written from JS each render so
+           the zone tracks size/sweep dynamically. */
         .readout {
           position: absolute;
-          left: 0; right: 0;
-          bottom: 18%;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
           text-align: center;
+          white-space: nowrap;
           font-weight: 300;
           font-variant-numeric: tabular-nums;
           letter-spacing: 0.02em;
@@ -236,6 +244,16 @@ export class TalosGauge extends HTMLElement {
     const cy = size / 2;
     const r = size / 2 - stroke / 2 - 2;
 
+    // The readout sits just below the dial's geometric centre — the visual
+    // centroid of a bottom-opening arc, where the number reads as the dial's
+    // core rather than crowding the top shoulder. The needle's inner end is
+    // clamped OUTSIDE this box's circumscribed radius (computed below from the
+    // rendered text), so the marker can never cross the number at any value,
+    // sweep, or size. This replaces the old fixed `r*0.52` needle radius that
+    // reached into the number at low values.
+    const textCx = cx;
+    const textCy = cy + size * 0.08;
+
     // Arc centred at the bottom: from (90 + sweep/2) sweeping to (90 - sweep/2)
     // in screen coords (y-down), so the opening faces down and the fill grows
     // left→right across the top.
@@ -266,11 +284,37 @@ export class TalosGauge extends HTMLElement {
     this.arc.setAttribute("d", this.arcPath(cx, cy, r, start, valAngle));
     this.arc.setAttribute("stroke-width", String(stroke));
 
+    const unit = this.getAttribute("unit") ?? "";
+    // Readout shows the true value (the number is the state, like the colour);
+    // the needle eases toward it. Digital-exact + analog-smooth, as instruments do.
+    const display = Math.round(target).toString();
+    this.readout.innerHTML = `${display}${unit ? `<span class="unit">${unit}</span>` : ""}`;
+    this.readout.style.fontSize = `${size * 0.22}px`;
+    this.readout.style.left = `${(textCx / size) * 100}%`;
+    this.readout.style.top = `${(textCy / size) * 100}%`;
+
+    // KEEP-OUT: reserve a circle (centred on the DIAL centre cx,cy) large enough
+    // to enclose the readout box wherever it sits. Because the readout is offset
+    // below centre by (textCy - cy), the radius must reach its FAR corner — half
+    // the text box plus that offset — not just its half-diagonal. The needle's
+    // inner end is then clamped outside this radius, so the marker can never
+    // cross the number at any value, sweep, or size. Falls back to a sound
+    // estimate when layout metrics aren't available yet (first paint / no DOM).
+    const measured = this.readout.getBoundingClientRect();
+    const hostRect = this.getBoundingClientRect();
+    const scale = hostRect.width > 0 ? size / hostRect.width : 1;
+    const tw = (measured.width || size * 0.5) * scale;
+    const th = (measured.height || size * 0.22) * scale;
+    const offset = Math.abs(textCy - cy);
+    const keepOut = Math.hypot(tw / 2, th / 2 + offset) + stroke * 0.5;
+
     // Needle as a short hub-anchored marker pointing at the arc, NOT a full
-    // clock hand — a long needle sweeps through the centred readout and reads as
-    // a glitch. It starts just outside the readout radius and stops short of the
-    // arc, so the number stays clear at every angle.
-    const [nx0, ny0] = this.point(cx, cy, r * 0.52, valAngle);
+    // clock hand. Its inner end is the larger of a fraction of r and the keep-out
+    // radius (so it can never enter the readout zone); its outer end stops short
+    // of the arc. The hub anchors at the same inner point, not the dial centre,
+    // so a long stem never crosses the number.
+    const innerR = Math.min(r - stroke - 2, Math.max(r * 0.52, keepOut));
+    const [nx0, ny0] = this.point(cx, cy, innerR, valAngle);
     const [nx1, ny1] = this.point(cx, cy, r - stroke, valAngle);
     this.needle.setAttribute("x1", String(nx0));
     this.needle.setAttribute("y1", String(ny0));
@@ -278,16 +322,9 @@ export class TalosGauge extends HTMLElement {
     this.needle.setAttribute("y2", String(ny1));
 
     const hub = this.root.querySelector(".hub")!;
-    hub.setAttribute("cx", String(cx));
-    hub.setAttribute("cy", String(cy));
+    hub.setAttribute("cx", String(nx0));
+    hub.setAttribute("cy", String(ny0));
     hub.setAttribute("r", String(Math.max(2.5, size * 0.025)));
-
-    const unit = this.getAttribute("unit") ?? "";
-    // Readout shows the true value (the number is the state, like the colour);
-    // the needle eases toward it. Digital-exact + analog-smooth, as instruments do.
-    const display = Math.round(target).toString();
-    this.readout.innerHTML = `${display}${unit ? `<span class="unit">${unit}</span>` : ""}`;
-    this.readout.style.fontSize = `${size * 0.22}px`;
 
     this.caption.textContent = this.getAttribute("label") ?? "";
 
