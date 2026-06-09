@@ -1,5 +1,5 @@
 /* ============================================================================
-   @shelfwood/talos-ui — TALOS-FORMS.CSS  (opt-in module)
+   @j_shelfwood/talos-ui — TALOS-FORMS.CSS  (opt-in module)
    HUD form chrome: field wrapper, uppercase HUD label, chamfered text inputs
    and textareas, and a bordered fieldset divider. Plain CSS so it works in
    Blade / plain HTML as well as Astro. Import AFTER talos.css.

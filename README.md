@@ -1,4 +1,4 @@
-# @shelfwood/talos-ui
+# @j_shelfwood/talos-ui
 
 Dark-monochrome **HUD design system**. Chamfered hairline panels, Oxanium
 uppercase type, a cursor-tracked ambient grid, and composable
@@ -23,13 +23,13 @@ Laravel/Blade, or plain HTML.
 ## Install
 
 ```sh
-bun add @shelfwood/talos-ui
+bun add @j_shelfwood/talos-ui
 ```
 
 ## Use — CSS (any project)
 
 ```html
-<link rel="stylesheet" href="/node_modules/@shelfwood/talos-ui/src/talos.css" />
+<link rel="stylesheet" href="/node_modules/@j_shelfwood/talos-ui/src/talos.css" />
 
 <div class="glass-panel interactive-panel">
   <div class="glass-panel-content">…</div>
@@ -54,9 +54,9 @@ The ambient grid needs the cursor position written to two custom properties:
 
 ```astro
 ---
-import "@shelfwood/talos-ui/talos.css";
-import GlassPanel from "@shelfwood/talos-ui/astro/GlassPanel.astro";
-import Button from "@shelfwood/talos-ui/astro/Button.astro";
+import "@j_shelfwood/talos-ui/talos.css";
+import GlassPanel from "@j_shelfwood/talos-ui/astro/GlassPanel.astro";
+import Button from "@j_shelfwood/talos-ui/astro/Button.astro";
 ---
 <GlassPanel as="a" href="/work">
   <h2>Projects</h2>
@@ -68,7 +68,7 @@ import Button from "@shelfwood/talos-ui/astro/Button.astro";
 
 ```html
 <script type="module">
-  import "@shelfwood/talos-ui/wc";
+  import "@j_shelfwood/talos-ui/wc";
 </script>
 
 <talos-panel panel-width="400" panel-height="220" animate>
@@ -92,7 +92,7 @@ readable with the animation removed.
 
 ```html
 <script type="module">
-  import "@shelfwood/talos-ui/wc";
+  import "@j_shelfwood/talos-ui/wc";
 </script>
 ```
 
@@ -123,7 +123,7 @@ readable with the animation removed.
 <talos-orbital id="mesh" rings="3" core-label="ATLAS"></talos-orbital>
 
 <script type="module">
-  import "@shelfwood/talos-ui/wc";
+  import "@j_shelfwood/talos-ui/wc";
   setInterval(() => rx.push(20 + Math.round(40 * Math.random())), 1000);
 
   mesh.nodes = [

@@ -1,10 +1,10 @@
 /**
- * @shelfwood/talos-ui/ambient — the cursor tracking the `.ambient-overlay` grid
+ * @j_shelfwood/talos-ui/ambient — the cursor tracking the `.ambient-overlay` grid
  * reads. The CSS ships the visual (and reads `--talos-cursor-x/y`), but writing
  * those properties is a runtime concern, so it lives here as an opt-in export
  * rather than being inlined by every consumer.
  *
- *   import { initAmbientCursor } from "@shelfwood/talos-ui/ambient";
+ *   import { initAmbientCursor } from "@j_shelfwood/talos-ui/ambient";
  *   initAmbientCursor();
  *
  * Smooth-lerped (the pointer is followed, not snapped), idempotent (safe to call

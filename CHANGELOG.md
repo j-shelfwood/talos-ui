@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@shelfwood/talos-ui` are documented here. The format
+All notable changes to `@j_shelfwood/talos-ui` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/); this package is
 pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
@@ -34,14 +34,14 @@ shipped and built.
 - **Band model `invert`** (low = bad) on `bandOf` — fixes "low is dangerous"
   signals (frame rate, coolant, battery, signal) without reframing hacks;
   `talos-gauge` / `talos-meter` observe it. Backward-compatible.
-- **`@shelfwood/talos-ui/ambient`** — opt-in cursor-tracking module
+- **`@j_shelfwood/talos-ui/ambient`** — opt-in cursor-tracking module
   (`initAmbientCursor()`) that drives the `.ambient-overlay` grid. Smooth-lerped,
   idempotent across view-transition swaps, and capability-honest (parked at
   centre under `prefers-reduced-motion` / touch).
 - **`talos-layout.css`** — dedicated layout-utility stylesheet: `.talos-grid`
   (+ `.col-span-*`), `.talos-grid-auto`, `.talos-pad`/`-lg`, `.talos-stack`,
   `.talos-row`, `.talos-muted`, `.talos-eyebrow`, `.talos-dot`. Exported as
-  `@shelfwood/talos-ui/talos-layout.css` and included in `all.css`.
+  `@j_shelfwood/talos-ui/talos-layout.css` and included in `all.css`.
 - `.anim-replay` and `.noise-overlay-subtle` utilities (in `talos-layout.css`),
   tokenized so they retheme with the palette.
 - Tokens: `--talos-glass-bg`, `--talos-glass-border` (translucent glass surface).

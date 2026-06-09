@@ -1,5 +1,5 @@
 /**
- * @shelfwood/talos-ui — web components entry.
+ * @j_shelfwood/talos-ui — web components entry.
  * Importing this module registers the panel-chrome elements (<talos-panel>,
  * <talos-corner>, <talos-notch>) and the data-binding instruments
  * (<talos-gauge>, …). Idempotent: safe to import more than once.

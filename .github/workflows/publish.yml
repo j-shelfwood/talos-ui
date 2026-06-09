@@ -45,7 +45,7 @@ jobs:
           if [ "$PKG" != "$TAG" ]; then
             echo "::error::tag v$TAG does not match package.json version $PKG"; exit 1
           fi
-          echo "publishing @shelfwood/talos-ui@$PKG"
+          echo "publishing @j_shelfwood/talos-ui@$PKG"
 
       - name: Verify package contents
         run: npm pack --dry-run

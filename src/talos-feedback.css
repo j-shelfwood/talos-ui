@@ -1,5 +1,5 @@
 /* ============================================================================
-   @shelfwood/talos-ui — TALOS-FEEDBACK.CSS  (opt-in module)
+   @j_shelfwood/talos-ui — TALOS-FEEDBACK.CSS  (opt-in module)
    HUD feedback chrome: badges, alerts, toasts, tooltips, progress, spinner,
    skeleton, empty state, and the status legend. Plain CSS so it works in
    Blade / plain HTML as well as Astro. Import AFTER talos.css.
