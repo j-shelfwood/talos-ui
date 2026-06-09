@@ -2,6 +2,12 @@ name: Publish to npm
 
 # Tag a release to publish: `git tag v0.1.0 && git push --tags`.
 # The tag version must match package.json.
+#
+# Auth is OIDC trusted publishing — no NPM_TOKEN secret. One-time setup on
+# npmjs.com: package settings -> Trusted Publisher -> GitHub Actions, repo
+# j-shelfwood/talos-ui, workflow file `publish.yml`. The package must already
+# exist on npm before that config can be added (npm limitation), so 0.1.0 was
+# published once manually; every release after is hands-off via this workflow.
 on:
   push:
     tags:
@@ -17,6 +23,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write # create the GitHub release
+      id-token: write # OIDC: mint the token npm trusted-publishing exchanges
     steps:
       - uses: actions/checkout@v4
 
@@ -24,6 +31,12 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing (OIDC) needs npm >= 11.5.1; node 20 ships an older
+      # npm, so upgrade it explicitly. This is what makes `npm publish` exchange
+      # the GitHub OIDC token for a short-lived npm credential — no NPM_TOKEN.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@latest
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -50,13 +63,15 @@ jobs:
       - name: Verify package contents
         run: npm pack --dry-run
 
-      # Install/test/build with Bun (the package toolchain); publish with npm,
-      # which has the mature registry-auth + provenance path. Two package
-      # managers in one job is deliberate, not an oversight.
-      - name: Publish to npm
+      # Publish via OIDC trusted publishing — no NPM_TOKEN, no OTP. npm exchanges
+      # the GitHub-issued id-token for a short-lived credential, and emits a
+      # provenance attestation by default (the --provenance flag is implied).
+      # Requires a one-time Trusted Publisher config on the package's npm
+      # settings page (publisher: GitHub Actions, repo j-shelfwood/talos-ui,
+      # workflow publish.yml). Until that exists, this step fails — set it up
+      # after the first manual publish makes the package exist.
+      - name: Publish to npm (trusted publishing / OIDC)
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub release
         run: gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes "See CHANGELOG.md"
