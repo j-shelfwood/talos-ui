@@ -74,7 +74,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "bun test",
-    "prepare": "tsup"
+    "prepublishOnly": "tsup"
   },
   "peerDependencies": {
     "astro": ">=5"
@@ -84,7 +84,7 @@
       "optional": true
     }
   },
-  "dependencies": {
+  "devDependencies": {
     "tsup": "^8.3.0",
     "typescript": "^5.7.0"
   },

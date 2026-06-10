@@ -3,7 +3,7 @@
   "workspaces": {
     "": {
       "name": "@shelfwood/talos-ui",
-      "devDependencies": {
+      "dependencies": {
         "tsup": "^8.3.0",
         "typescript": "^5.7.0",
       },
