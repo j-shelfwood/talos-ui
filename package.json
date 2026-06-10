@@ -73,7 +73,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "bun test"
+    "test": "bun test",
+    "prepare": "tsup"
   },
   "peerDependencies": {
     "astro": ">=5"
