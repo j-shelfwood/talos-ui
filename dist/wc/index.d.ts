@@ -20,6 +20,7 @@ declare class TalosPanel extends HTMLElement {
     private root;
     private svg;
     private path;
+    private content;
     private observer?;
     private frame;
     private animatedOnce;
@@ -31,6 +32,17 @@ declare class TalosPanel extends HTMLElement {
     private scheduleRender;
     private dim;
     private render;
+    /**
+     * Grow content padding on any edge that carries a notch, so slotted content
+     * clears the cut instead of colliding with the plunged border.
+     *
+     * The notch `depth` is in viewBox units; the SVG fills the host with
+     * `preserveAspectRatio="none"`, so depth scales per-axis to rendered px:
+     * top/bottom notches live on the height axis, left/right on the width axis.
+     * Each side resets to the base `--_pad` first, then takes max(base, depth)
+     * so removing a notch restores the base and a shallow notch never shrinks it.
+     */
+    private reserveNotchPadding;
     private get reducedMotion();
     private draw;
 }

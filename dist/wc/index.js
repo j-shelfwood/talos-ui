@@ -90,6 +90,7 @@ var TalosPanel = class extends HTMLElement {
   root;
   svg;
   path;
+  content;
   observer;
   frame = 0;
   animatedOnce = false;
@@ -126,7 +127,12 @@ var TalosPanel = class extends HTMLElement {
         .content {
           position: relative;
           z-index: 1;
-          padding: 1rem;
+          /* Base padding; each side is grown by the rendered depth of a notch
+             cut into that edge so slotted content never collides with the
+             border (set per-edge in render()). Consumers can raise the floor
+             via --talos-panel-pad. */
+          --_pad: var(--talos-panel-pad, 1rem);
+          padding: var(--_pad);
         }
       </style>
       <svg part="svg" preserveAspectRatio="none">
@@ -136,6 +142,7 @@ var TalosPanel = class extends HTMLElement {
     `;
     this.svg = this.root.querySelector("svg");
     this.path = this.root.querySelector(".outline");
+    this.content = this.root.querySelector(".content");
   }
   connectedCallback() {
     Promise.all([
@@ -185,9 +192,36 @@ var TalosPanel = class extends HTMLElement {
     const d = new PanelShapeBuilder({ width, height }).buildPath(segments);
     this.path.setAttribute("d", d);
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    this.reserveNotchPadding(segments, width, height);
     if (this.hasAttribute("animate") && !this.animatedOnce && !this.reducedMotion) {
       this.animatedOnce = true;
       this.draw();
+    }
+  }
+  /**
+   * Grow content padding on any edge that carries a notch, so slotted content
+   * clears the cut instead of colliding with the plunged border.
+   *
+   * The notch `depth` is in viewBox units; the SVG fills the host with
+   * `preserveAspectRatio="none"`, so depth scales per-axis to rendered px:
+   * top/bottom notches live on the height axis, left/right on the width axis.
+   * Each side resets to the base `--_pad` first, then takes max(base, depth)
+   * so removing a notch restores the base and a shallow notch never shrinks it.
+   */
+  reserveNotchPadding(segments, vbWidth, vbHeight) {
+    const rect = this.getBoundingClientRect();
+    const sx = vbWidth > 0 ? rect.width / vbWidth : 1;
+    const sy = vbHeight > 0 ? rect.height / vbHeight : 1;
+    const sides = ["Top", "Right", "Bottom", "Left"];
+    for (const side of sides) this.content.style[`padding${side}`] = "";
+    for (const seg of segments) {
+      if (seg.type !== "notch") continue;
+      const depth = seg.depth ?? 0;
+      if (depth <= 0) continue;
+      const horizontal = seg.edge === "left" || seg.edge === "right";
+      const px = depth * (horizontal ? sx : sy);
+      const side = seg.edge === "top" ? "Top" : seg.edge === "right" ? "Right" : seg.edge === "bottom" ? "Bottom" : "Left";
+      this.content.style[`padding${side}`] = `calc(var(--_pad) + ${px}px)`;
     }
   }
   get reducedMotion() {
