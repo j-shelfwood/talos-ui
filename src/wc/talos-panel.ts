@@ -18,13 +18,9 @@ import { PanelShapeBuilder, type Segment } from "./PanelShapeBuilder";
  * geometry intent. Add decorators to cut corners or notch edges.
  */
 export class TalosPanel extends HTMLElement {
-  static observedAttributes = [
-    "panel-width",
-    "panel-height",
-    "fill",
-    "edge",
-    "stroke-width",
-  ];
+  static get observedAttributes() {
+    return ["panel-width", "panel-height", "fill", "edge", "stroke-width"];
+  }
 
   private root: ShadowRoot;
   private svg!: SVGSVGElement;
@@ -139,10 +135,20 @@ export class TalosPanel extends HTMLElement {
     this.path.setAttribute("d", d);
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
-    if (this.hasAttribute("animate") && !this.animatedOnce) {
+    // The stroke-draw is an entrance flourish; the outline is the same shape
+    // either way, so under prefers-reduced-motion we mark it done and skip the
+    // animation entirely (no offset trickery to unwind) — honesty clause.
+    if (this.hasAttribute("animate") && !this.animatedOnce && !this.reducedMotion) {
       this.animatedOnce = true;
       this.draw();
     }
+  }
+
+  private get reducedMotion(): boolean {
+    return (
+      typeof matchMedia !== "undefined" &&
+      matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
   }
 
   private draw(): void {

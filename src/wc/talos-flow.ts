@@ -19,26 +19,22 @@
  *   rate           throughput; 0 = idle (no motion)        (default 0)
  *   max            rate at which speed saturates           (default 100)
  *   warn / crit    band thresholds on rate                 (optional)
+ *   invert         low = bad (band trips as rate FALLS)    (flag)
  *   x1 y1 x2 y2    endpoints in viewBox units              (default a horizontal line)
  *   curve          bow height for a curved path, px        (default 0 = straight)
  *   reverse        reverse travel direction                (flag)
  *   width height   viewBox px                              (default 200 / 40)
+ *
+ * Banding uses the shared bandOf() helper (bands.ts) — identical threshold +
+ * invert semantics to gauge/meter/trend; a starved link (low throughput as a
+ * symptom) reads red via `invert`.
  */
+import { bandOf, type Band } from "./bands";
+
 export class TalosFlow extends HTMLElement {
-  static observedAttributes = [
-    "rate",
-    "max",
-    "warn",
-    "crit",
-    "x1",
-    "y1",
-    "x2",
-    "y2",
-    "curve",
-    "reverse",
-    "width",
-    "height",
-  ];
+  static get observedAttributes() {
+    return ["rate", "max", "warn", "crit", "invert", "x1", "y1", "x2", "y2", "curve", "reverse", "width", "height"];
+  }
 
   private root: ShadowRoot;
   private base!: SVGPathElement;
@@ -56,8 +52,8 @@ export class TalosFlow extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_idle: var(--talos-edge-default, hsl(0 0% 100% / 0.18));
           --_c: var(--_nominal);
 
@@ -98,16 +94,17 @@ export class TalosFlow extends HTMLElement {
   connectedCallback(): void {
     this.render();
     this.tick(performance.now());
-    // MutationObserver, not attributeChangedCallback: the latter did not fire
-    // for these elements after esbuild's class transform; the filtered observer
-    // is reliable.
+    // Reactivity is driven by a filtered MutationObserver (not
+    // attributeChangedCallback): render writes role/aria-* back onto the host,
+    // and the observer's attributeFilter excludes those, so one mechanism
+    // handles inputs without looping on its own writes.
     // (Dash speed already updates live in the rAF tick; this keeps the band
     // colour / geometry in sync when attributes change.)
     this.observer = new MutationObserver(() => this.render());
     // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
     // unfiltered observer would loop on its own write-backs.
     this.observer.observe(this, {
-      attributeFilter: ["rate", "max", "warn", "crit", "x1", "y1", "x2", "y2", "curve", "reverse", "width", "height"],
+      attributeFilter: ["rate", "max", "warn", "crit", "invert", "x1", "y1", "x2", "y2", "curve", "reverse", "width", "height"],
     });
   }
 
@@ -128,12 +125,8 @@ export class TalosFlow extends HTMLElement {
     );
   }
 
-  private band(value: number): "nominal" | "warning" | "critical" {
-    const crit = this.getAttribute("crit");
-    const warn = this.getAttribute("warn");
-    if (crit !== null && value >= parseFloat(crit)) return "critical";
-    if (warn !== null && value >= parseFloat(warn)) return "warning";
-    return "nominal";
+  private band(value: number): Band {
+    return bandOf(this, value);
   }
 
   private pathD(): string {

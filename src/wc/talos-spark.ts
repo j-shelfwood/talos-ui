@@ -24,7 +24,9 @@ import { bandOf } from "./bands";
  * Imperative API: el.push(value) — preferred for streams.
  */
 export class TalosSpark extends HTMLElement {
-  static observedAttributes = ["points", "min", "max", "warn", "crit", "invert", "fill"];
+  static get observedAttributes() {
+    return ["points", "min", "max", "warn", "crit", "invert", "fill"];
+  }
 
   private root: ShadowRoot;
   private svg!: SVGSVGElement;
@@ -42,7 +44,9 @@ export class TalosSpark extends HTMLElement {
           display: inline-block;
           width: var(--talos-spark-w, 100%);
           height: var(--talos-spark-h, 16px);
-          --_nominal: var(--talos-accent, hsl(140 90% 60%));
+          /* nominal band = --talos-success (the band token), matching gauge/
+             meter/trend. --talos-accent is reserved for live-status, not bands. */
+          --_nominal: var(--talos-success, hsl(140 90% 60%));
           --_warning: var(--talos-warning, hsl(38 92% 60%));
           --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_stroke: var(--_nominal);

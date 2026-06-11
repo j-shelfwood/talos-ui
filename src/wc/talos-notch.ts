@@ -6,7 +6,9 @@ import type { Segment } from "./PanelShapeBuilder";
  * reads toSegment() to build the outline.
  */
 export class TalosNotch extends HTMLElement {
-  static observedAttributes = ["edge", "width", "depth"];
+  static get observedAttributes() {
+    return ["edge", "width", "depth"];
+  }
 
   attributeChangedCallback(): void {
     this.closest("talos-panel")?.dispatchEvent(

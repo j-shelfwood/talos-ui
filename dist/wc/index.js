@@ -84,13 +84,9 @@ var PanelShapeBuilder = class {
 
 // src/wc/talos-panel.ts
 var TalosPanel = class extends HTMLElement {
-  static observedAttributes = [
-    "panel-width",
-    "panel-height",
-    "fill",
-    "edge",
-    "stroke-width"
-  ];
+  static get observedAttributes() {
+    return ["panel-width", "panel-height", "fill", "edge", "stroke-width"];
+  }
   root;
   svg;
   path;
@@ -189,10 +185,13 @@ var TalosPanel = class extends HTMLElement {
     const d = new PanelShapeBuilder({ width, height }).buildPath(segments);
     this.path.setAttribute("d", d);
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    if (this.hasAttribute("animate") && !this.animatedOnce) {
+    if (this.hasAttribute("animate") && !this.animatedOnce && !this.reducedMotion) {
       this.animatedOnce = true;
       this.draw();
     }
+  }
+  get reducedMotion() {
+    return typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
   draw() {
     const duration = this.dim("animation-duration", 800);
@@ -212,7 +211,9 @@ var TalosPanel = class extends HTMLElement {
 
 // src/wc/talos-corner.ts
 var TalosCorner = class extends HTMLElement {
-  static observedAttributes = ["edge", "radius"];
+  static get observedAttributes() {
+    return ["edge", "radius"];
+  }
   attributeChangedCallback() {
     this.closest("talos-panel")?.dispatchEvent(
       new CustomEvent("talos:decorator-changed", { bubbles: true })
@@ -230,7 +231,9 @@ var TalosCorner = class extends HTMLElement {
 
 // src/wc/talos-notch.ts
 var TalosNotch = class extends HTMLElement {
-  static observedAttributes = ["edge", "width", "depth"];
+  static get observedAttributes() {
+    return ["edge", "width", "depth"];
+  }
   attributeChangedCallback() {
     this.closest("talos-panel")?.dispatchEvent(
       new CustomEvent("talos:decorator-changed", { bubbles: true })
@@ -260,11 +263,13 @@ function bandOf(el, value) {
 
 // src/wc/talos-gauge.ts
 var TalosGauge = class extends HTMLElement {
-  // A static GETTER, not a class field: tsup/esbuild can emit a `static`
-  // field as a post-class assignment (`TalosGauge.observedAttributes = …`),
-  // which runs AFTER customElements.define() has already read the property as
-  // undefined — so the browser observes nothing and attributeChangedCallback
-  // never fires. A getter is present on the constructor before define() reads it.
+  // CONVENTION: every Talos web component declares observedAttributes as a
+  // static GETTER (not a class field), uniformly across the library. Both forms
+  // compile correctly under the current tsup/esbuild config (the field is
+  // emitted in-class, verified in dist/wc/index.js), so this is a coherence
+  // choice, not a workaround: the getter is unambiguously evaluated on the
+  // constructor before customElements.define() reads it, with no dependency on
+  // how the bundler lowers static fields. Keep new components on the getter.
   static get observedAttributes() {
     return ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "sweep", "size"];
   }
@@ -286,8 +291,8 @@ var TalosGauge = class extends HTMLElement {
           /* Band colours default to the status tokens; the rendered band sets
              --_c to one of these, and everything that encodes state reads it. */
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_track: var(--talos-edge-subtle, hsl(0 0% 100% / 0.1));
           --_c: var(--_nominal);
 
@@ -495,19 +500,9 @@ var TalosGauge = class extends HTMLElement {
 
 // src/wc/talos-trend.ts
 var TalosTrend = class extends HTMLElement {
-  static observedAttributes = [
-    "value",
-    "points",
-    "min",
-    "max",
-    "warn",
-    "crit",
-    "width",
-    "height",
-    "fill",
-    "label",
-    "unit"
-  ];
+  static get observedAttributes() {
+    return ["value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"];
+  }
   root;
   line;
   area;
@@ -524,8 +519,8 @@ var TalosTrend = class extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_grid: var(--talos-edge-subtle, hsl(0 0% 100% / 0.08));
           --_c: var(--_nominal);
 
@@ -614,7 +609,7 @@ var TalosTrend = class extends HTMLElement {
       }
     });
     this.observer.observe(this, {
-      attributeFilter: ["value", "points", "min", "max", "warn", "crit", "width", "height", "fill", "label", "unit"]
+      attributeFilter: ["value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"]
     });
   }
   disconnectedCallback() {
@@ -636,11 +631,7 @@ var TalosTrend = class extends HTMLElement {
     return Number.isFinite(v) ? v : fallback;
   }
   band(value) {
-    const crit = this.getAttribute("crit");
-    const warn = this.getAttribute("warn");
-    if (crit !== null && value >= parseFloat(crit)) return "critical";
-    if (warn !== null && value >= parseFloat(warn)) return "warning";
-    return "nominal";
+    return bandOf(this, value);
   }
   render() {
     const w = this.num("width", 220);
@@ -720,18 +711,9 @@ var TalosTrend = class extends HTMLElement {
 
 // src/wc/talos-meter.ts
 var TalosMeter = class extends HTMLElement {
-  static observedAttributes = [
-    "value",
-    "min",
-    "max",
-    "warn",
-    "crit",
-    "invert",
-    "label",
-    "unit",
-    "width",
-    "ticks"
-  ];
+  static get observedAttributes() {
+    return ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "width", "ticks"];
+  }
   root;
   fill;
   ticksEl;
@@ -747,8 +729,8 @@ var TalosMeter = class extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_track: var(--talos-edge-subtle, hsl(0 0% 100% / 0.1));
           --_c: var(--_nominal);
           --_h: 0.5rem;
@@ -922,20 +904,9 @@ var TalosMeter = class extends HTMLElement {
 
 // src/wc/talos-flow.ts
 var TalosFlow = class extends HTMLElement {
-  static observedAttributes = [
-    "rate",
-    "max",
-    "warn",
-    "crit",
-    "x1",
-    "y1",
-    "x2",
-    "y2",
-    "curve",
-    "reverse",
-    "width",
-    "height"
-  ];
+  static get observedAttributes() {
+    return ["rate", "max", "warn", "crit", "invert", "x1", "y1", "x2", "y2", "curve", "reverse", "width", "height"];
+  }
   root;
   base;
   dash;
@@ -951,8 +922,8 @@ var TalosFlow = class extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_idle: var(--talos-edge-default, hsl(0 0% 100% / 0.18));
           --_c: var(--_nominal);
 
@@ -993,7 +964,7 @@ var TalosFlow = class extends HTMLElement {
     this.tick(performance.now());
     this.observer = new MutationObserver(() => this.render());
     this.observer.observe(this, {
-      attributeFilter: ["rate", "max", "warn", "crit", "x1", "y1", "x2", "y2", "curve", "reverse", "width", "height"]
+      attributeFilter: ["rate", "max", "warn", "crit", "invert", "x1", "y1", "x2", "y2", "curve", "reverse", "width", "height"]
     });
   }
   disconnectedCallback() {
@@ -1008,11 +979,7 @@ var TalosFlow = class extends HTMLElement {
     return typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
   band(value) {
-    const crit = this.getAttribute("crit");
-    const warn = this.getAttribute("warn");
-    if (crit !== null && value >= parseFloat(crit)) return "critical";
-    if (warn !== null && value >= parseFloat(warn)) return "warning";
-    return "nominal";
+    return bandOf(this, value);
   }
   pathD() {
     const w = this.num("width", 200);
@@ -1113,8 +1080,8 @@ var TalosOrbital = class extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_ring: var(--talos-edge-subtle, hsl(0 0% 100% / 0.08));
           --_ringStrong: var(--talos-edge-default, hsl(0 0% 100% / 0.16));
           --_core: var(--talos-foreground, #e7e9ec);
@@ -1350,7 +1317,7 @@ var TalosSheen = class extends HTMLElement {
 // src/wc/talos-readout.ts
 var TalosReadout = class _TalosReadout extends HTMLElement {
   static get observedAttributes() {
-    return ["value", "warn", "crit", "unit", "label", "duration"];
+    return ["value", "warn", "crit", "invert", "unit", "label", "duration"];
   }
   root;
   out;
@@ -1370,8 +1337,8 @@ var TalosReadout = class _TalosReadout extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_c: var(--talos-foreground, #e7e9ec);
 
           display: inline-flex;
@@ -1416,7 +1383,7 @@ var TalosReadout = class _TalosReadout extends HTMLElement {
     this.renderBand();
     this.observer = new MutationObserver(() => this.onAttrs());
     this.observer.observe(this, {
-      attributeFilter: ["value", "warn", "crit", "unit", "label", "duration"]
+      attributeFilter: ["value", "warn", "crit", "invert", "unit", "label", "duration"]
     });
   }
   disconnectedCallback() {
@@ -1439,16 +1406,12 @@ var TalosReadout = class _TalosReadout extends HTMLElement {
     }
     this.startScramble();
   }
-  /** Band tint, only meaningful for numeric values — mirrors gauge/meter. */
+  /** Band tint, only meaningful for numeric values — uses the shared bandOf()
+   *  helper (bands.ts), so threshold + invert semantics match gauge/meter. A
+   *  non-numeric value has no band: it stays neutral foreground. */
   renderBand() {
     const n = parseFloat(this.getAttribute("value") ?? "");
-    let band = "nominal";
-    if (Number.isFinite(n)) {
-      const crit = this.getAttribute("crit");
-      const warn = this.getAttribute("warn");
-      if (crit !== null && n >= parseFloat(crit)) band = "critical";
-      else if (warn !== null && n >= parseFloat(warn)) band = "warning";
-    }
+    const band = Number.isFinite(n) ? bandOf(this, n) : "nominal";
     const v = band === "critical" ? "var(--_critical)" : band === "warning" ? "var(--_warning)" : "var(--talos-foreground, #e7e9ec)";
     this.style.setProperty("--_c", v);
   }
@@ -1505,7 +1468,9 @@ var TalosReadout = class _TalosReadout extends HTMLElement {
 
 // src/wc/talos-spark.ts
 var TalosSpark = class extends HTMLElement {
-  static observedAttributes = ["points", "min", "max", "warn", "crit", "invert", "fill"];
+  static get observedAttributes() {
+    return ["points", "min", "max", "warn", "crit", "invert", "fill"];
+  }
   root;
   svg;
   line;
@@ -1522,7 +1487,9 @@ var TalosSpark = class extends HTMLElement {
           display: inline-block;
           width: var(--talos-spark-w, 100%);
           height: var(--talos-spark-h, 16px);
-          --_nominal: var(--talos-accent, hsl(140 90% 60%));
+          /* nominal band = --talos-success (the band token), matching gauge/
+             meter/trend. --talos-accent is reserved for live-status, not bands. */
+          --_nominal: var(--talos-success, hsl(140 90% 60%));
           --_warning: var(--talos-warning, hsl(38 92% 60%));
           --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_stroke: var(--_nominal);
@@ -1603,7 +1570,9 @@ var TalosSpark = class extends HTMLElement {
 
 // src/wc/talos-dots.ts
 var TalosDots = class extends HTMLElement {
-  static observedAttributes = ["value", "total", "warn", "crit", "invert"];
+  static get observedAttributes() {
+    return ["value", "total", "warn", "crit", "invert"];
+  }
   root;
   wrap;
   constructor() {
@@ -1616,7 +1585,10 @@ var TalosDots = class extends HTMLElement {
           display: inline-flex;
           align-items: center;
           gap: var(--talos-dots-gap, 2px);
-          --_nominal: var(--talos-accent, hsl(140 90% 60%));
+          /* nominal band = --talos-success (the band token), matching gauge/
+             meter/trend. --talos-accent stays reserved for the live-status glow
+             below, not for band colour. */
+          --_nominal: var(--talos-success, hsl(140 90% 60%));
           --_warning: var(--talos-warning, hsl(38 92% 60%));
           --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_off: var(--talos-surface-3, hsl(0 0% 10%));
@@ -1664,7 +1636,9 @@ var TalosDots = class extends HTMLElement {
 
 // src/wc/talos-delta.ts
 var TalosDelta = class extends HTMLElement {
-  static observedAttributes = ["value", "good", "precision", "eps"];
+  static get observedAttributes() {
+    return ["value", "good", "precision", "eps"];
+  }
   root;
   text;
   prev = null;
@@ -1738,7 +1712,9 @@ var TalosDelta = class extends HTMLElement {
 
 // src/wc/talos-stat.ts
 var TalosStat = class extends HTMLElement {
-  static observedAttributes = ["value", "label", "unit", "precision", "warn", "crit", "invert"];
+  static get observedAttributes() {
+    return ["value", "label", "unit", "precision", "warn", "crit", "invert"];
+  }
   root;
   numEl;
   labelEl;

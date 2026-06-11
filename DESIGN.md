@@ -56,6 +56,26 @@ Web components render the same family of outlines as an **SVG path** via
 `PanelShapeBuilder`, which additionally supports **notches** (centered edge
 cut-outs) — the one motif the CSS layer doesn't do.
 
+### Two geometries (the corner policy)
+
+There are exactly **two** allowed corner treatments — pick by role, never mix a
+third:
+
+1. **Chamfer (the brand chrome).** Anything that reads as HUD chrome — panels,
+   buttons, flags/tags, stat/readout/avatar cells, alerts, toasts, inputs — is
+   **cut**: `--talos-chamfer` / `-btn` / `-flag`, via `clip-path` (or the SVG
+   path in the WC layer). This is the default; reach for it first.
+2. **Small radius (dense content containers only).** Tight, text-dense,
+   *content* surfaces — inline/block code, `kbd`, log feeds, menu/menu-items,
+   tooltips — use `--talos-radius-sm` (2px) / `-md` (4px). The chamfer's diagonal
+   would fight the dense rectangular content, so these get a hairline softening
+   instead. This is a deliberate, bounded exception — not a license to round
+   chrome.
+
+`border-radius: 50%` is its own thing (status dots, the spinner ring, circular
+avatars) and is fine. **What is never allowed:** rounding brand chrome, or a
+fully-rounded `999px` pill (the flag chamfer is the pill shape here).
+
 ## Interaction
 
 - **Cursor sheen:** interactive panels track the pointer (`--talos-mx/my`) and

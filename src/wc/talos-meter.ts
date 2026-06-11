@@ -24,18 +24,9 @@
 import { bandOf, type Band } from "./bands";
 
 export class TalosMeter extends HTMLElement {
-  static observedAttributes = [
-    "value",
-    "min",
-    "max",
-    "warn",
-    "crit",
-    "invert",
-    "label",
-    "unit",
-    "width",
-    "ticks",
-  ];
+  static get observedAttributes() {
+    return ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "width", "ticks"];
+  }
 
   private root: ShadowRoot;
   private fill!: HTMLElement;
@@ -53,8 +44,8 @@ export class TalosMeter extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_track: var(--talos-edge-subtle, hsl(0 0% 100% / 0.1));
           --_c: var(--_nominal);
           --_h: 0.5rem;
@@ -147,9 +138,11 @@ export class TalosMeter extends HTMLElement {
   connectedCallback(): void {
     this.shown = this.num("value", 0);
     this.render();
-    // MutationObserver, not attributeChangedCallback: the latter did not fire
-    // for these elements after esbuild's class transform; the filtered observer
-    // is reliable (the mechanism <talos-panel> already uses in this build).
+    // Reactivity is driven by a filtered MutationObserver (not
+    // attributeChangedCallback). render() writes role/aria-* back onto the host,
+    // and the observer's attributeFilter excludes those, so a single mechanism
+    // handles inputs without looping on its own writes — the pattern the
+    // animated instruments share.
     this.observer = new MutationObserver(() => this.update());
     // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
     // unfiltered observer would loop on its own write-backs.

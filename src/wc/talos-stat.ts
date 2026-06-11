@@ -24,7 +24,9 @@ import { bandOf } from "./bands";
  * Imperative API: el.set(value).
  */
 export class TalosStat extends HTMLElement {
-  static observedAttributes = ["value", "label", "unit", "precision", "warn", "crit", "invert"];
+  static get observedAttributes() {
+    return ["value", "label", "unit", "precision", "warn", "crit", "invert"];
+  }
 
   private root: ShadowRoot;
   private numEl!: HTMLElement;

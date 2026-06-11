@@ -23,16 +23,20 @@
  *   value     the value to display (string or number)        (default "")
  *   warn      numeric value at/after which band = warning     (optional)
  *   crit      numeric value at/after which band = critical    (optional)
+ *   invert    low = bad (band trips as value FALLS)           (flag)
  *   unit      appended after the resolved value (e.g. "%")     (optional)
  *   label     uppercase caption above the readout             (optional)
  *   duration  scramble length in ms                            (default 420)
  *
  * Bands apply only when `value` parses as a number; non-numeric values render
- * nominal. warn/crit are inclusive-from, matching the other instruments.
+ * nominal. Banding uses the shared bandOf() helper (bands.ts), so warn/crit are
+ * inclusive-from and `invert` works identically to the other instruments.
  */
+import { bandOf, type Band } from "./bands";
+
 export class TalosReadout extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ["value", "warn", "crit", "unit", "label", "duration"];
+    return ["value", "warn", "crit", "invert", "unit", "label", "duration"];
   }
 
   private root: ShadowRoot;
@@ -56,8 +60,8 @@ export class TalosReadout extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_c: var(--talos-foreground, #e7e9ec);
 
           display: inline-flex;
@@ -102,12 +106,13 @@ export class TalosReadout extends HTMLElement {
     this.paint(this.toText);
     this.renderCaption();
     this.renderBand();
-    // MutationObserver, not attributeChangedCallback — the same esbuild
-    // reactivity workaround the rest of the library uses: attributeChangedCallback
-    // did not fire for these elements after the build; a filtered observer does.
+    // Reactivity is driven by a filtered MutationObserver (not
+    // attributeChangedCallback): render writes role/aria-* back onto the host,
+    // and the observer's attributeFilter excludes those, so one mechanism
+    // handles inputs without looping on its own writes.
     this.observer = new MutationObserver(() => this.onAttrs());
     this.observer.observe(this, {
-      attributeFilter: ["value", "warn", "crit", "unit", "label", "duration"],
+      attributeFilter: ["value", "warn", "crit", "invert", "unit", "label", "duration"],
     });
   }
 
@@ -137,16 +142,12 @@ export class TalosReadout extends HTMLElement {
     this.startScramble();
   }
 
-  /** Band tint, only meaningful for numeric values — mirrors gauge/meter. */
+  /** Band tint, only meaningful for numeric values — uses the shared bandOf()
+   *  helper (bands.ts), so threshold + invert semantics match gauge/meter. A
+   *  non-numeric value has no band: it stays neutral foreground. */
   private renderBand(): void {
     const n = parseFloat(this.getAttribute("value") ?? "");
-    let band: "nominal" | "warning" | "critical" = "nominal";
-    if (Number.isFinite(n)) {
-      const crit = this.getAttribute("crit");
-      const warn = this.getAttribute("warn");
-      if (crit !== null && n >= parseFloat(crit)) band = "critical";
-      else if (warn !== null && n >= parseFloat(warn)) band = "warning";
-    }
+    const band: Band = Number.isFinite(n) ? bandOf(this, n) : "nominal";
     const v =
       band === "critical"
         ? "var(--_critical)"

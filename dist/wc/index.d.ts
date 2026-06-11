@@ -16,7 +16,7 @@
  * geometry intent. Add decorators to cut corners or notch edges.
  */
 declare class TalosPanel extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     private root;
     private svg;
     private path;
@@ -31,6 +31,7 @@ declare class TalosPanel extends HTMLElement {
     private scheduleRender;
     private dim;
     private render;
+    private get reducedMotion();
     private draw;
 }
 
@@ -72,7 +73,7 @@ declare class PanelShapeBuilder {
  * its parent <talos-panel> reads toSegment() to build the outline.
  */
 declare class TalosCorner extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     attributeChangedCallback(): void;
     toSegment(): Segment | null;
 }
@@ -83,7 +84,7 @@ declare class TalosCorner extends HTMLElement {
  * reads toSegment() to build the outline.
  */
 declare class TalosNotch extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     attributeChangedCallback(): void;
     toSegment(): Segment | null;
 }
@@ -119,39 +120,8 @@ declare class TalosGauge extends HTMLElement {
     private render;
 }
 
-/**
- * <talos-trend> — a live trend line / sparkline. The clearest demonstration of
- * "motion is telemetry, not transition" (PHILOSOPHY.md, principle 3): the line
- * is a moving window over a value stream, so its *shape and slope are the rate*.
- * Push a value and the window scrolls; the motion is the data advancing, not a
- * decorative transition.
- *
- * Form encodes function:
- *   - SHAPE   the polyline is the recent history; slope = rate of change.
- *   - COLOUR  the line/fill colour is the current band (nominal/warn/crit),
- *             same threshold logic as <talos-gauge> — colour IS the state.
- *   - LIVE    push(v) or setAttribute("value", v) appends a sample; read it
- *             twice while a system runs and the curve differs.
- *
- * Honest motion: the *information* — last value, recent shape, band colour — is
- * fully present in any static frame. There is no entrance animation to lose; the
- * curve simply reflects the buffer. (Nothing to gate for reduced-motion beyond
- * not auto-advancing on our own — we only move when the consumer pushes data.)
- *
- * Attributes:
- *   value          push this as the newest sample when it changes (reactive)
- *   points         max samples kept in the window           (default 48)
- *   min / max      vertical domain; "auto" tracks the buffer (default auto)
- *   warn / crit    band thresholds on the CURRENT value     (optional)
- *   width / height px                                        (default 220 / 60)
- *   fill           if present, fills under the curve
- *   label          caption (optional)
- *   unit           appended to the inline readout (optional)
- *
- * Imperative API: el.push(value) — preferred for streams.
- */
 declare class TalosTrend extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     private root;
     private line;
     private area;
@@ -177,7 +147,7 @@ declare class TalosTrend extends HTMLElement {
 }
 
 declare class TalosMeter extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     private root;
     private fill;
     private ticksEl;
@@ -199,34 +169,8 @@ declare class TalosMeter extends HTMLElement {
     private render;
 }
 
-/**
- * <talos-flow> — an edge/connection that shows THROUGHPUT as motion. A dashed
- * stroke travels along the path; its speed is bound to `rate`, so the animation
- * is the flow, not a decorative shimmer (PHILOSOPHY.md principle 3). Zero rate =
- * no motion = nothing flowing. This is the link primitive for pipeline diagrams.
- *
- *   - SPEED   dash travel velocity ∝ rate (capped, so a huge rate stays legible).
- *   - COLOUR  band (nominal/warn/crit) on the rate — colour IS the state.
- *   - DIRECTION  reverse="" flips travel; the visual direction is the data
- *                direction.
- *
- * Honest motion: under prefers-reduced-motion the dashes DON'T travel — instead
- * we render static directional chevrons + expose the rate via aria, so the
- * information (there is flow, this fast, this direction, this health) survives
- * without animation. Motion that, when removed, leaves you unable to tell
- * whether anything is flowing would be decoration; this isn't.
- *
- * Attributes:
- *   rate           throughput; 0 = idle (no motion)        (default 0)
- *   max            rate at which speed saturates           (default 100)
- *   warn / crit    band thresholds on rate                 (optional)
- *   x1 y1 x2 y2    endpoints in viewBox units              (default a horizontal line)
- *   curve          bow height for a curved path, px        (default 0 = straight)
- *   reverse        reverse travel direction                (flag)
- *   width height   viewBox px                              (default 200 / 40)
- */
 declare class TalosFlow extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     private root;
     private base;
     private dash;
@@ -377,38 +321,6 @@ declare class TalosSheen extends HTMLElement {
     private clear;
 }
 
-/**
- * <talos-readout> — a text value that DECODES when it changes.
- *
- * The reference pen scrambles text on hover as decoration. Here the same
- * mechanism is rebound to data: when the `value` attribute changes, the readout
- * resolves from a burst of scrambled glyphs into the new value. The motion is
- * not decoration — it is the *arrival event* of new telemetry made legible:
- * a value that just changed looks different from one that has been stable, the
- * way a flipboard or a settling segment display does. A frame mid-scramble is
- * never mistaken for the real value because the scramble is brief and the
- * settled text is the only stable state.
- *
- *   - VALUE → TEXT       the resolved characters are the value, exactly.
- *   - CHANGE → MOTION    a scramble fires only when the value actually changes;
- *                        a stable value is stable text. Motion marks an event.
- *   - HONEST MOTION      under prefers-reduced-motion the new value is shown
- *                        immediately with no scramble — the meaning is the text,
- *                        and the text is always correct in a static frame.
- *   - BAND COLOUR        optional warn/crit thresholds tint the text by state,
- *                        same convention as <talos-gauge>/<talos-meter>.
- *
- * Attributes (all reactive):
- *   value     the value to display (string or number)        (default "")
- *   warn      numeric value at/after which band = warning     (optional)
- *   crit      numeric value at/after which band = critical    (optional)
- *   unit      appended after the resolved value (e.g. "%")     (optional)
- *   label     uppercase caption above the readout             (optional)
- *   duration  scramble length in ms                            (default 420)
- *
- * Bands apply only when `value` parses as a number; non-numeric values render
- * nominal. warn/crit are inclusive-from, matching the other instruments.
- */
 declare class TalosReadout extends HTMLElement {
     static get observedAttributes(): string[];
     private root;
@@ -425,7 +337,9 @@ declare class TalosReadout extends HTMLElement {
     disconnectedCallback(): void;
     private get reducedMotion();
     private onAttrs;
-    /** Band tint, only meaningful for numeric values — mirrors gauge/meter. */
+    /** Band tint, only meaningful for numeric values — uses the shared bandOf()
+     *  helper (bands.ts), so threshold + invert semantics match gauge/meter. A
+     *  non-numeric value has no band: it stays neutral foreground. */
     private renderBand;
     private renderCaption;
     private startScramble;
@@ -461,7 +375,7 @@ declare class TalosReadout extends HTMLElement {
  * Imperative API: el.push(value) — preferred for streams.
  */
 declare class TalosSpark extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     private root;
     private svg;
     private line;
@@ -498,7 +412,7 @@ declare class TalosSpark extends HTMLElement {
  *   invert       low = bad                              (optional)
  */
 declare class TalosDots extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     private root;
     private wrap;
     constructor();
@@ -528,7 +442,7 @@ declare class TalosDots extends HTMLElement {
  * Imperative API: el.update(value) — equivalent to setting the `value` attribute.
  */
 declare class TalosDelta extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     private root;
     private text;
     private prev;
@@ -566,7 +480,7 @@ declare class TalosDelta extends HTMLElement {
  * Imperative API: el.set(value).
  */
 declare class TalosStat extends HTMLElement {
-    static observedAttributes: string[];
+    static get observedAttributes(): string[];
     private root;
     private numEl;
     private labelEl;

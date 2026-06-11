@@ -19,7 +19,9 @@ import { bandOf } from "./bands";
  *   invert       low = bad                              (optional)
  */
 export class TalosDots extends HTMLElement {
-  static observedAttributes = ["value", "total", "warn", "crit", "invert"];
+  static get observedAttributes() {
+    return ["value", "total", "warn", "crit", "invert"];
+  }
 
   private root: ShadowRoot;
   private wrap!: HTMLElement;
@@ -33,7 +35,10 @@ export class TalosDots extends HTMLElement {
           display: inline-flex;
           align-items: center;
           gap: var(--talos-dots-gap, 2px);
-          --_nominal: var(--talos-accent, hsl(140 90% 60%));
+          /* nominal band = --talos-success (the band token), matching gauge/
+             meter/trend. --talos-accent stays reserved for the live-status glow
+             below, not for band colour. */
+          --_nominal: var(--talos-success, hsl(140 90% 60%));
           --_warning: var(--talos-warning, hsl(38 92% 60%));
           --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_off: var(--talos-surface-3, hsl(0 0% 10%));

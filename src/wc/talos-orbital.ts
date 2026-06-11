@@ -66,8 +66,8 @@ export class TalosOrbital extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_ring: var(--talos-edge-subtle, hsl(0 0% 100% / 0.08));
           --_ringStrong: var(--talos-edge-default, hsl(0 0% 100% / 0.16));
           --_core: var(--talos-foreground, #e7e9ec);

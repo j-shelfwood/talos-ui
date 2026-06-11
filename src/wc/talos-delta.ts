@@ -18,7 +18,9 @@
  * Imperative API: el.update(value) — equivalent to setting the `value` attribute.
  */
 export class TalosDelta extends HTMLElement {
-  static observedAttributes = ["value", "good", "precision", "eps"];
+  static get observedAttributes() {
+    return ["value", "good", "precision", "eps"];
+  }
 
   private root: ShadowRoot;
   private text!: HTMLElement;

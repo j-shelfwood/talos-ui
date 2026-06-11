@@ -6,7 +6,9 @@ import type { Segment } from "./PanelShapeBuilder";
  * its parent <talos-panel> reads toSegment() to build the outline.
  */
 export class TalosCorner extends HTMLElement {
-  static observedAttributes = ["edge", "radius"];
+  static get observedAttributes() {
+    return ["edge", "radius"];
+  }
 
   attributeChangedCallback(): void {
     this.closest("talos-panel")?.dispatchEvent(

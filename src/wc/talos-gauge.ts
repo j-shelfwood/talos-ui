@@ -33,11 +33,13 @@
 import { bandOf, type Band } from "./bands";
 
 export class TalosGauge extends HTMLElement {
-  // A static GETTER, not a class field: tsup/esbuild can emit a `static`
-  // field as a post-class assignment (`TalosGauge.observedAttributes = …`),
-  // which runs AFTER customElements.define() has already read the property as
-  // undefined — so the browser observes nothing and attributeChangedCallback
-  // never fires. A getter is present on the constructor before define() reads it.
+  // CONVENTION: every Talos web component declares observedAttributes as a
+  // static GETTER (not a class field), uniformly across the library. Both forms
+  // compile correctly under the current tsup/esbuild config (the field is
+  // emitted in-class, verified in dist/wc/index.js), so this is a coherence
+  // choice, not a workaround: the getter is unambiguously evaluated on the
+  // constructor before customElements.define() reads it, with no dependency on
+  // how the bundler lowers static fields. Keep new components on the getter.
   static get observedAttributes(): string[] {
     return ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "sweep", "size"];
   }
@@ -60,8 +62,8 @@ export class TalosGauge extends HTMLElement {
           /* Band colours default to the status tokens; the rendered band sets
              --_c to one of these, and everything that encodes state reads it. */
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_track: var(--talos-edge-subtle, hsl(0 0% 100% / 0.1));
           --_c: var(--_nominal);
 
@@ -148,13 +150,12 @@ export class TalosGauge extends HTMLElement {
   connectedCallback(): void {
     this.shown = this.num("value", 0);
     this.render();
-    // Reactivity via MutationObserver, NOT attributeChangedCallback: the latter
-    // does not fire for these elements after esbuild's class transform/minify
-    // (observedAttributes + the callback look correct but the browser never
-    // invokes it). The observer is the mechanism <talos-panel> already uses
-    // reliably in this build. The observe() call below uses an explicit
-    // attributeFilter (an unfiltered observer loops on render()'s aria/role
-    // write-backs and freezes the renderer).
+    // Reactivity via a filtered MutationObserver (not attributeChangedCallback).
+    // render() writes role/aria-* back onto the host every frame; the observe()
+    // call below uses an explicit attributeFilter that excludes those, so a
+    // single mechanism handles real inputs without looping on its own write-backs
+    // (an unfiltered observer would freeze the renderer). This is the pattern
+    // the animated instruments share.
     this.observer = new MutationObserver(() => this.update());
     // Drive a continuous needle ease independent of the observer, so the
     // displayed value always converges to the attribute even if a mutation

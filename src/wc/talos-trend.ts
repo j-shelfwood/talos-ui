@@ -22,27 +22,23 @@
  *   points         max samples kept in the window           (default 48)
  *   min / max      vertical domain; "auto" tracks the buffer (default auto)
  *   warn / crit    band thresholds on the CURRENT value     (optional)
+ *   invert         low = bad (band trips as value FALLS)    (flag)
  *   width / height px                                        (default 220 / 60)
  *   fill           if present, fills under the curve
  *   label          caption (optional)
  *   unit           appended to the inline readout (optional)
  *
  * Imperative API: el.push(value) — preferred for streams.
+ *
+ * Banding on the current value uses the shared bandOf() helper (bands.ts) —
+ * same threshold + invert semantics as gauge/meter.
  */
+import { bandOf, type Band } from "./bands";
+
 export class TalosTrend extends HTMLElement {
-  static observedAttributes = [
-    "value",
-    "points",
-    "min",
-    "max",
-    "warn",
-    "crit",
-    "width",
-    "height",
-    "fill",
-    "label",
-    "unit",
-  ];
+  static get observedAttributes() {
+    return ["value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"];
+  }
 
   private root: ShadowRoot;
   private line!: SVGPolylineElement;
@@ -61,8 +57,8 @@ export class TalosTrend extends HTMLElement {
       <style>
         :host {
           --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(40 95% 60%));
-          --_critical: var(--talos-danger, hsl(0 90% 62%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_grid: var(--talos-edge-subtle, hsl(0 0% 100% / 0.08));
           --_c: var(--_nominal);
 
@@ -140,9 +136,10 @@ export class TalosTrend extends HTMLElement {
       this.lastValueAttr = this.getAttribute("value");
     }
     this.render();
-    // MutationObserver, not attributeChangedCallback: the latter did not fire
-    // for these elements after esbuild's class transform; the filtered observer
-    // is reliable.
+    // Reactivity is driven by a filtered MutationObserver (not
+    // attributeChangedCallback): render writes role/aria-* back onto the host,
+    // and the observer's attributeFilter excludes those, so one mechanism
+    // handles inputs without looping on its own writes.
     // (Streams should prefer the imperative push(); the attr path is a
     // convenience for declarative one-value updates.)
     this.observer = new MutationObserver((records) => {
@@ -160,7 +157,7 @@ export class TalosTrend extends HTMLElement {
     // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
     // unfiltered observer would loop on its own write-backs.
     this.observer.observe(this, {
-      attributeFilter: ["value", "points", "min", "max", "warn", "crit", "width", "height", "fill", "label", "unit"],
+      attributeFilter: ["value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"],
     });
   }
 
@@ -190,12 +187,8 @@ export class TalosTrend extends HTMLElement {
     return Number.isFinite(v) ? v : fallback;
   }
 
-  private band(value: number): "nominal" | "warning" | "critical" {
-    const crit = this.getAttribute("crit");
-    const warn = this.getAttribute("warn");
-    if (crit !== null && value >= parseFloat(crit)) return "critical";
-    if (warn !== null && value >= parseFloat(warn)) return "warning";
-    return "nominal";
+  private band(value: number): Band {
+    return bandOf(this, value);
   }
 
   private render(): void {
