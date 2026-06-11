@@ -18,6 +18,7 @@
  * not auto-advancing on our own — we only move when the consumer pushes data.)
  *
  * Attributes:
+ *   data           initial series, comma/space separated    (declarative seed)
  *   value          push this as the newest sample when it changes (reactive)
  *   points         max samples kept in the window           (default 48)
  *   min / max      vertical domain; "auto" tracks the buffer (default auto)
@@ -37,7 +38,7 @@ import { bandOf, type Band } from "./bands";
 
 export class TalosTrend extends HTMLElement {
   static get observedAttributes() {
-    return ["value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"];
+    return ["data", "value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"];
   }
 
   private root: ShadowRoot;
@@ -131,6 +132,15 @@ export class TalosTrend extends HTMLElement {
   private lastValueAttr: string | null = null;
 
   connectedCallback(): void {
+    // Declarative seed: `data="40 52 48 …"` fills the window so a static trend
+    // draws a real curve (a lone `value` would render a single dot). Mirrors
+    // <talos-spark>'s points= series. push()/value still drive live updates.
+    if (this.hasAttribute("data") && this.buf.length === 0) {
+      this.buf = (this.getAttribute("data") ?? "")
+        .split(/[\s,]+/)
+        .map(Number)
+        .filter(Number.isFinite);
+    }
     if (this.hasAttribute("value") && this.buf.length === 0) {
       this.buf.push(this.num("value", 0));
       this.lastValueAttr = this.getAttribute("value");

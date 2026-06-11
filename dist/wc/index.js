@@ -501,7 +501,7 @@ var TalosGauge = class extends HTMLElement {
 // src/wc/talos-trend.ts
 var TalosTrend = class extends HTMLElement {
   static get observedAttributes() {
-    return ["value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"];
+    return ["data", "value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"];
   }
   root;
   line;
@@ -591,6 +591,9 @@ var TalosTrend = class extends HTMLElement {
   observer;
   lastValueAttr = null;
   connectedCallback() {
+    if (this.hasAttribute("data") && this.buf.length === 0) {
+      this.buf = (this.getAttribute("data") ?? "").split(/[\s,]+/).map(Number).filter(Number.isFinite);
+    }
     if (this.hasAttribute("value") && this.buf.length === 0) {
       this.buf.push(this.num("value", 0));
       this.lastValueAttr = this.getAttribute("value");
