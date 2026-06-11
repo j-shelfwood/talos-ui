@@ -1,9 +1,10 @@
 /* ============================================================================
    @j_shelfwood/talos-ui — TALOS-NAV.CSS  (opt-in module)
    App/site navigation chrome: tabs, breadcrumbs, pagination, menus, sidebar
-   nav, stepper, toolbar. Plain CSS; import AFTER talos.css. The marketing
-   navbar/footer live in talos-blog.css — this file is the application surface
-   and deliberately uses distinct class names.
+   nav, stepper, toolbar. Plain CSS; import AFTER talos.css. This is the
+   *application* navigation surface — instrument-console nav. Marketing-site
+   chrome (a fixed navbar pill, footer) is intentionally NOT in the pack;
+   sites own that themselves.
 
      <link rel="stylesheet" href=".../talos-ui/talos.css" />
      <link rel="stylesheet" href=".../talos-ui/talos-nav.css" />

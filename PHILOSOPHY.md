@@ -128,12 +128,37 @@ when motion is off was decoration wearing a function's coat.
 
 ## What this means for the library
 
-The center of gravity is the **data-binding primitive layer**: components that
-take a *value* and render its *meaning* (gauges, trend lines, threshold meters,
-flow lines, status fields where the color **is** the status), plus the
-**non-document layouts** (the console shell) that show the alternative to the
-A4 column. The chamfered-panel chrome and the gallery of cards are the *frame*
-and the *reference* — necessary, but not the point. The point is the
-instruments.
+The library is built in **two tiers**, and they are not equals.
 
-Every addition is measured against the thesis, the law, and the test above.
+**Tier 1 — the instruments (the point).** The data-binding primitive layer:
+components that take a *value* and render its *meaning* — gauges, trend lines,
+threshold meters, flow lines, status fields where the colour **is** the status —
+plus the **non-document layouts** (the console shell) that show the alternative
+to the A4 column. This tier *is* the thesis. The law applies to it without
+exception: every visual property here is bound to domain state, full stop. This
+is what Talos is *for*, and it is where new design energy goes first.
+
+**Tier 2 — the frame (the chrome and controls).** The chamfered panels, the
+buttons, forms, navigation, feedback, data display, and prose — a complete
+dark-monochrome HUD component kit. Honestly, by surface area this tier is most
+of the library, and most of what a consumer touches day to day. We do not
+pretend otherwise. But it is the *frame*: it exists to house the instruments and
+to carry the aesthetic, not to embody the thesis. Its job is to be tasteful,
+consistent, and out of the way.
+
+The relationship between the tiers is the discipline:
+
+- **The law is absolute in Tier 1, a guideline in Tier 2.** An instrument with a
+  decorative property is a bug. A panel with a hover sheen is fine — but it earns
+  its place by setting the HUD *mood*, and it must stay subordinate: it may
+  never *fake* telemetry (a glow that looks like a status signal but isn't is
+  forbidden in *both* tiers — that's the one rule that crosses the line).
+- **Tier 2 serves Tier 1.** A new control is measured by whether it helps house
+  or drive instruments. Tier 2 does not grow for its own sake; if a component
+  belongs to a generic SaaS kit and does nothing for an instrument console, it
+  is out of scope (this is why prose/marketing styling is *not* part of the
+  pack — see DESIGN.md).
+
+Every Tier 1 addition is measured against the thesis, the law, and the test
+above. Every Tier 2 addition is measured against: *does this frame an
+instrument, in this aesthetic, without faking signal?*

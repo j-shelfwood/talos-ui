@@ -1827,6 +1827,182 @@ var TalosStat = class extends HTMLElement {
   }
 };
 
+// src/wc/talos-led.ts
+var TalosLed = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["state", "value", "warn", "crit", "invert", "live", "label", "size"];
+  }
+  root;
+  constructor() {
+    super();
+    this.root = this.attachShadow({ mode: "open" });
+    this.root.innerHTML = /* html */
+    `
+      <style>
+        :host {
+          /* band tokens, identical fallbacks to the other instruments */
+          --_ok: var(--talos-success, hsl(140 90% 60%));
+          --_warn: var(--talos-warning, hsl(38 92% 60%));
+          --_crit: var(--talos-danger, hsl(0 80% 62%));
+          --_idle: var(--talos-muted-foreground, hsl(0 0% 60%));
+          --_c: var(--_ok);
+          --_d: 10px;
+
+          display: inline-block;
+          line-height: 0;
+          vertical-align: middle;
+        }
+        .dot {
+          width: var(--_d);
+          height: var(--_d);
+          border-radius: 50%;
+          background: var(--_c);
+          /* glow encodes presence, not decoration: it's the state colour, sized
+             to the dot, so a brighter halo never means anything the fill doesn't. */
+          box-shadow: 0 0 calc(var(--_d) * 0.6) hsl(var(--_c-hsl, 0 0% 100%) / 0);
+          transition: background var(--talos-dur-fast, 180ms) var(--talos-ease-out, ease);
+        }
+        :host([state="idle"]:not([value])) .dot { background: var(--_idle); }
+        /* live = actively reporting: a slow steady pulse. */
+        :host([live]) .dot { animation: talos-led-pulse 2.4s ease-in-out infinite; }
+        @keyframes talos-led-pulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 0 0 transparent; }
+          50%      { opacity: 0.55; box-shadow: 0 0 calc(var(--_d) * 0.8) var(--_c); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          /* honest fallback: hold the lit state, drop the pulse. */
+          :host([live]) .dot { animation: none; opacity: 1; }
+        }
+      </style>
+      <span class="dot" part="dot"></span>`;
+  }
+  connectedCallback() {
+    this.render();
+  }
+  attributeChangedCallback() {
+    this.render();
+  }
+  render() {
+    const size = parseFloat(this.getAttribute("size") ?? "");
+    this.style.setProperty("--_d", Number.isFinite(size) ? `${size}px` : "10px");
+    let varName = "--_ok";
+    let label;
+    const valueAttr = this.getAttribute("value");
+    if (valueAttr !== null && Number.isFinite(parseFloat(valueAttr))) {
+      const band = bandOf(this, parseFloat(valueAttr));
+      varName = band === "critical" ? "--_crit" : band === "warning" ? "--_warn" : "--_ok";
+      label = band;
+    } else {
+      const state = (this.getAttribute("state") ?? "ok").toLowerCase();
+      varName = state === "crit" ? "--_crit" : state === "warn" ? "--_warn" : state === "idle" ? "--_idle" : "--_ok";
+      label = state;
+    }
+    this.style.setProperty("--_c", `var(${varName})`);
+    this.setAttribute("role", "status");
+    const lbl = this.getAttribute("label");
+    const live = this.hasAttribute("live") ? ", live" : "";
+    this.setAttribute("aria-label", `${lbl ? lbl + ": " : ""}${label}${live}`);
+  }
+};
+
+// src/wc/talos-toggle.ts
+var TalosToggle = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["options", "value", "label"];
+  }
+  root;
+  group;
+  constructor() {
+    super();
+    this.root = this.attachShadow({ mode: "open" });
+    this.root.innerHTML = /* html */
+    `
+      <style>
+        :host {
+          --_edge: var(--talos-edge-default, hsl(0 0% 100% / 0.18));
+          --_fg: var(--talos-foreground, hsl(0 0% 100%));
+          --_muted: var(--talos-muted-foreground, hsl(0 0% 60%));
+          --_on-bg: var(--talos-foreground, hsl(0 0% 100%));
+          --_on-fg: var(--talos-background, hsl(0 0% 0%));
+          display: inline-block;
+        }
+        .group {
+          display: inline-flex;
+          border: 1px solid var(--_edge);
+          /* dense content control \u2192 the documented radius-sm geometry, not chamfer */
+          border-radius: var(--talos-radius-sm, 2px);
+          overflow: hidden;
+        }
+        button {
+          appearance: none;
+          border: 0;
+          background: transparent;
+          color: var(--_muted);
+          font-family: var(--talos-font-display, system-ui);
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: var(--talos-tracking-hud-tight, 0.08em);
+          padding: 0.4rem 0.85rem;
+          cursor: pointer;
+          transition: color var(--talos-dur-fast, 180ms) var(--talos-ease-out, ease),
+                      background var(--talos-dur-fast, 180ms) var(--talos-ease-out, ease);
+        }
+        button + button { border-left: 1px solid var(--_edge); }
+        button:hover { color: var(--_fg); }
+        button[aria-pressed="true"] {
+          background: var(--_on-bg);
+          color: var(--_on-fg);
+        }
+        button:focus-visible {
+          outline: var(--talos-focus-ring-width, 1px) solid var(--talos-focus-ring, hsl(0 0% 100% / 0.9));
+          outline-offset: -2px;
+        }
+      </style>
+      <div class="group" part="group" role="group"></div>`;
+    this.group = this.root.querySelector(".group");
+    this.group.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (btn?.dataset.value != null) this.select(btn.dataset.value);
+    });
+  }
+  connectedCallback() {
+    this.render();
+  }
+  attributeChangedCallback() {
+    this.render();
+  }
+  get value() {
+    return this.getAttribute("value") ?? this.parseOptions()[0]?.value ?? "";
+  }
+  set value(v) {
+    this.setAttribute("value", v);
+  }
+  parseOptions() {
+    const raw = this.getAttribute("options") ?? "";
+    return raw.split(",").map((s) => s.trim()).filter(Boolean).map((tok) => {
+      const i = tok.indexOf(":");
+      return i === -1 ? { value: tok, label: tok } : { value: tok.slice(0, i), label: tok.slice(i + 1) };
+    });
+  }
+  /** User selection: update value + announce. No-op if unchanged. */
+  select(value) {
+    if (value === this.value) return;
+    this.value = value;
+    this.dispatchEvent(
+      new CustomEvent("talos:change", { detail: { value }, bubbles: true })
+    );
+  }
+  render() {
+    const options = this.parseOptions();
+    const current = this.value;
+    this.group.innerHTML = options.map(
+      (o) => `<button type="button" part="segment" data-value="${o.value}" aria-pressed="${o.value === current ? "true" : "false"}">${o.label}</button>`
+    ).join("");
+    const lbl = this.getAttribute("label");
+    if (lbl) this.group.setAttribute("aria-label", lbl);
+  }
+};
+
 // src/wc/index.ts
 function define(name, ctor) {
   if (!customElements.get(name)) customElements.define(name, ctor);
@@ -1846,6 +2022,8 @@ if (typeof customElements !== "undefined") {
   define("talos-dots", TalosDots);
   define("talos-delta", TalosDelta);
   define("talos-stat", TalosStat);
+  define("talos-led", TalosLed);
+  define("talos-toggle", TalosToggle);
 }
 export {
   PanelShapeBuilder,
@@ -1854,6 +2032,7 @@ export {
   TalosDots,
   TalosFlow,
   TalosGauge,
+  TalosLed,
   TalosMeter,
   TalosNotch,
   TalosOrbital,
@@ -1862,5 +2041,6 @@ export {
   TalosSheen,
   TalosSpark,
   TalosStat,
+  TalosToggle,
   TalosTrend
 };

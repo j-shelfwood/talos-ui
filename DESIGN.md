@@ -42,7 +42,7 @@ old talos cyan/orange/red neon — the monochrome direction is deliberate.
 Corners are **cut, never rounded**. Geometry replaces `border-radius`.
 
 - Panels: `--talos-chamfer` 14px, on **top-right + bottom-left** (top-left +
-  bottom-right stay square; brackets attach there).
+  bottom-right stay square).
 - Buttons: `--talos-chamfer-btn` 10px, bottom-right only.
 - Flags/pills: `--talos-chamfer-flag` 8px, top-right only.
 
@@ -81,8 +81,6 @@ fully-rounded `999px` pill (the flag chamfer is the pill shape here).
 - **Cursor sheen:** interactive panels track the pointer (`--talos-mx/my`) and
   paint a soft radial spotlight. Dropped on touch / `hover: none`.
 - **Lift:** `-3px` translate + brightened edge + drop-shadow on hover.
-- **Viewfinder brackets:** 14px L-shapes fade in on the two square corners on
-  hover.
 - **Focus:** edge goes bright white + a single brightness pulse.
 
 ## Ambient
@@ -100,9 +98,11 @@ hard frame. Crosshair hidden on touch.
 | `--talos-ease-out` | `cubic-bezier(0,0,.2,1)` | focus pulse (decel only) |
 | `--talos-dur-fast/mid/slow` | 180 / 360 / 600ms | — |
 
-Bento entrance: children of `.bento-stagger` cascade in (blur+brightness,
-60ms stagger). Keyframes touch opacity + filter only, never `transform`, so
-hover lifts keep working. All motion respects `prefers-reduced-motion`.
+Motion is reserved for telemetry and interaction feedback (hover lift, focus
+pulse, the rate-bound activity edge, the instruments). There is **no decorative
+entrance animation** — a former bento "cascade-in" was removed because an
+entrance flourish depicts nothing about the system (principle 3: *motion is
+telemetry, not transition*). All motion respects `prefers-reduced-motion`.
 
 ## Do / Don't
 

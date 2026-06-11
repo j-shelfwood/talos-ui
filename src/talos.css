@@ -167,41 +167,10 @@
   }
 }
 
-/* ----------------------------------------------------------------------------
-   HUD CORNER BRACKETS — camera-viewfinder L-shapes on the two square corners
-   of interactive cards. Chamfered corners get nothing (the bevel reads as a
-   corner already). Hidden by default, fade in on hover.
-   -------------------------------------------------------------------------- */
-.hud-bracket {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-  opacity: 0;
-  transform: scale(0.7);
-  transition: opacity 220ms ease, transform 220ms var(--talos-ease-glass);
-  z-index: 3;
-}
-.hud-bracket--tl {
-  top: 6px;
-  left: 6px;
-  border-top: 1px solid var(--talos-bracket);
-  border-left: 1px solid var(--talos-bracket);
-}
-.hud-bracket--br {
-  bottom: 6px;
-  right: 6px;
-  border-bottom: 1px solid var(--talos-bracket);
-  border-right: 1px solid var(--talos-bracket);
-}
-.hud-bracket--tr,
-.hud-bracket--bl {
-  display: none;
-}
-.interactive-panel:hover .hud-bracket {
-  opacity: 1;
-  transform: scale(1);
-}
+/* HUD corner brackets were removed: they faded in on hover and encoded nothing
+   the lift + sheen don't already signal. Decoration carrying no information is a
+   Tier-1 violation and unwelcome in Tier-2 chrome too (PHILOSOPHY.md). The
+   activity edge below is the kept pattern — it travels at a rate bound to state. */
 
 /* ----------------------------------------------------------------------------
    ACTIVITY EDGE — a conic ring that travels around a panel's border, whose
@@ -454,39 +423,11 @@
   }
 }
 
-/* ----------------------------------------------------------------------------
-   BENTO CASCADE — staggered entrance for children of .bento-stagger, plus a
-   standalone .cascade-in. Keyframe touches opacity + filter only so element
-   :hover transforms keep working.
-   -------------------------------------------------------------------------- */
-.bento-stagger > * {
-  animation: talos-cascade-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
-  animation-delay: calc(var(--talos-bento-i, 0) * 60ms);
-}
-.bento-stagger > *:nth-child(1) { --talos-bento-i: 0; }
-.bento-stagger > *:nth-child(2) { --talos-bento-i: 1; }
-.bento-stagger > *:nth-child(3) { --talos-bento-i: 2; }
-.bento-stagger > *:nth-child(4) { --talos-bento-i: 3; }
-.bento-stagger > *:nth-child(5) { --talos-bento-i: 4; }
-.bento-stagger > *:nth-child(6) { --talos-bento-i: 5; }
-.bento-stagger > *:nth-child(7) { --talos-bento-i: 6; }
-.bento-stagger > *:nth-child(8) { --talos-bento-i: 7; }
-.bento-stagger > *:nth-child(9) { --talos-bento-i: 8; }
-.bento-stagger > *:nth-child(10) { --talos-bento-i: 9; }
-.bento-stagger > *:nth-child(11) { --talos-bento-i: 10; }
-.bento-stagger > *:nth-child(12) { --talos-bento-i: 11; }
-.bento-stagger > *:nth-child(n + 13) { --talos-bento-i: 12; }
-
-.cascade-in {
-  animation: talos-cascade-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
-  animation-delay: var(--talos-cascade-delay, 0ms);
-}
-
-@keyframes talos-cascade-in {
-  0%   { opacity: 0; filter: blur(10px) brightness(0.9); }
-  60%  { opacity: 1; filter: blur(2px) brightness(1.02); }
-  100% { opacity: 1; filter: blur(0) brightness(1); }
-}
+/* BENTO CASCADE was removed: a staggered blur/brightness ENTRANCE is exactly
+   "motion as transition," which PHILOSOPHY.md principle 3 rejects ("motion is
+   telemetry, not transition"). It depicted nothing about the system — it just
+   animated elements in. Grid layout (.bento-grid / .talos-grid) stays; only the
+   entrance animation is gone. Content is present in the first frame. */
 
 /* ============================================================================
    LAYOUT SYSTEM — plain-CSS bento/mosaic grid + section helpers.
@@ -543,6 +484,4 @@ a.glass-panel .glass-panel-content { text-decoration: none; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .glass-panel { transition: none; }
   .interactive-panel:hover { --talos-lift: 0px; }
-  .bento-stagger > *,
-  .cascade-in { animation: none; }
 }

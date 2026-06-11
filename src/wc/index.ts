@@ -18,8 +18,10 @@ import { TalosSpark } from "./talos-spark";
 import { TalosDots } from "./talos-dots";
 import { TalosDelta } from "./talos-delta";
 import { TalosStat } from "./talos-stat";
+import { TalosLed } from "./talos-led";
+import { TalosToggle } from "./talos-toggle";
 
-export { TalosPanel, TalosCorner, TalosNotch, TalosGauge, TalosTrend, TalosMeter, TalosFlow, TalosOrbital, TalosSheen, TalosReadout, TalosSpark, TalosDots, TalosDelta, TalosStat };
+export { TalosPanel, TalosCorner, TalosNotch, TalosGauge, TalosTrend, TalosMeter, TalosFlow, TalosOrbital, TalosSheen, TalosReadout, TalosSpark, TalosDots, TalosDelta, TalosStat, TalosLed, TalosToggle };
 export type { Band } from "./bands";
 export type { OrbitalNode } from "./talos-orbital";
 export { PanelShapeBuilder } from "./PanelShapeBuilder";
@@ -44,4 +46,6 @@ if (typeof customElements !== "undefined") {
   define("talos-dots", TalosDots);
   define("talos-delta", TalosDelta);
   define("talos-stat", TalosStat);
+  define("talos-led", TalosLed);
+  define("talos-toggle", TalosToggle);
 }

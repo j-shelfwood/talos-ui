@@ -8,7 +8,7 @@
    ========================================================================== */
 
 /* Bento grid — 4 cols (mobile) → 8 (md) → 12 (lg). Pair children with
-   .col-span-* / .row-span-*. Wrap in .bento-stagger for the cascade entrance. */
+   .col-span-* / .row-span-*. */
 .talos-grid {
   display: grid;
   width: 100%;

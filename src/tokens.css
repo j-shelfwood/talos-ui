@@ -61,7 +61,6 @@
   --talos-hud-fill: hsl(0 0% 5%);
   --talos-hud-edge: hsl(0 0% 100% / 0.28);
   --talos-hud-edge-hot: hsl(0 0% 100% / 0.7);
-  --talos-bracket: hsl(0 0% 100% / 0.85);
   /* Translucent glass surface — for overlaid chrome (file-tree rows, popovers)
      that sit ON content rather than the page void. Lighter + softer-edged than
      the opaque --talos-hud-* pair above. */

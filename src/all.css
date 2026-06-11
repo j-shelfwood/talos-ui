@@ -10,11 +10,22 @@
    tokens.css is pulled in transitively by talos.css, so it is not re-imported.
    ========================================================================== */
 
-@import "./talos.css";        /* tokens + core: panels, button, ambient        */
-@import "./talos-layout.css"; /* grid + spans, padding, flex, eyebrow, dot      */
-@import "./talos-forms.css";  /* inputs, select, checkbox/radio/switch, range */
-@import "./talos-feedback.css"; /* badges, alerts, toasts, progress, spinner…  */
-@import "./talos-data.css";   /* tables, stats, code, log, avatar, meter        */
-@import "./talos-nav.css";    /* tabs, breadcrumbs, menu, sidebar, stepper      */
-@import "./talos-console.css"; /* non-document layout: zoned fixed-viewport shell */
-@import "./talos-blog.css";   /* prose, marketing navbar/footer, tags           */
+/* Two tiers (see PHILOSOPHY.md). Tier 1 = the instruments + the console shell
+   that houses them (the point). Tier 2 = the frame: chrome and controls that
+   carry the aesthetic and house the instruments. Import order is dependency-
+   driven (tokens/core first), so the tiers interleave below — the T1/T2 marks
+   say which is which. The live instruments themselves are web components,
+   imported from "@j_shelfwood/talos-ui/wc", not CSS. */
+
+@import "./talos.css";        /* T2 core: tokens + panels, button, ambient      */
+@import "./talos-layout.css"; /* T2 grid + spans, padding, flex, eyebrow, dot   */
+@import "./talos-forms.css";  /* T2 inputs, select, checkbox/radio/switch, range*/
+@import "./talos-feedback.css"; /* T2 badges, alerts, toasts, progress, spinner */
+@import "./talos-data.css";   /* T2 tables, stats, code, log, avatar, meter     */
+@import "./talos-nav.css";    /* T2 tabs, breadcrumbs, menu, sidebar, stepper   */
+@import "./talos-console.css"; /* T1 the instrument console: zoned non-doc shell */
+
+/* talos-blog.css (prose, marketing navbar/footer, tags) was removed: a static
+   long-form/marketing module contradicts the "live, not static" thesis and was
+   pure Tier-2 scope creep. Consumers needing prose styling bring their own; the
+   marketing navbar moved to the showcase site, which owns its own chrome. */
