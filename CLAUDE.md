@@ -50,7 +50,10 @@ dark-monochrome HUD design system. See `README.md` (consumer docs),
 
 ```sh
 bun install
-bun run build   # tsup → dist/  (run before publish; dist is gitignored)
+bun run build   # tsup → dist/  (the showcase site consumes this repo as a git
+                # dependency, so dist/ is COMMITTED — not gitignored — to ship
+                # prebuilt artifacts to git-dep consumers; rebuild + commit it
+                # when src/ changes. There is no `prepare`/install-time build.)
 bun run test    # bun test (currently bands.test.ts; coverage is thin — expand it)
 bun run dev     # tsup --watch
 ```
