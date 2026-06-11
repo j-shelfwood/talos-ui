@@ -299,6 +299,13 @@
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud-tight);
   color: var(--talos-text-tertiary);
+  /* The step column is full-width (the connector ::after spans it at left:50%
+     / width:100%), so the centred label must NOT fill the column or adjacent
+     labels touch. Cap its width and let it ellipsize rather than collide. */
+  max-width: calc(100% - 0.75rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* Connector — a hairline from this node's centre to the next. */
 .talos-step:not(:last-child)::after {

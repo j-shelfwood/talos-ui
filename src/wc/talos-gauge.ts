@@ -166,7 +166,7 @@ export class TalosGauge extends HTMLElement {
     // an unfiltered observer would catch its own write-backs → infinite loop /
     // frozen renderer. Only observe the real inputs.
     this.observer.observe(this, {
-      attributeFilter: ["value", "min", "max", "warn", "crit", "label", "unit", "sweep", "size"],
+      attributeFilter: ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "sweep", "size"],
     });
   }
 

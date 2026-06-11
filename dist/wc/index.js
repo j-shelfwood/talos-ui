@@ -380,7 +380,7 @@ var TalosGauge = class extends HTMLElement {
     this.observer = new MutationObserver(() => this.update());
     this.startEase();
     this.observer.observe(this, {
-      attributeFilter: ["value", "min", "max", "warn", "crit", "label", "unit", "sweep", "size"]
+      attributeFilter: ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "sweep", "size"]
     });
   }
   disconnectedCallback() {
@@ -826,7 +826,7 @@ var TalosMeter = class extends HTMLElement {
     this.render();
     this.observer = new MutationObserver(() => this.update());
     this.observer.observe(this, {
-      attributeFilter: ["value", "min", "max", "warn", "crit", "label", "unit", "width", "ticks"]
+      attributeFilter: ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "width", "ticks"]
     });
     this.startEase();
   }

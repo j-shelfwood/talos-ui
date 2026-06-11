@@ -147,7 +147,7 @@ export class TalosMeter extends HTMLElement {
     // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
     // unfiltered observer would loop on its own write-backs.
     this.observer.observe(this, {
-      attributeFilter: ["value", "min", "max", "warn", "crit", "label", "unit", "width", "ticks"],
+      attributeFilter: ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "width", "ticks"],
     });
     // Single persistent rAF eases the fill toward the live target (see
     // talos-gauge: per-mutation tweens deadlocked under rapid updates).
