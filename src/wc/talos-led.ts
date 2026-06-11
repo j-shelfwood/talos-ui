@@ -54,6 +54,9 @@ export class TalosLed extends HTMLElement {
           vertical-align: middle;
         }
         .dot {
+          /* MUST be block/inline-block: a bare inline <span> ignores width/height
+             and collapses to a 0×0 box — the dot was invisible despite a colour. */
+          display: block;
           width: var(--_d);
           height: var(--_d);
           border-radius: 50%;
