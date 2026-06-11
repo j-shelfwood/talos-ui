@@ -13,10 +13,13 @@
    ========================================================================== */
 
 /* @property registrations — animatable custom props. Smooth `width` interp on
-   the progress bar; safe no-op where @property is unsupported. */
+   the progress bar; safe no-op where @property is unsupported. inherits:true is
+   REQUIRED: the value is set on .talos-progress (parent) and read by the
+   __bar child's width:calc() — inherits:false made every bar render at 0%.
+   Must match the talos-data.css registration. */
 @property --talos-value {
   syntax: "<number>";
-  inherits: false;
+  inherits: true;
   initial-value: 0;
 }
 

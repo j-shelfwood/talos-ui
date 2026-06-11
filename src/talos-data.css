@@ -9,11 +9,15 @@
      <link rel="stylesheet" href=".../talos-ui/talos-data.css" />
    ========================================================================== */
 
-/* Animatable fill ratio for meters (0–100). Idempotent re-declare; matches the
-   registration in talos-feedback.css. */
+/* Animatable fill ratio for meters/progress (0–100). MUST inherit: the value is
+   set on the parent (.talos-meter / .talos-progress) and consumed by the child
+   fill via width:calc(var(--talos-value)*1%). With inherits:false the child read
+   the initial 0 → every fill rendered empty. Idempotent re-declare; the matching
+   registration in talos-feedback.css must keep inherits:true too (a mismatched
+   @property re-registration is ignored). */
 @property --talos-value {
   syntax: "<number>";
-  inherits: false;
+  inherits: true;
   initial-value: 0;
 }
 
