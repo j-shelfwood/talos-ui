@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Talos UI canonical mark: a SOLID inverted triangle (a bold filled
+       'descend' silhouette) with a wide, shallow rounded NOTCH bitten from its
+       lower-right edge — the design system's notch motif, as the brand's one
+       tell. Solid white, no outline, no letter, transparent background so it
+       composites on any surface. Mark colour: hsl(0 0% 95%). -->
+  <path d="M5.6 7.2
+           Q5 6 6.4 6
+           H25.6
+           Q27 6 26.4 7.2
+           L23.13 13.72 Q22.82 14.35 22.19 14.04
+           L21.84 13.86 Q21.21 13.55 20.90 14.18
+           L18.84 18.29 Q18.53 18.92 19.16 19.23
+           L19.51 19.41 Q20.14 19.72 19.83 20.35
+           L16.9 26.2
+           Q16 28 15.1 26.2
+           Z"
+        fill="hsl(0 0% 95%)" stroke-linejoin="round"/>
+</svg>

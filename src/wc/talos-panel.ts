@@ -1,4 +1,5 @@
 import { PanelShapeBuilder, type Segment } from "./PanelShapeBuilder";
+import { prefersReducedMotion } from "./bands";
 
 /**
  * <talos-panel> — chamfered/notched panel rendered as an SVG outline, with
@@ -147,7 +148,7 @@ export class TalosPanel extends HTMLElement {
     // The stroke-draw is an entrance flourish; the outline is the same shape
     // either way, so under prefers-reduced-motion we mark it done and skip the
     // animation entirely (no offset trickery to unwind) — honesty clause.
-    if (this.hasAttribute("animate") && !this.animatedOnce && !this.reducedMotion) {
+    if (this.hasAttribute("animate") && !this.animatedOnce && !prefersReducedMotion()) {
       this.animatedOnce = true;
       this.draw();
     }
@@ -195,12 +196,6 @@ export class TalosPanel extends HTMLElement {
     }
   }
 
-  private get reducedMotion(): boolean {
-    return (
-      typeof matchMedia !== "undefined" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
-  }
 
   private draw(): void {
     const duration = this.dim("animation-duration", 800);

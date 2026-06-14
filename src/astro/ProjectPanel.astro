@@ -3,7 +3,7 @@
  * ProjectPanel — project link card: header (title + directional corner glyph),
  * muted description, and a tag row. Renders as an anchor when `href` is set so
  * the GlassPanel HUD brackets light up on hover. De-Tailwinded.
- * Requires "@j_shelfwood/talos-ui/talos.css".
+ * Requires "@j_shelfwood/talos-ui/talos.css" + "/talos-feedback.css" (tag badges).
  */
 import GlassPanel from "./GlassPanel.astro";
 
@@ -43,7 +43,7 @@ const linkProps = href
 
   {tags.length > 0 && (
     <div class="project-card__tags">
-      {tags.map((tag) => <span class="talos-tag">{tag}</span>)}
+      {tags.map((tag) => <span class="talos-badge talos-badge--sm">{tag}</span>)}
     </div>
   )}
 </GlassPanel>

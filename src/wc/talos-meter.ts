@@ -21,7 +21,7 @@
  *   ticks          if present, draw warn/crit tick marks (default on when
  *                  warn/crit set; pass ticks="off" to suppress)
  */
-import { bandOf, type Band } from "./bands";
+import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
 
 export class TalosMeter extends HTMLElement {
   static get observedAttributes() {
@@ -136,7 +136,7 @@ export class TalosMeter extends HTMLElement {
   private observer?: MutationObserver;
 
   connectedCallback(): void {
-    this.shown = this.num("value", 0);
+    this.shown = num(this, "value", 0);
     this.render();
     // Reactivity is driven by a filtered MutationObserver (not
     // attributeChangedCallback). render() writes role/aria-* back onto the host,
@@ -159,21 +159,9 @@ export class TalosMeter extends HTMLElement {
     this.observer?.disconnect();
   }
 
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
-  }
-
-  private get reducedMotion(): boolean {
-    return (
-      typeof matchMedia !== "undefined" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
-  }
-
   /** Render immediately from the true value (colour + readout exact at once). */
   private update(): void {
-    if (this.reducedMotion) this.shown = this.num("value", this.shown);
+    if (prefersReducedMotion()) this.shown = num(this, "value", this.shown);
     this.render();
   }
 
@@ -181,7 +169,7 @@ export class TalosMeter extends HTMLElement {
   private startEase(): void {
     cancelAnimationFrame(this.frame);
     const loop = () => {
-      const target = this.num("value", this.shown);
+      const target = num(this, "value", this.shown);
       const diff = target - this.shown;
       if (Math.abs(diff) > 0.5) {
         this.shown += diff * 0.18;
@@ -200,16 +188,16 @@ export class TalosMeter extends HTMLElement {
   }
 
   private render(): void {
-    const width = this.num("width", 200);
-    const min = this.num("min", 0);
-    const max = this.num("max", 100);
+    const width = num(this, "width", 200);
+    const min = num(this, "min", 0);
+    const max = num(this, "max", 100);
     this.style.width = `${width}px`;
 
     // LENGTH uses the tweening `shown`; COLOUR + readout use the true value so
     // the band never lags the data (see talos-gauge for the rationale).
     const clamped = Math.max(min, Math.min(max, this.shown));
     const frac = max > min ? (clamped - min) / (max - min) : 0;
-    const target = Math.max(min, Math.min(max, this.num("value", this.shown)));
+    const target = Math.max(min, Math.min(max, num(this, "value", this.shown)));
 
     const band = this.band(target);
     const bandVar =
@@ -241,7 +229,7 @@ export class TalosMeter extends HTMLElement {
     this.caption.textContent = this.getAttribute("label") ?? "";
 
     this.setAttribute("role", "meter");
-    this.setAttribute("aria-valuenow", String(Math.round(this.num("value", 0))));
+    this.setAttribute("aria-valuenow", String(Math.round(num(this, "value", 0))));
     this.setAttribute("aria-valuemin", String(min));
     this.setAttribute("aria-valuemax", String(max));
     const lbl = this.getAttribute("label");

@@ -29,7 +29,7 @@
  * invert semantics to gauge/meter/trend; a starved link (low throughput as a
  * symptom) reads red via `invert`.
  */
-import { bandOf, type Band } from "./bands";
+import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
 
 export class TalosFlow extends HTMLElement {
   static get observedAttributes() {
@@ -113,30 +113,18 @@ export class TalosFlow extends HTMLElement {
     this.observer?.disconnect();
   }
 
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
-  }
-
-  private get reducedMotion(): boolean {
-    return (
-      typeof matchMedia !== "undefined" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
-  }
-
   private band(value: number): Band {
     return bandOf(this, value);
   }
 
   private pathD(): string {
-    const w = this.num("width", 200);
-    const h = this.num("height", 40);
-    const x1 = this.num("x1", 4);
-    const y1 = this.num("y1", h / 2);
-    const x2 = this.num("x2", w - 4);
-    const y2 = this.num("y2", h / 2);
-    const curve = this.num("curve", 0);
+    const w = num(this, "width", 200);
+    const h = num(this, "height", 40);
+    const x1 = num(this, "x1", 4);
+    const y1 = num(this, "y1", h / 2);
+    const x2 = num(this, "x2", w - 4);
+    const y2 = num(this, "y2", h / 2);
+    const curve = num(this, "curve", 0);
     if (curve === 0) return `M ${x1} ${y1} L ${x2} ${y2}`;
     const mx = (x1 + x2) / 2;
     const my = (y1 + y2) / 2 - curve;
@@ -144,8 +132,8 @@ export class TalosFlow extends HTMLElement {
   }
 
   private render(): void {
-    const w = this.num("width", 200);
-    const h = this.num("height", 40);
+    const w = num(this, "width", 200);
+    const h = num(this, "height", 40);
     const svg = this.root.querySelector("svg")!;
     svg.setAttribute("width", String(w));
     svg.setAttribute("height", String(h));
@@ -155,7 +143,7 @@ export class TalosFlow extends HTMLElement {
     this.base.setAttribute("d", d);
     this.dash.setAttribute("d", d);
 
-    const rate = Math.max(0, this.num("rate", 0));
+    const rate = Math.max(0, num(this, "rate", 0));
     const band = this.band(rate);
     const bandVar =
       band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
@@ -165,7 +153,7 @@ export class TalosFlow extends HTMLElement {
     // "connected, nothing flowing".
     this.dash.style.opacity = rate <= 0 ? "0" : "1";
 
-    if (this.reducedMotion) {
+    if (prefersReducedMotion()) {
       // Static honest fallback: directional chevrons instead of travel.
       this.dash.style.opacity = "0";
       this.chevrons.style.display = rate > 0 ? "block" : "none";
@@ -177,7 +165,7 @@ export class TalosFlow extends HTMLElement {
     this.setAttribute("role", "img");
     this.setAttribute(
       "aria-label",
-      `flow ${rate > 0 ? rate.toFixed(0) + "/" + this.num("max", 100).toFixed(0) : "idle"}` +
+      `flow ${rate > 0 ? rate.toFixed(0) + "/" + num(this, "max", 100).toFixed(0) : "idle"}` +
         ` ${this.hasAttribute("reverse") ? "reverse" : "forward"}, ${band}`,
     );
   }
@@ -208,9 +196,9 @@ export class TalosFlow extends HTMLElement {
     const dt = this.last ? (now - this.last) / 1000 : 0;
     this.last = now;
 
-    if (!this.reducedMotion) {
-      const rate = Math.max(0, this.num("rate", 0));
-      const max = Math.max(1, this.num("max", 100));
+    if (!prefersReducedMotion()) {
+      const rate = Math.max(0, num(this, "rate", 0));
+      const max = Math.max(1, num(this, "max", 100));
       // Speed ∝ rate, saturating at max. ~60 dash-units/sec at full rate.
       const speed = Math.min(rate / max, 1) * 60;
       const dir = this.hasAttribute("reverse") ? 1 : -1; // negative offset travels forward

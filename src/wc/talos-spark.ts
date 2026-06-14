@@ -1,4 +1,4 @@
-import { bandOf } from "./bands";
+import { bandOf, num } from "./bands";
 
 /**
  * <talos-spark> — a compact inline sparkline. The small sibling of <talos-trend>:
@@ -9,12 +9,13 @@ import { bandOf } from "./bands";
  *   - SHAPE   the recent series, scaled to [min,max] over the buffer width.
  *   - COLOUR  the band of the CURRENT (last) value drives the stroke — colour
  *             IS the state. Honours `invert` (low = bad) like every instrument.
- *   - LIVE    push(v) appends a sample; or set the `points` attribute to a
+ *   - LIVE    push(v) appends a sample; or set the `data` attribute to a
  *             comma/space list. A frozen frame still shows the shape (motion
  *             test) — there is no animation to lose under reduced-motion.
  *
  * Attributes:
- *   points        initial series, comma/space separated   (optional)
+ *   data          initial series, comma/space separated   (optional)
+ *                 (`points` is accepted as a deprecated alias)
  *   min / max     domain for the y-scale                  (default 0 / 100)
  *   warn / crit   band thresholds on the current value    (optional)
  *   invert        low = bad (flips band direction)        (optional)
@@ -25,7 +26,12 @@ import { bandOf } from "./bands";
  */
 export class TalosSpark extends HTMLElement {
   static get observedAttributes() {
-    return ["points", "min", "max", "warn", "crit", "invert", "fill"];
+    return ["data", "points", "min", "max", "warn", "crit", "invert", "fill"];
+  }
+
+  /** The seed series: canonical `data=`, with `points=` as a deprecated alias. */
+  private seedAttr(): string | null {
+    return this.getAttribute("data") ?? this.getAttribute("points");
   }
 
   private root: ShadowRoot;
@@ -67,7 +73,7 @@ export class TalosSpark extends HTMLElement {
   }
 
   connectedCallback(): void {
-    const attr = this.getAttribute("points");
+    const attr = this.seedAttr();
     if (attr) this.buf = attr.split(/[\s,]+/).map(Number).filter(Number.isFinite);
     this.schedule();
   }
@@ -77,8 +83,8 @@ export class TalosSpark extends HTMLElement {
   }
 
   attributeChangedCallback(name: string): void {
-    if (name === "points") {
-      const attr = this.getAttribute("points");
+    if (name === "data" || name === "points") {
+      const attr = this.seedAttr();
       this.buf = attr ? attr.split(/[\s,]+/).map(Number).filter(Number.isFinite) : [];
     }
     this.schedule();
@@ -87,15 +93,10 @@ export class TalosSpark extends HTMLElement {
   /** Append a sample and re-render (the streaming entry point). */
   push(value: number): void {
     if (!Number.isFinite(value)) return;
-    const cap = this.num("cap", 32);
+    const cap = num(this, "cap", 32);
     this.buf.push(value);
     while (this.buf.length > cap) this.buf.shift();
     this.schedule();
-  }
-
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
   }
 
   private schedule(): void {
@@ -105,12 +106,24 @@ export class TalosSpark extends HTMLElement {
 
   private render(): void {
     const n = this.buf.length;
-    const min = this.num("min", 0);
-    const max = this.num("max", 100);
+    const min = num(this, "min", 0);
+    const max = num(this, "max", 100);
     const span = max - min || 1;
     const W = 100, H = 16;
 
-    if (n < 2) { this.line.setAttribute("points", ""); this.area.setAttribute("points", ""); return; }
+    // Text alternative for assistive tech. role/aria-label are not in
+    // observedAttributes, so writing them never re-enters attributeChangedCallback.
+    this.setAttribute("role", "img");
+
+    if (n < 2) {
+      this.line.setAttribute("points", "");
+      this.area.setAttribute("points", "");
+      this.setAttribute(
+        "aria-label",
+        n === 1 ? `Sparkline, 1 point, current ${this.buf[0]}` : "Sparkline, no data",
+      );
+      return;
+    }
 
     const pts = this.buf
       .map((v, i) => {
@@ -132,5 +145,11 @@ export class TalosSpark extends HTMLElement {
     const band = bandOf(this, this.buf[n - 1]);
     if (band === "nominal") this.removeAttribute("data-band");
     else this.setAttribute("data-band", band);
+
+    // Live description reuses the current value + its band (computed above).
+    this.setAttribute(
+      "aria-label",
+      `Sparkline, ${n} points, current ${this.buf[n - 1]}, ${band}`,
+    );
   }
 }

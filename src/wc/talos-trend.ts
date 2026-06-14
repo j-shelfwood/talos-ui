@@ -34,7 +34,7 @@
  * Banding on the current value uses the shared bandOf() helper (bands.ts) —
  * same threshold + invert semantics as gauge/meter.
  */
-import { bandOf, type Band } from "./bands";
+import { bandOf, num, type Band } from "./bands";
 
 export class TalosTrend extends HTMLElement {
   static get observedAttributes() {
@@ -142,7 +142,7 @@ export class TalosTrend extends HTMLElement {
         .filter(Number.isFinite);
     }
     if (this.hasAttribute("value") && this.buf.length === 0) {
-      this.buf.push(this.num("value", 0));
+      this.buf.push(num(this, "value", 0));
       this.lastValueAttr = this.getAttribute("value");
     }
     this.render();
@@ -158,7 +158,7 @@ export class TalosTrend extends HTMLElement {
         const v = this.getAttribute("value");
         if (v !== this.lastValueAttr) {
           this.lastValueAttr = v;
-          this.push(this.num("value", 0));
+          this.push(num(this, "value", 0));
         }
       } else {
         this.scheduleRender();
@@ -178,7 +178,7 @@ export class TalosTrend extends HTMLElement {
 
   /** Append a sample and scroll the window. Preferred entry for streams. */
   push(value: number): void {
-    const cap = Math.max(2, this.num("points", 48));
+    const cap = Math.max(2, num(this, "points", 48));
     this.buf.push(value);
     while (this.buf.length > cap) this.buf.shift();
     // Render synchronously. A one-shot requestAnimationFrame coalesce
@@ -192,18 +192,13 @@ export class TalosTrend extends HTMLElement {
     this.render();
   }
 
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
-  }
-
   private band(value: number): Band {
     return bandOf(this, value);
   }
 
   private render(): void {
-    const w = this.num("width", 220);
-    const h = this.num("height", 60);
+    const w = num(this, "width", 220);
+    const h = num(this, "height", 60);
     const pad = 3;
 
     const svg = this.root.querySelector("svg")!;
@@ -218,7 +213,7 @@ export class TalosTrend extends HTMLElement {
     base.setAttribute("y2", String(h - pad));
 
     const data = this.buf;
-    const current = data.length ? data[data.length - 1] : this.num("value", 0);
+    const current = data.length ? data[data.length - 1] : num(this, "value", 0);
 
     // Vertical domain: explicit min/max, else auto-fit the buffer with headroom.
     const minAttr = this.getAttribute("min");

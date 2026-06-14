@@ -20,16 +20,31 @@ import { TalosDelta } from "./talos-delta";
 import { TalosStat } from "./talos-stat";
 import { TalosLed } from "./talos-led";
 import { TalosToggle } from "./talos-toggle";
+import { TalosStatus } from "./talos-status";
+import { TalosMatrix } from "./talos-matrix";
+import { TalosGroundtrack } from "./talos-groundtrack";
+import { TalosHistogram } from "./talos-histogram";
+import { TalosPlane } from "./talos-plane";
+import { TalosSpacecraft } from "./talos-spacecraft";
+import { TalosRange } from "./talos-range";
+import { TalosCompass } from "./talos-compass";
+import { TalosPercentile } from "./talos-percentile";
+import { TalosTicker } from "./talos-ticker";
+import { TalosOdometer } from "./talos-odometer";
 
-export { TalosPanel, TalosCorner, TalosNotch, TalosGauge, TalosTrend, TalosMeter, TalosFlow, TalosOrbital, TalosSheen, TalosReadout, TalosSpark, TalosDots, TalosDelta, TalosStat, TalosLed, TalosToggle };
+export { TalosPanel, TalosCorner, TalosNotch, TalosGauge, TalosTrend, TalosMeter, TalosFlow, TalosOrbital, TalosSheen, TalosReadout, TalosSpark, TalosDots, TalosDelta, TalosStat, TalosLed, TalosToggle, TalosStatus, TalosMatrix, TalosGroundtrack, TalosHistogram, TalosPlane, TalosSpacecraft, TalosRange, TalosCompass, TalosPercentile, TalosTicker, TalosOdometer };
 export type { Band } from "./bands";
 export type { OrbitalNode } from "./talos-orbital";
+export type { PercentileStats } from "./talos-percentile";
+export type { TickerEvent } from "./talos-ticker";
+export type { GroundSat, Gateway } from "./talos-groundtrack";
+export type { TrackSat } from "./talos-plane";
+export type { Parts, PartState } from "./talos-spacecraft";
+export type { ToggleOption } from "./talos-toggle";
 export { PanelShapeBuilder } from "./PanelShapeBuilder";
 export type { Segment, Edge, CornerEdge, PanelShapeOptions } from "./PanelShapeBuilder";
 
-function define(name: string, ctor: CustomElementConstructor): void {
-  if (!customElements.get(name)) customElements.define(name, ctor);
-}
+import { define } from "./register";
 
 if (typeof customElements !== "undefined") {
   define("talos-corner", TalosCorner);
@@ -48,4 +63,15 @@ if (typeof customElements !== "undefined") {
   define("talos-stat", TalosStat);
   define("talos-led", TalosLed);
   define("talos-toggle", TalosToggle);
+  define("talos-status", TalosStatus);
+  define("talos-matrix", TalosMatrix);
+  define("talos-groundtrack", TalosGroundtrack);
+  define("talos-histogram", TalosHistogram);
+  define("talos-plane", TalosPlane);
+  define("talos-spacecraft", TalosSpacecraft);
+  define("talos-range", TalosRange);
+  define("talos-compass", TalosCompass);
+  define("talos-percentile", TalosPercentile);
+  define("talos-ticker", TalosTicker);
+  define("talos-odometer", TalosOdometer);
 }

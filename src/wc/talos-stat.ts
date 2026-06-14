@@ -1,4 +1,4 @@
-import { bandOf } from "./bands";
+import { bandOf, num } from "./bands";
 
 /**
  * <talos-stat> — a labelled statistic cell: an eyebrow label, a big number, an
@@ -87,7 +87,7 @@ export class TalosStat extends HTMLElement {
   }
 
   connectedCallback(): void {
-    this.shown = this.num("value", 0);
+    this.shown = num(this, "value", 0);
     this.render(true);
   }
 
@@ -100,11 +100,6 @@ export class TalosStat extends HTMLElement {
 
   /** Imperative setter. */
   set(value: number): void { this.setAttribute("value", String(value)); }
-
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
-  }
 
   private paintStatic(): void {
     this.labelEl.textContent = this.getAttribute("label") ?? "";
@@ -119,8 +114,8 @@ export class TalosStat extends HTMLElement {
 
   private render(immediate: boolean): void {
     this.paintStatic();
-    const target = this.num("value", 0);
-    const prec = Math.max(0, Math.round(this.num("precision", 0)));
+    const target = num(this, "value", 0);
+    const prec = Math.max(0, Math.round(num(this, "precision", 0)));
     this.setBand(target);
 
     const reduce =
@@ -136,7 +131,7 @@ export class TalosStat extends HTMLElement {
     // Count to the new figure — motion depicts the magnitude transition.
     cancelAnimationFrame(this.frame);
     const from = this.shown;
-    const duration = this.num("duration", 500);
+    const duration = num(this, "duration", 500);
     const start = performance.now();
     const step = (t: number) => {
       const p = Math.min((t - start) / duration, 1);

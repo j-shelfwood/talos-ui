@@ -37,3 +37,49 @@ export function bandOf(el: Element, value: number): Band {
   if (warn !== null && trips(warn)) return "warning";
   return "nominal";
 }
+
+/**
+ * The local CSS custom property a band maps to inside an instrument's shadow
+ * root. The canonical band-token names mirror the `Band` union exactly:
+ * `--_nominal` / `--_warning` / `--_critical`. Use with {@link BAND_TOKENS_CSS}.
+ */
+export function bandColorVar(band: Band): string {
+  return band === "critical"
+    ? "--_critical"
+    : band === "warning"
+      ? "--_warning"
+      : "--_nominal";
+}
+
+/**
+ * The band-token block every instrument opens its `:host` with. One source of
+ * truth for the three health colours (and their palette fallbacks), so a
+ * retheme via `--talos-success/warning/danger` reaches every instrument and the
+ * local names never fork (`--_ok/--_warn/--_crit` was a second scheme; retired).
+ * Inject as the first declarations inside `:host { … }`.
+ */
+export const BAND_TOKENS_CSS = /* css */ `
+  --_nominal: var(--talos-success, hsl(140 90% 60%));
+  --_warning: var(--talos-warning, hsl(38 92% 60%));
+  --_critical: var(--talos-danger, hsl(0 80% 62%));`;
+
+/**
+ * Read a finite number from an element attribute, falling back when the
+ * attribute is absent or non-numeric. The uniform attribute-number parser for
+ * every instrument (replaces the per-component `this.num()` copies).
+ */
+export function num(el: Element, attr: string, fallback: number): number {
+  const v = parseFloat(el.getAttribute(attr) ?? "");
+  return Number.isFinite(v) ? v : fallback;
+}
+
+/**
+ * Whether the user prefers reduced motion. Instruments use this to skip tweens
+ * while keeping the static frame fully readable (the honesty clause). SSR-safe.
+ */
+export function prefersReducedMotion(): boolean {
+  return (
+    typeof matchMedia !== "undefined" &&
+    matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}

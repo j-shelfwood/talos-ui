@@ -6,7 +6,76 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-06-14
+
+### Added
+- **Monitoring & telemetry instruments** — five new signal natures the core set
+  didn't cover:
+  - `<talos-range>` — value within a live min/max tolerance band + setpoint
+    marker (the two-sided sibling of `<talos-meter>`).
+  - `<talos-compass>` — 360°-wrap bearing/heading dial; the needle tweens the
+    shortest way (350°→10° goes +20°, not −340°).
+  - `<talos-percentile>` — p50/p90/p99 box-plot; the p99 marker is banded
+    (`warn`/`crit`). Attributes or `.stats = { p50, p90, p99, … }`.
+  - `<talos-ticker>` — live event log, newest on top, severity-coloured;
+    `.push({ msg, level })`. `role="log"` + `aria-live` (announces new events).
+  - `<talos-odometer>` — rolling-digit running total where digit motion encodes
+    throughput (distinct from `<talos-stat>`'s one-shot count-up).
+- **Per-component imports** — `import "@j_shelfwood/talos-ui/wc/talos-gauge"`
+  registers only that element, so bundlers can tree-shake the rest. Idempotent
+  with the barrel. Generated per-component entries under `dist/wc/talos-*.js`.
+- **Exported input types** — `GroundSat`, `Gateway`, `TrackSat`, `Parts`,
+  `PartState`, `ToggleOption`, `PercentileStats`, `TickerEvent` are now exported
+  from the `./wc` barrel for TS consumers of the imperative setters.
+- **Keyboard + screen-reader support** — `<talos-orbital>`, `<talos-spark>`,
+  `<talos-dots>` gained `role="img"` + live `aria-label`; the interactive picks
+  (`<talos-matrix>`, `<talos-plane>`, `<talos-spacecraft>`) are now focusable and
+  arrow-key/Enter operable. Their `talos:*` events are now `composed` (cross
+  shadow boundaries).
+- **Orbital / fleet drill-down instruments** — five web components forming a
+  fleet→spacecraft magnification chain, each the honest form for its scale:
+  - `<talos-matrix>` — N×M banded-colour cell grid (the whole shell at a glance;
+    `.cells = [...]`, `.highlight`).
+  - `<talos-histogram>` — distribution *shape* of one value across many units
+    (`.values = [...]`).
+  - `<talos-groundtrack>` — equirectangular sub-satellite tracks + ground
+    stations (`.sats`, `.gateways`).
+  - `<talos-plane>` — one orbital plane as its N-satellite train along the shared
+    track (`.sats = [...]`).
+  - `<talos-spacecraft>` — a single satellite as its anatomy, each part an
+    instrument (`.parts = {...}`).
+- `<talos-status>` — system-mood rollup: many channels aggregated to one state
+  (`.channels = [...]`).
+- **`BrandMark.astro`** wrapper + `src/brand/talos-mark.svg` — the Talos mark as
+  an inline-SVG component (fill inherits `currentColor`) plus the raw asset,
+  both exported (`./astro/*`, `./brand/*`).
+
+### Changed
+- **Shared instrument primitives extracted to `bands.ts`** — `num()` (was
+  copy-pasted into 17 components) and `prefersReducedMotion()` (9 copies) are now
+  single functions; the band-token CSS fork (`--_ok/--_warn/--_crit` vs
+  `--_nominal/--_warning/--_critical`) was unified to the `Band`-aligned
+  `--_nominal/--_warning/--_critical` everywhere. New `bandColorVar()` +
+  `BAND_TOKENS_CSS` helpers. No behaviour change; bundle shrank.
+- **Series-seed attribute unified** — `<talos-spark>` now seeds from `data=`
+  (matching `<talos-trend>`); `points=` still works as a deprecated alias. (It
+  previously collided with `<talos-trend>`'s `points=` window-size meaning.)
+
 ### Fixed
+- **`<talos-panel>` content clipped by notches.** Content padding now reserves
+  the notch depth so children no longer collide with a notched edge.
+- **`<talos-gauge>` / `<talos-meter>` `invert` reactivity** + stepper label
+  collision in `talos-nav.css`.
+- **`<talos-led>` was a 0×0 inline span** — the status dot didn't render until
+  `display:block` was added.
+- **`@property --talos-value` must `inherit`** — without it meters and progress
+  rendered empty. Both declarations (data + feedback) are now `inherits: true`.
+- **Build was broken** — the `talos-planering`→`talos-plane` rename left
+  `src/wc/index.ts` registering an undefined `TalosPlanering` (TS2552, runtime
+  `ReferenceError` on import), and `<talos-spacecraft>` was imported/exported but
+  never registered. Both registrations corrected; a dead `H` constant in
+  `talos-plane.ts` (TS6133) removed; `dist/` rebuilt.
+- **`<talos-trend>`** now accepts a declarative `data=` series (spark parity).
 - **`<talos-gauge>` readout/needle overlap.** The readout was placed at a fixed
   `bottom:18%` and the needle reached in to a fixed `r*0.52`, so at low values
   the marker and the arc shoulder crossed the number. The needle's inner radius

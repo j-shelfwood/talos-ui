@@ -1,15 +1,24 @@
+<p align="left">
+  <img src="./src/brand/talos-mark.svg" alt="Talos UI" width="56" height="56" />
+</p>
+
 # @j_shelfwood/talos-ui
 
 Dark-monochrome **HUD design system**. Chamfered hairline panels, Oxanium
 uppercase type, a cursor-tracked ambient grid, and composable
 notched-panel web components.
 
+The brand mark — an inverted triangle with a notch cut from its lower-right
+edge — ships as a static asset (`@j_shelfwood/talos-ui/brand/talos-mark.svg`)
+and as an Astro lockup component (`@j_shelfwood/talos-ui/astro/BrandMark.astro`,
+mark + Oxanium wordmark, `compact` prop for mark-only).
+
 Framework-agnostic by design — three layers, take what you need:
 
 | Layer | What | Needs |
 |---|---|---|
 | **CSS** | `talos.css` + `tokens.css` + fonts | nothing (just a `<link>`) |
-| **Web components** | panel chrome + 7 data-binding instruments | a `<script type="module">` |
+| **Web components** | panel chrome + 24 data-binding instruments | a `<script type="module">` |
 | **Astro wrappers** | `GlassPanel.astro` `Button.astro` | Astro |
 
 No Tailwind, no build step required for the CSS layer. Works in Astro,
@@ -84,7 +93,7 @@ children and the outline re-renders.
 
 ## Use — data-binding instruments
 
-The seven instruments are the heart of the library. Each one binds a visual
+The instruments are the heart of the library. Each one binds a visual
 property to live state — colour, size, motion all carry meaning, never
 decoration (see [`PHILOSOPHY.md`](./PHILOSOPHY.md), *form encodes function*).
 They degrade honestly: under `prefers-reduced-motion` the picture stays
@@ -105,6 +114,38 @@ readable with the animation removed.
 | `<talos-orbital>` | a system → radial mesh (ring/size/colour/orbit) | `.nodes = [...]` |
 | `<talos-readout>` | value → scramble-decode on change | `value` attr |
 | `<talos-sheen>` | pointer → tracked specular highlight | `selector` attr |
+
+**Compact data primitives** — small, inline, single-glance readings:
+
+| Element | Binds | Drive it by |
+|---|---|---|
+| `<talos-spark>` | series → inline sparkline (small `<talos-trend>`) | `points` attr |
+| `<talos-stat>` | value → labelled statistic cell (eyebrow + big number) | `value` / `label` / `unit` attrs |
+| `<talos-delta>` | value → change glyph (▲/▼/▬) + magnitude | `value` / `good` attrs |
+| `<talos-dots>` | count → filled-of-total dot matrix | `value` / `total` attrs |
+| `<talos-led>` | state → single status light (optional pulse) | `state` or `value` attr |
+| `<talos-toggle>` | selection → segmented control (active = current value) | `options` / `value` attrs, emits on change |
+| `<talos-status>` | many channels → system-mood rollup | `.channels = [...]` |
+
+**Orbital / fleet drill-down** — the constellation family, fleet → spacecraft:
+
+| Element | Binds | Drive it by |
+|---|---|---|
+| `<talos-matrix>` | N×M units → banded-colour cell grid (the whole shell) | `.cells = [...]` |
+| `<talos-histogram>` | population → distribution shape across units | `.values = [...]` |
+| `<talos-groundtrack>` | constellation → equirectangular sub-satellite tracks | `.sats = [...]`, `.gateways = [...]` |
+| `<talos-plane>` | one orbital plane → its N-satellite train along the track | `.sats = [...]` |
+| `<talos-spacecraft>` | one satellite → its anatomy, each part an instrument | `.parts = {...}` |
+
+**Monitoring & telemetry** — signal natures the core set doesn't cover:
+
+| Element | Binds | Drive it by |
+|---|---|---|
+| `<talos-range>` | value → position within a live min/max tolerance band + setpoint | `value` / `low` / `high` / `setpoint` attrs |
+| `<talos-compass>` | heading → 360°-wrap bearing dial (shortest-path needle) | `heading` / `target` attrs |
+| `<talos-percentile>` | distribution → p50/p90/p99 box-plot (p99 banded) | `p50`/`p90`/`p99` attrs, or `.stats = {...}` |
+| `<talos-ticker>` | events → live severity-coloured event log (newest on top) | `.push({ msg, level })` |
+| `<talos-odometer>` | running total → rolling digits (motion = throughput) | `value` attr |
 
 ```html
 <!-- Attribute-driven: change value and colour/needle follow the bands. -->
@@ -139,6 +180,38 @@ Every instrument reads `warn` / `crit` thresholds the same way and snaps
 through `--talos-success` → `--talos-warning` → `--talos-danger`. Re-read any
 of them while a system runs and the value differs — they are instruments, not
 illustrations.
+
+### Import one instrument, not all of them
+
+`import "@j_shelfwood/talos-ui/wc"` registers every element. To ship only the
+ones you use (and let your bundler tree-shake the rest), import the
+per-component entry — each registers exactly its own tag:
+
+```js
+import "@j_shelfwood/talos-ui/wc/talos-gauge";   // only <talos-gauge>
+import "@j_shelfwood/talos-ui/wc/talos-ticker";  // only <talos-ticker>
+```
+
+Registration is idempotent — mixing the barrel and per-component imports is
+safe. TypeScript input types are exported from the barrel: `OrbitalNode`,
+`PercentileStats`, `TickerEvent`, `GroundSat`, `Gateway`, `TrackSat`,
+`Parts` / `PartState`, `ToggleOption`, `Band`.
+
+### Interaction & events
+
+The interactive instruments emit `composed`, bubbling `CustomEvent`s (they
+cross shadow boundaries), and are keyboard-operable (focusable, arrow keys move
+the selection, Enter/Space activate):
+
+| Element | Event | `detail` |
+|---|---|---|
+| `<talos-toggle>` | `talos:change` | `{ value }` |
+| `<talos-matrix>` | `talos:cell` | `{ col, row, index }` |
+| `<talos-plane>` | `talos:sat` | `{ slot }` |
+| `<talos-spacecraft>` | `talos:part` | `{ part }` |
+
+Read-only instruments expose `role="img"` + a live `aria-label`; `<talos-ticker>`
+is a `role="log"` with `aria-live="polite"` so new events are announced.
 
 ## Use — Laravel / Blade
 

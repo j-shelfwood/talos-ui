@@ -23,7 +23,7 @@
  * Property: el.value (string) — get/set; setting reflects to the attribute.
  * Event:    talos:change — detail = { value } — fired on user selection.
  */
-interface ToggleOption {
+export interface ToggleOption {
   value: string;
   label: string;
 }
@@ -116,7 +116,7 @@ export class TalosToggle extends HTMLElement {
     if (value === this.value) return;
     this.value = value; // reflects → triggers render via observer
     this.dispatchEvent(
-      new CustomEvent("talos:change", { detail: { value }, bubbles: true }),
+      new CustomEvent("talos:change", { detail: { value }, bubbles: true, composed: true }),
     );
   }
 

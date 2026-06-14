@@ -1,0 +1,81 @@
+---
+// Talos UI brand lockup — the inverted-triangle logomark + Oxanium wordmark.
+//
+// The mark is a bold filled 'descend' silhouette (an inverted triangle) with a
+// wide, shallow rounded NOTCH bitten from its lower-right edge — the design
+// system's notch motif as the brand's one tell. No glow (PHILOSOPHY.md:
+// decoration must encode something; the sanctioned "presence" is the
+// activity-edge, whose motion encodes a rate).
+//
+// Inline SVG (not <img>) so the fill inherits currentColor and the mark reacts
+// to hover / a collapsing navbar like surrounding chrome. The wordmark collapses
+// away under `compact`, leaving just the mark. Canonical static asset (for
+// READMEs, favicons, OG cards) ships alongside at ../brand/talos-mark.svg.
+interface Props {
+  /** Drop the wordmark, render the mark alone (collapsed navbar / favicon size). */
+  compact?: boolean;
+  /** Accessible name for the whole lockup. */
+  label?: string;
+  /** Mark size in px (square). Default 22. */
+  size?: number;
+  class?: string;
+}
+const {
+  compact = false,
+  label = "Talos UI",
+  size = 22,
+  class: className,
+} = Astro.props;
+---
+
+<span class:list={["talos-brand", className]} role="img" aria-label={label}>
+  <svg
+    class="talos-brand-mark"
+    viewBox="0 0 32 32"
+    width={size}
+    height={size}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <!-- Solid inverted triangle with a wide, shallow rounded NOTCH on its
+         lower-right edge. Solid fill, no outline, no letter. -->
+    <path
+      class="talos-brand-shard"
+      d="M5.6 7.2 Q5 6 6.4 6 H25.6 Q27 6 26.4 7.2
+         L23.13 13.72 Q22.82 14.35 22.19 14.04
+         L21.84 13.86 Q21.21 13.55 20.90 14.18
+         L18.84 18.29 Q18.53 18.92 19.16 19.23
+         L19.51 19.41 Q20.14 19.72 19.83 20.35
+         L16.9 26.2 Q16 28 15.1 26.2 Z"
+      fill="currentColor"
+      stroke-linejoin="round"
+    ></path>
+  </svg>
+  {!compact && <span class="talos-brand-word">Talos&nbsp;UI</span>}
+</span>
+
+<style>
+  .talos-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--talos-foreground);
+    line-height: 1;
+  }
+  .talos-brand-mark {
+    flex: none;
+    display: block;
+    transition: color 200ms ease;
+  }
+  .talos-brand-word {
+    font-family: var(--talos-font-display, "Oxanium", system-ui, sans-serif);
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: var(--talos-tracking-hud, 0.18em);
+    white-space: nowrap;
+    /* The wide HUD tracking pushes a trailing gap; pull the box back so the
+       lockup stays optically centered against the mark. */
+    margin-right: calc(-1 * var(--talos-tracking-hud, 0.18em));
+  }
+</style>

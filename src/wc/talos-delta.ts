@@ -17,6 +17,8 @@
  *
  * Imperative API: el.update(value) — equivalent to setting the `value` attribute.
  */
+import { num } from "./bands";
+
 export class TalosDelta extends HTMLElement {
   static get observedAttributes() {
     return ["value", "good", "precision", "eps"];
@@ -51,7 +53,7 @@ export class TalosDelta extends HTMLElement {
   }
 
   connectedCallback(): void {
-    if (this.hasAttribute("value")) this.render(this.num("value", 0));
+    if (this.hasAttribute("value")) this.render(num(this,"value", 0));
   }
 
   attributeChangedCallback(name: string, _old: string | null, val: string | null): void {
@@ -61,15 +63,10 @@ export class TalosDelta extends HTMLElement {
   /** Imperative equivalent of setting `value`. */
   update(value: number): void { this.render(value); }
 
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
-  }
-
   private render(value: number): void {
     if (!Number.isFinite(value)) return;
-    const prec = Math.max(0, Math.round(this.num("precision", 0)));
-    const eps = this.num("eps", 0);
+    const prec = Math.max(0, Math.round(num(this,"precision", 0)));
+    const eps = num(this,"eps", 0);
     const goodDir = (this.getAttribute("good") ?? "up") === "down" ? "down" : "up";
 
     if (this.prev === null) {

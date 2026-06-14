@@ -30,6 +30,8 @@
  * for free. Under prefers-reduced-motion we still set position but leave sheen
  * brightness at 0 — no glow pulse for users who opted out of motion.
  */
+import { prefersReducedMotion } from "./bands";
+
 export class TalosSheen extends HTMLElement {
   static get observedAttributes(): string[] {
     return ["selector"];
@@ -57,12 +59,6 @@ export class TalosSheen extends HTMLElement {
     return this.getAttribute("selector") ?? ".glass-panel";
   }
 
-  private get reducedMotion(): boolean {
-    return (
-      typeof matchMedia !== "undefined" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
-  }
 
   private bind(): void {
     if (this.bound) return;
@@ -102,7 +98,7 @@ export class TalosSheen extends HTMLElement {
     target.style.setProperty("--talos-my", `${my.toFixed(2)}%`);
     // Brightness is the affordance signal. Suppressed under reduced-motion: the
     // pointer position still tracks (cheap, no pulse), but no glow ramps up.
-    target.style.setProperty("--talos-sheen", this.reducedMotion ? "0" : "1");
+    target.style.setProperty("--talos-sheen", prefersReducedMotion() ? "0" : "1");
   }
 
   private lit: HTMLElement | null = null;

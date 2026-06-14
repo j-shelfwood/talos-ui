@@ -12,7 +12,7 @@ export class TalosCorner extends HTMLElement {
 
   attributeChangedCallback(): void {
     this.closest("talos-panel")?.dispatchEvent(
-      new CustomEvent("talos:decorator-changed", { bubbles: true }),
+      new CustomEvent("talos:decorator-changed", { bubbles: true, composed: true }),
     );
   }
 

@@ -1,4 +1,4 @@
-import { bandOf } from "./bands";
+import { bandOf, num } from "./bands";
 
 /**
  * <talos-dots> — a dot-matrix: a discrete COUNT shown as filled-of-total marks.
@@ -64,14 +64,9 @@ export class TalosDots extends HTMLElement {
   connectedCallback(): void { this.render(); }
   attributeChangedCallback(): void { this.render(); }
 
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
-  }
-
   private render(): void {
-    const total = Math.max(0, Math.round(this.num("total", 8)));
-    const value = this.num("value", 0);
+    const total = Math.max(0, Math.round(num(this, "total", 8)));
+    const value = num(this, "value", 0);
     const on = Math.max(0, Math.min(total, Math.round(value)));
 
     // Rebuild the dot elements only when the count changes (cheap + stable).
@@ -83,5 +78,10 @@ export class TalosDots extends HTMLElement {
     const band = bandOf(this, value);
     if (band === "nominal") this.removeAttribute("data-band");
     else this.setAttribute("data-band", band);
+
+    // Text alternative for assistive tech. role/aria-label are not in
+    // observedAttributes, so writing them never re-enters attributeChangedCallback.
+    this.setAttribute("role", "img");
+    this.setAttribute("aria-label", `${on} of ${total}, ${band}`);
   }
 }

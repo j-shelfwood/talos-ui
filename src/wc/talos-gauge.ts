@@ -30,7 +30,7 @@
  * Bands are inclusive-from: value >= crit → critical; else value >= warn →
  * warning; else nominal. `warn`/`crit` may be omitted for a single-band gauge.
  */
-import { bandOf, type Band } from "./bands";
+import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
 
 export class TalosGauge extends HTMLElement {
   // CONVENTION: every Talos web component declares observedAttributes as a
@@ -148,7 +148,7 @@ export class TalosGauge extends HTMLElement {
   private observer?: MutationObserver;
 
   connectedCallback(): void {
-    this.shown = this.num("value", 0);
+    this.shown = num(this, "value", 0);
     this.render();
     // Reactivity via a filtered MutationObserver (not attributeChangedCallback).
     // render() writes role/aria-* back onto the host every frame; the observe()
@@ -175,22 +175,10 @@ export class TalosGauge extends HTMLElement {
     this.observer?.disconnect();
   }
 
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
-  }
-
-  private get reducedMotion(): boolean {
-    return (
-      typeof matchMedia !== "undefined" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
-  }
-
   /** Render immediately from the true value (colour + readout are exact at once);
    *  the needle position eases toward it via startEase(). */
   private update(): void {
-    if (this.reducedMotion) this.shown = this.num("value", this.shown);
+    if (prefersReducedMotion()) this.shown = num(this, "value", this.shown);
     this.render();
   }
 
@@ -201,7 +189,7 @@ export class TalosGauge extends HTMLElement {
   private startEase(): void {
     cancelAnimationFrame(this.frame);
     const loop = () => {
-      const target = this.num("value", this.shown);
+      const target = num(this, "value", this.shown);
       const diff = target - this.shown;
       if (Math.abs(diff) > 0.5) {
         this.shown += diff * 0.18; // exponential approach, ~frame-rate stable
@@ -235,10 +223,10 @@ export class TalosGauge extends HTMLElement {
   }
 
   private render(): void {
-    const size = this.num("size", 160);
-    const min = this.num("min", 0);
-    const max = this.num("max", 100);
-    const sweep = Math.max(180, Math.min(300, this.num("sweep", 240)));
+    const size = num(this, "size", 160);
+    const min = num(this, "min", 0);
+    const max = num(this, "max", 100);
+    const sweep = Math.max(180, Math.min(300, num(this, "sweep", 240)));
     const stroke = Math.max(4, size * 0.06);
 
     const cx = size / 2;
@@ -269,7 +257,7 @@ export class TalosGauge extends HTMLElement {
     const frac = max > min ? (clamped - min) / (max - min) : 0;
     const valAngle = start + (end - start) * frac;
 
-    const target = Math.max(min, Math.min(max, this.num("value", this.shown)));
+    const target = Math.max(min, Math.min(max, num(this, "value", this.shown)));
     const band = this.band(target);
     const bandVar =
       band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
@@ -331,7 +319,7 @@ export class TalosGauge extends HTMLElement {
 
     // Accessibility: the gauge is a live meter.
     this.setAttribute("role", "meter");
-    this.setAttribute("aria-valuenow", String(Math.round(this.num("value", 0))));
+    this.setAttribute("aria-valuenow", String(Math.round(num(this, "value", 0))));
     this.setAttribute("aria-valuemin", String(min));
     this.setAttribute("aria-valuemax", String(max));
     const lbl = this.getAttribute("label");

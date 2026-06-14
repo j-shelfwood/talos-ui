@@ -37,14 +37,53 @@ dark-monochrome HUD design system. See `README.md` (consumer docs),
 - **`observedAttributes` is a static GETTER, not a class field** — esbuild emits a
   field as a post-class assignment that runs after `customElements.define()`, so
   the browser observes nothing. See the comment in `talos-gauge.ts`.
-- **Reactivity uses a filtered `MutationObserver`, not `attributeChangedCallback`**
-  — the callback doesn't fire after esbuild's class transform in this build. The
-  `attributeFilter` is required (an unfiltered observer loops on render()'s own
-  aria/role write-backs and freezes the renderer).
+- **Reactivity — two valid patterns; the real hazard is the unfiltered observer.**
+  The historical bug was *not* that `attributeChangedCallback` is broken — it was
+  that `observedAttributes` as a class field ran *after* `define()`, so the
+  browser registered no attributes and the callback never had anything to fire
+  on. With the static-getter convention (above), the callback fires normally
+  (verified). So both patterns ship and are fine:
+  - Older instruments (`talos-gauge`, `talos-meter`) use a **filtered
+    `MutationObserver`**. Its `attributeFilter` is REQUIRED — an unfiltered
+    observer loops on render()'s own aria/role write-backs and freezes the
+    renderer. This is the one genuine footgun; never drop the filter.
+  - Newer instruments (`talos-status`, `talos-matrix`, `talos-groundtrack`,
+    `talos-histogram`, `talos-plane`, `talos-spacecraft`) use plain
+    **`attributeChangedCallback`** — simpler, and immune to the write-back loop
+    because it only fires for `observedAttributes`. Prefer this for new components
+    unless you specifically need to observe non-attribute mutations.
 - **Instrument text never overlaps its graphic by fixed fraction** — `talos-gauge`
   computes a keep-out circle from the *rendered* readout box and clamps the needle
   outside it. If you add a text-over-graphic instrument, do the same; don't
   hard-code `bottom:%`/`r*k` placement.
+
+### Shared instrument standard (use these; don't re-copy)
+
+`bands.ts` is the single home for cross-instrument primitives. A new instrument
+should import, never re-implement:
+- `num(el, attr, fallback)` — the attribute-number parser (never write a private
+  `this.num`).
+- `prefersReducedMotion()` — the reduced-motion check (never inline `matchMedia`).
+- `bandOf(el, value)` / `Band` / `bandColorVar(band)` — the warn/crit band model.
+- `BAND_TOKENS_CSS` — the canonical band-token block. The local CSS names are
+  `--_nominal` / `--_warning` / `--_critical` (mirroring the `Band` union). The
+  old `--_ok/--_warn/--_crit` scheme was retired — do not reintroduce it.
+
+**Registration & per-component entries.** The guarded `define()` lives in
+`register.ts`; both the barrel (`index.ts`) and each `register/<tag>.ts` entry use
+it (idempotent). Each component file is **export-only** (no self-registration) —
+add a new component by (1) writing `talos-<name>.ts` exporting its class, (2)
+importing + `define()`-ing it in `index.ts`, (3) dropping a `register/<tag>.ts`
+entry (copy an existing one). tsup auto-discovers `register/*.ts`, so the
+per-component import `@j_shelfwood/talos-ui/wc/talos-<name>` works with no config
+edit. Export any imperative-input type from `index.ts`.
+
+**Event + a11y contract.** Interactive instruments emit `composed`, bubbling
+`talos:*` CustomEvents (`talos:change`/`cell`/`sat`/`part`) and are keyboard
+operable (tabindex + arrows + Enter/Space). Read-only instruments set
+`role="img"` + a live `aria-label` rebuilt each render — safe because role/aria
+are never in `observedAttributes`/the MutationObserver `attributeFilter`, so the
+write-back can't loop.
 
 ## Build / test
 

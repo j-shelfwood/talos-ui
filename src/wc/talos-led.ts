@@ -42,11 +42,11 @@ export class TalosLed extends HTMLElement {
       <style>
         :host {
           /* band tokens, identical fallbacks to the other instruments */
-          --_ok: var(--talos-success, hsl(140 90% 60%));
-          --_warn: var(--talos-warning, hsl(38 92% 60%));
-          --_crit: var(--talos-danger, hsl(0 80% 62%));
+          --_nominal: var(--talos-success, hsl(140 90% 60%));
+          --_warning: var(--talos-warning, hsl(38 92% 60%));
+          --_critical: var(--talos-danger, hsl(0 80% 62%));
           --_idle: var(--talos-muted-foreground, hsl(0 0% 60%));
-          --_c: var(--_ok);
+          --_c: var(--_nominal);
           --_d: 10px;
 
           display: inline-block;
@@ -90,21 +90,21 @@ export class TalosLed extends HTMLElement {
 
     // Resolve the state. A live numeric reading leads; else the qualitative
     // `state`; else default ok.
-    let varName = "--_ok";
+    let varName = "--_nominal";
     let label: string;
     const valueAttr = this.getAttribute("value");
 
     if (valueAttr !== null && Number.isFinite(parseFloat(valueAttr))) {
       const band = bandOf(this, parseFloat(valueAttr));
-      varName = band === "critical" ? "--_crit" : band === "warning" ? "--_warn" : "--_ok";
+      varName = band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
       label = band; // nominal | warning | critical
     } else {
       const state = (this.getAttribute("state") ?? "ok").toLowerCase();
       varName =
-        state === "crit" ? "--_crit"
-        : state === "warn" ? "--_warn"
+        state === "crit" ? "--_critical"
+        : state === "warn" ? "--_warning"
         : state === "idle" ? "--_idle"
-        : "--_ok";
+        : "--_nominal";
       label = state;
     }
 

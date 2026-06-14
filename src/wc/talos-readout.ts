@@ -32,7 +32,7 @@
  * nominal. Banding uses the shared bandOf() helper (bands.ts), so warn/crit are
  * inclusive-from and `invert` works identically to the other instruments.
  */
-import { bandOf, type Band } from "./bands";
+import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
 
 export class TalosReadout extends HTMLElement {
   static get observedAttributes(): string[] {
@@ -121,13 +121,6 @@ export class TalosReadout extends HTMLElement {
     this.observer?.disconnect();
   }
 
-  private get reducedMotion(): boolean {
-    return (
-      typeof matchMedia !== "undefined" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
-  }
-
   private onAttrs(): void {
     this.renderCaption();
     this.renderBand();
@@ -135,7 +128,7 @@ export class TalosReadout extends HTMLElement {
     if (next === this.lastValue) return; // stable value → stable text, no motion
     this.toText = next;
     this.lastValue = next;
-    if (this.reducedMotion) {
+    if (prefersReducedMotion()) {
       this.paint(this.toText); // honest: show the value, skip the scramble
       return;
     }
@@ -166,7 +159,7 @@ export class TalosReadout extends HTMLElement {
 
   private startScramble(): void {
     cancelAnimationFrame(this.frame);
-    const dur = Math.max(0, this.num("duration", 420));
+    const dur = Math.max(0, num(this, "duration", 420));
     // performance.now via rAF timestamp (Date.now would be equivalent but the
     // timestamp is already handed to us). Capture origin on first tick.
     this.scrambleStart = 0;
@@ -208,10 +201,5 @@ export class TalosReadout extends HTMLElement {
 
   private escape(s: string): string {
     return s.replace(/[&<>]/g, (c) => (c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;"));
-  }
-
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
   }
 }

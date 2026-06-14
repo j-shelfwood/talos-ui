@@ -29,6 +29,8 @@
  *   size       px square viewBox                        (default 520)
  *   core-label short text in the core                   (optional)
  */
+import { num, prefersReducedMotion } from "./bands";
+
 export interface OrbitalNode {
   id: string;
   ring: number; // 1-based, 1 = innermost
@@ -138,23 +140,11 @@ export class TalosOrbital extends HTMLElement {
     return this.state.map(({ angle, ...n }) => n);
   }
 
-  private num(attr: string, fallback: number): number {
-    const v = parseFloat(this.getAttribute(attr) ?? "");
-    return Number.isFinite(v) ? v : fallback;
-  }
-
-  private get reducedMotion(): boolean {
-    return (
-      typeof matchMedia !== "undefined" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
-  }
-
   private get sizePx(): number {
-    return this.num("size", 520);
+    return num(this, "size", 520);
   }
   private get ringCount(): number {
-    return Math.max(1, Math.round(this.num("rings", 3)));
+    return Math.max(1, Math.round(num(this, "rings", 3)));
   }
   private get cx(): number {
     return this.sizePx / 2;
@@ -174,8 +164,8 @@ export class TalosOrbital extends HTMLElement {
   }
 
   private bandColor(value: number): string {
-    const crit = this.num("crit", 90);
-    const warn = this.num("warn", 70);
+    const crit = num(this, "crit", 90);
+    const warn = num(this, "warn", 70);
     if (value >= crit) return "var(--_critical)";
     if (value >= warn) return "var(--_warning)";
     return "var(--_nominal)";
@@ -235,6 +225,31 @@ export class TalosOrbital extends HTMLElement {
     }
     this.gArcs.innerHTML = arcs;
     this.gNodes.innerHTML = nodes;
+
+    // Text alternative for assistive tech (role="img" + live aria-label rebuilt
+    // each render so it tracks the data). Writing these is safe: the host's
+    // MutationObserver is filtered to data attributes only (see connectedCallback),
+    // so "role"/"aria-label" cannot re-trigger it.
+    this.setAttribute("role", "img");
+    const crit = num(this, "crit", 90);
+    const warn = num(this, "warn", 70);
+    let nNominal = 0,
+      nWarning = 0,
+      nCritical = 0;
+    let rings = 0;
+    for (const n of this.state) {
+      if (n.ring > rings) rings = n.ring;
+      if (n.value >= crit) nCritical++;
+      else if (n.value >= warn) nWarning++;
+      else nNominal++;
+    }
+    const count = this.state.length;
+    const coreLabel = this.getAttribute("core-label") ?? "CORE";
+    this.setAttribute(
+      "aria-label",
+      `System mesh: ${count} node${count === 1 ? "" : "s"} across ${rings} ring${rings === 1 ? "" : "s"}, core ${coreLabel}. ` +
+        `${nNominal} nominal, ${nWarning} warning, ${nCritical} critical.`,
+    );
   }
 
   /** Persistent rAF: advance each node's orbit by its rate, then re-render.
@@ -245,7 +260,7 @@ export class TalosOrbital extends HTMLElement {
     const loop = (t: number) => {
       const dt = this.lastT ? (t - this.lastT) / 1000 : 0;
       this.lastT = t;
-      if (!this.reducedMotion) {
+      if (!prefersReducedMotion()) {
         for (const n of this.state) {
           // angular velocity ∝ rate; inner rings sweep a touch faster.
           const speed = (0.15 + (n.rate / 100) * 0.7) * (1 + (this.ringCount - n.ring) * 0.12);
