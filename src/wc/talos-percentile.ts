@@ -43,6 +43,7 @@
  *   width             px (default 240)
  */
 import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import { setImageA11y } from "./a11y";
 
 /**
  * The imperative payload for the live case. p50/p90/p99 are the canonical
@@ -285,13 +286,12 @@ export class TalosPercentile extends HTMLElement {
     }
 
     // --- ARIA: the text alternative is the full summary. ---------------------
-    this.setAttribute("role", "img");
     const lbl = this.getAttribute("label");
     const parts = marks.map((m) => m.text.replace(/\s/, " "));
-    this.setAttribute(
-      "aria-label",
-      `${lbl ? lbl + ": " : ""}${parts.length ? parts.join(", ") : "no percentiles"}`,
-    );
+    setImageA11y(this, {
+      label: lbl,
+      summary: parts.length ? parts.join(", ") : "no percentiles",
+    });
 
     const caption = this.root.querySelector(".caption")!;
     caption.textContent = lbl ?? "";

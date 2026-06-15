@@ -11,6 +11,8 @@ declare class TalosTrend extends HTMLElement {
     constructor();
     private observer?;
     private lastValueAttr;
+    private capBuffer;
+    private resetBufferFromData;
     connectedCallback(): void;
     disconnectedCallback(): void;
     /** Append a sample and scroll the window. Preferred entry for streams. */

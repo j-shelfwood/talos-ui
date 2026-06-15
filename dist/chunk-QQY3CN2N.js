@@ -1,4 +1,10 @@
 import {
+  replaceTextWithUnit
+} from "./chunk-FOSYIWTW.js";
+import {
+  setMeterA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   bandOf,
   num,
   prefersReducedMotion
@@ -202,7 +208,7 @@ var TalosGauge = class extends HTMLElement {
     this.arc.setAttribute("stroke-width", String(stroke));
     const unit = this.getAttribute("unit") ?? "";
     const display = Math.round(target).toString();
-    this.readout.innerHTML = `${display}${unit ? `<span class="unit">${unit}</span>` : ""}`;
+    replaceTextWithUnit(this.readout, display, unit);
     this.readout.style.fontSize = `${size * 0.22}px`;
     this.readout.style.left = `${textCx / size * 100}%`;
     this.readout.style.top = `${textCy / size * 100}%`;
@@ -225,12 +231,15 @@ var TalosGauge = class extends HTMLElement {
     hub.setAttribute("cy", String(ny0));
     hub.setAttribute("r", String(Math.max(2.5, size * 0.025)));
     this.caption.textContent = this.getAttribute("label") ?? "";
-    this.setAttribute("role", "meter");
-    this.setAttribute("aria-valuenow", String(Math.round(num(this, "value", 0))));
-    this.setAttribute("aria-valuemin", String(min));
-    this.setAttribute("aria-valuemax", String(max));
     const lbl = this.getAttribute("label");
-    if (lbl) this.setAttribute("aria-label", lbl);
+    const text = `${display}${unit} \u2014 ${band}`;
+    setMeterA11y(this, {
+      label: lbl,
+      summary: text,
+      value: Math.round(num(this, "value", 0)),
+      min,
+      max
+    });
   }
 };
 

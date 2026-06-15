@@ -1,4 +1,10 @@
 import {
+  replaceTextWithUnit
+} from "./chunk-FOSYIWTW.js";
+import {
+  setMeterA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   bandOf,
   num,
   prefersReducedMotion
@@ -179,14 +185,17 @@ var TalosMeter = class extends HTMLElement {
       }
     }
     const unit = this.getAttribute("unit") ?? "";
-    this.readout.innerHTML = `${Math.round(target)}${unit ? `<span class="unit">${unit}</span>` : ""}`;
+    const display = Math.round(target).toString();
+    replaceTextWithUnit(this.readout, display, unit);
     this.caption.textContent = this.getAttribute("label") ?? "";
-    this.setAttribute("role", "meter");
-    this.setAttribute("aria-valuenow", String(Math.round(num(this, "value", 0))));
-    this.setAttribute("aria-valuemin", String(min));
-    this.setAttribute("aria-valuemax", String(max));
     const lbl = this.getAttribute("label");
-    if (lbl) this.setAttribute("aria-label", lbl);
+    setMeterA11y(this, {
+      label: lbl,
+      summary: `${display}${unit} \u2014 ${band}`,
+      value: Math.round(num(this, "value", 0)),
+      min,
+      max
+    });
   }
 };
 

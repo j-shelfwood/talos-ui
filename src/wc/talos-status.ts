@@ -1,3 +1,4 @@
+import { setStatusA11y } from "./a11y";
 import type { Band } from "./bands";
 
 /**
@@ -186,17 +187,22 @@ export class TalosStatus extends HTMLElement {
     this.wordEl.textContent = posture.word;
 
     // Auditable counts: show only the bands that are present, worst first.
-    const parts: string[] = [];
-    if (nCrit > 0) parts.push(`<b>${nCrit}</b> crit`);
-    if (nWarn > 0) parts.push(`<b>${nWarn}</b> warn`);
-    if (nNominal > 0) parts.push(`<b>${nNominal}</b> ok`);
-    this.countsEl.innerHTML = parts.join("·&nbsp;").replace(/·/g, " · ");
+    const parts: Array<{ count: string; label: string }> = [];
+    if (nCrit > 0) parts.push({ count: String(nCrit), label: "crit" });
+    if (nWarn > 0) parts.push({ count: String(nWarn), label: "warn" });
+    if (nNominal > 0) parts.push({ count: String(nNominal), label: "ok" });
+    this.countsEl.replaceChildren();
+    parts.forEach((part, i) => {
+      if (i > 0) this.countsEl.append(document.createTextNode(" · "));
+      const strong = document.createElement("b");
+      strong.textContent = part.count;
+      this.countsEl.append(strong, document.createTextNode(` ${part.label}`));
+    });
 
     // Honesty: the posture survives without colour or motion.
-    this.setAttribute("role", "status");
-    this.setAttribute(
-      "aria-label",
-      `${this.getAttribute("label") ?? "System"}: ${posture.word} — ${nCrit} critical, ${nWarn} warning, ${nNominal} nominal`,
-    );
+    setStatusA11y(this, {
+      label: this.getAttribute("label") ?? "System",
+      summary: `${posture.word} — ${nCrit} critical, ${nWarn} warning, ${nNominal} nominal`,
+    });
   }
 }

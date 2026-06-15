@@ -1,4 +1,7 @@
 import {
+  setImageA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   num
 } from "./chunk-7SB3FGYG.js";
 
@@ -147,13 +150,12 @@ var TalosGroundtrack = class extends HTMLElement {
       ctx.arc(x, y, 1.4, 0, Math.PI * 2);
       ctx.fill();
     }
-    this.setAttribute("role", "img");
     const lbl = this.getAttribute("label");
     const active = this._gateways.filter((g) => g.active).length;
-    this.setAttribute(
-      "aria-label",
-      `${lbl ? lbl + ": " : ""}${this._sats.length} satellites, ${active} of ${this._gateways.length} gateways in view`
-    );
+    setImageA11y(this, {
+      label: lbl,
+      summary: `${this._sats.length} satellites, ${active} of ${this._gateways.length} gateways in view`
+    });
   }
 };
 

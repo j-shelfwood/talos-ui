@@ -1,4 +1,6 @@
 import { bandOf, num } from "./bands";
+import { setImageA11y } from "./a11y";
+import { parseNumberList } from "./parse";
 
 /**
  * <talos-spark> — a compact inline sparkline. The small sibling of <talos-trend>:
@@ -74,7 +76,7 @@ export class TalosSpark extends HTMLElement {
 
   connectedCallback(): void {
     const attr = this.seedAttr();
-    if (attr) this.buf = attr.split(/[\s,]+/).map(Number).filter(Number.isFinite);
+    if (attr) this.buf = parseNumberList(attr);
     this.schedule();
   }
 
@@ -85,7 +87,7 @@ export class TalosSpark extends HTMLElement {
   attributeChangedCallback(name: string): void {
     if (name === "data" || name === "points") {
       const attr = this.seedAttr();
-      this.buf = attr ? attr.split(/[\s,]+/).map(Number).filter(Number.isFinite) : [];
+      this.buf = parseNumberList(attr);
     }
     this.schedule();
   }
@@ -113,15 +115,12 @@ export class TalosSpark extends HTMLElement {
 
     // Text alternative for assistive tech. role/aria-label are not in
     // observedAttributes, so writing them never re-enters attributeChangedCallback.
-    this.setAttribute("role", "img");
-
     if (n < 2) {
       this.line.setAttribute("points", "");
       this.area.setAttribute("points", "");
-      this.setAttribute(
-        "aria-label",
-        n === 1 ? `Sparkline, 1 point, current ${this.buf[0]}` : "Sparkline, no data",
-      );
+      setImageA11y(this, {
+        summary: n === 1 ? `Sparkline, 1 point, current ${this.buf[0]}` : "Sparkline, no data",
+      });
       return;
     }
 
@@ -147,9 +146,8 @@ export class TalosSpark extends HTMLElement {
     else this.setAttribute("data-band", band);
 
     // Live description reuses the current value + its band (computed above).
-    this.setAttribute(
-      "aria-label",
-      `Sparkline, ${n} points, current ${this.buf[n - 1]}, ${band}`,
-    );
+    setImageA11y(this, {
+      summary: `Sparkline, ${n} points, current ${this.buf[n - 1]}, ${band}`,
+    });
   }
 }

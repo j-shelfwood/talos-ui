@@ -23,7 +23,6 @@ declare class TalosReadout extends HTMLElement {
      *  the real value; the rest are random glyphs. Same shape as the reference. */
     private frameText;
     private paint;
-    private escape;
 }
 
 export { TalosReadout };

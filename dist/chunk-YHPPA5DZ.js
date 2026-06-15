@@ -1,3 +1,7 @@
+import {
+  setStatusA11y
+} from "./chunk-4WWY5MOA.js";
+
 // src/wc/talos-status.ts
 var POSTURE = {
   nominal: { band: "nominal", word: "NOMINAL" },
@@ -136,15 +140,20 @@ var TalosStatus = class extends HTMLElement {
     this.labelEl.textContent = this.getAttribute("label") ?? "SYSTEM";
     this.wordEl.textContent = posture.word;
     const parts = [];
-    if (nCrit > 0) parts.push(`<b>${nCrit}</b> crit`);
-    if (nWarn > 0) parts.push(`<b>${nWarn}</b> warn`);
-    if (nNominal > 0) parts.push(`<b>${nNominal}</b> ok`);
-    this.countsEl.innerHTML = parts.join("\xB7&nbsp;").replace(/·/g, " \xB7 ");
-    this.setAttribute("role", "status");
-    this.setAttribute(
-      "aria-label",
-      `${this.getAttribute("label") ?? "System"}: ${posture.word} \u2014 ${nCrit} critical, ${nWarn} warning, ${nNominal} nominal`
-    );
+    if (nCrit > 0) parts.push({ count: String(nCrit), label: "crit" });
+    if (nWarn > 0) parts.push({ count: String(nWarn), label: "warn" });
+    if (nNominal > 0) parts.push({ count: String(nNominal), label: "ok" });
+    this.countsEl.replaceChildren();
+    parts.forEach((part, i) => {
+      if (i > 0) this.countsEl.append(document.createTextNode(" \xB7 "));
+      const strong = document.createElement("b");
+      strong.textContent = part.count;
+      this.countsEl.append(strong, document.createTextNode(` ${part.label}`));
+    });
+    setStatusA11y(this, {
+      label: this.getAttribute("label") ?? "System",
+      summary: `${posture.word} \u2014 ${nCrit} critical, ${nWarn} warning, ${nNominal} nominal`
+    });
   }
 };
 

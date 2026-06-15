@@ -1,4 +1,10 @@
 import {
+  svgEl
+} from "./chunk-FOSYIWTW.js";
+import {
+  setImageA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   num,
   prefersReducedMotion
 } from "./chunk-7SB3FGYG.js";
@@ -127,22 +133,76 @@ var TalosOrbital = class extends HTMLElement {
   layout() {
     const s = this.sizePx;
     this.svg.setAttribute("viewBox", `0 0 ${s} ${s}`);
-    let rings = "";
+    const rings = [];
     for (let r = 1; r <= this.ringCount; r++) {
-      rings += `<circle class="ring" cx="${this.cx}" cy="${this.cy}" r="${this.ringRadius(r).toFixed(1)}"></circle>`;
+      rings.push(
+        svgEl("circle", {
+          class: "ring",
+          cx: String(this.cx),
+          cy: String(this.cy),
+          r: this.ringRadius(r).toFixed(1)
+        })
+      );
     }
-    rings += `<line class="ring ring--axis" x1="${this.cx}" y1="${this.cy - s * 0.46}" x2="${this.cx}" y2="${this.cy + s * 0.46}"></line>`;
-    rings += `<line class="ring ring--axis" x1="${this.cx - s * 0.46}" y1="${this.cy}" x2="${this.cx + s * 0.46}" y2="${this.cy}"></line>`;
-    this.gRings.innerHTML = rings;
+    rings.push(
+      svgEl("line", {
+        class: "ring ring--axis",
+        x1: String(this.cx),
+        y1: String(this.cy - s * 0.46),
+        x2: String(this.cx),
+        y2: String(this.cy + s * 0.46)
+      }),
+      svgEl("line", {
+        class: "ring ring--axis",
+        x1: String(this.cx - s * 0.46),
+        y1: String(this.cy),
+        x2: String(this.cx + s * 0.46),
+        y2: String(this.cy)
+      })
+    );
+    this.gRings.replaceChildren(...rings);
     const label = this.getAttribute("core-label") ?? "CORE";
     const sub = this.getAttribute("core-sub") ?? "SYS://ATLAS";
-    this.core.innerHTML = `<circle class="core-fill" cx="${this.cx}" cy="${this.cy}" r="${this.coreR}"></circle><circle class="core-ring" cx="${this.cx}" cy="${this.cy}" r="${this.coreR}"></circle><circle class="core-ring" cx="${this.cx}" cy="${this.cy}" r="${(this.coreR * 0.7).toFixed(1)}"></circle><text class="core-label" x="${this.cx}" y="${this.cy - 4}">${label}</text><text class="core-sub" x="${this.cx}" y="${this.cy + 9}">${sub}</text>`;
+    const coreLabel = svgEl("text", {
+      class: "core-label",
+      x: String(this.cx),
+      y: String(this.cy - 4)
+    });
+    coreLabel.textContent = label;
+    const coreSub = svgEl("text", {
+      class: "core-sub",
+      x: String(this.cx),
+      y: String(this.cy + 9)
+    });
+    coreSub.textContent = sub;
+    this.core.replaceChildren(
+      svgEl("circle", {
+        class: "core-fill",
+        cx: String(this.cx),
+        cy: String(this.cy),
+        r: String(this.coreR)
+      }),
+      svgEl("circle", {
+        class: "core-ring",
+        cx: String(this.cx),
+        cy: String(this.cy),
+        r: String(this.coreR)
+      }),
+      svgEl("circle", {
+        class: "core-ring",
+        cx: String(this.cx),
+        cy: String(this.cy),
+        r: (this.coreR * 0.7).toFixed(1)
+      }),
+      coreLabel,
+      coreSub
+    );
     this.renderNodes();
   }
   /** Position + style nodes and their flow arcs from current state. */
   renderNodes() {
-    let nodes = "";
-    let arcs = "";
+    const nodes = [];
+    const arcs = [];
     for (const n of this.state) {
       const r = this.ringRadius(Math.max(1, Math.min(this.ringCount, n.ring)));
       const x = this.cx + r * Math.cos(n.angle);
@@ -153,16 +213,36 @@ var TalosOrbital = class extends HTMLElement {
       if (rate > 0.02) {
         const mx = this.cx + r * 0.5 * Math.cos(n.angle - 0.25);
         const my = this.cy + r * 0.5 * Math.sin(n.angle - 0.25);
-        arcs += `<path class="arc" d="M ${this.cx} ${this.cy} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}" stroke="${color}" opacity="${(0.12 + rate * 0.5).toFixed(2)}"></path>`;
+        arcs.push(
+          svgEl("path", {
+            class: "arc",
+            d: `M ${this.cx} ${this.cy} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}`,
+            stroke: color,
+            opacity: (0.12 + rate * 0.5).toFixed(2)
+          })
+        );
       }
-      nodes += `<circle class="node-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${size.toFixed(1)}" fill="${color}"></circle>`;
+      nodes.push(
+        svgEl("circle", {
+          class: "node-dot",
+          cx: x.toFixed(1),
+          cy: y.toFixed(1),
+          r: size.toFixed(1),
+          fill: color
+        })
+      );
       if (n.label) {
-        nodes += `<text class="node-label" x="${(x + size + 4).toFixed(1)}" y="${(y + 3).toFixed(1)}">${n.label}</text>`;
+        const label = svgEl("text", {
+          class: "node-label",
+          x: (x + size + 4).toFixed(1),
+          y: (y + 3).toFixed(1)
+        });
+        label.textContent = n.label;
+        nodes.push(label);
       }
     }
-    this.gArcs.innerHTML = arcs;
-    this.gNodes.innerHTML = nodes;
-    this.setAttribute("role", "img");
+    this.gArcs.replaceChildren(...arcs);
+    this.gNodes.replaceChildren(...nodes);
     const crit = num(this, "crit", 90);
     const warn = num(this, "warn", 70);
     let nNominal = 0, nWarning = 0, nCritical = 0;
@@ -175,10 +255,9 @@ var TalosOrbital = class extends HTMLElement {
     }
     const count = this.state.length;
     const coreLabel = this.getAttribute("core-label") ?? "CORE";
-    this.setAttribute(
-      "aria-label",
-      `System mesh: ${count} node${count === 1 ? "" : "s"} across ${rings} ring${rings === 1 ? "" : "s"}, core ${coreLabel}. ${nNominal} nominal, ${nWarning} warning, ${nCritical} critical.`
-    );
+    setImageA11y(this, {
+      summary: `System mesh: ${count} node${count === 1 ? "" : "s"} across ${rings} ring${rings === 1 ? "" : "s"}, core ${coreLabel}. ${nNominal} nominal, ${nWarning} warning, ${nCritical} critical.`
+    });
   }
   /** Persistent rAF: advance each node's orbit by its rate, then re-render.
    *  (The proven reactivity pattern — one loop, reads live state, no per-change

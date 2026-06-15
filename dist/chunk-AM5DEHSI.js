@@ -1,3 +1,7 @@
+import {
+  parseToggleOptions
+} from "./chunk-RSACTRRB.js";
+
 // src/wc/talos-toggle.ts
 var TalosToggle = class extends HTMLElement {
   static get observedAttributes() {
@@ -42,7 +46,7 @@ var TalosToggle = class extends HTMLElement {
         }
         button + button { border-left: 1px solid var(--_edge); }
         button:hover { color: var(--_fg); }
-        button[aria-pressed="true"] {
+        button[aria-checked="true"] {
           background: var(--_on-bg);
           color: var(--_on-fg);
         }
@@ -51,12 +55,13 @@ var TalosToggle = class extends HTMLElement {
           outline-offset: -2px;
         }
       </style>
-      <div class="group" part="group" role="group"></div>`;
+      <div class="group" part="group" role="radiogroup"></div>`;
     this.group = this.root.querySelector(".group");
     this.group.addEventListener("click", (e) => {
       const btn = e.target.closest("button");
       if (btn?.dataset.value != null) this.select(btn.dataset.value);
     });
+    this.group.addEventListener("keydown", this.onKeydown);
   }
   connectedCallback() {
     this.render();
@@ -71,28 +76,86 @@ var TalosToggle = class extends HTMLElement {
     this.setAttribute("value", v);
   }
   parseOptions() {
-    const raw = this.getAttribute("options") ?? "";
-    return raw.split(",").map((s) => s.trim()).filter(Boolean).map((tok) => {
-      const i = tok.indexOf(":");
-      return i === -1 ? { value: tok, label: tok } : { value: tok.slice(0, i), label: tok.slice(i + 1) };
-    });
+    return parseToggleOptions(this.getAttribute("options") ?? "");
   }
+  focusValue(value) {
+    this.group.querySelector(`button[data-value="${CSS.escape(value)}"]`)?.focus();
+  }
+  onKeydown = (e) => {
+    const options = this.parseOptions();
+    if (!options.length) return;
+    const currentIndex = Math.max(0, options.findIndex((o) => o.value === this.value));
+    let nextIndex = currentIndex;
+    switch (e.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        nextIndex = (currentIndex + 1) % options.length;
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        nextIndex = (currentIndex - 1 + options.length) % options.length;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = options.length - 1;
+        break;
+      case "Enter":
+      case " ": {
+        const btn = e.target.closest("button");
+        if (!btn?.dataset.value) return;
+        e.preventDefault();
+        this.select(btn.dataset.value, true);
+        return;
+      }
+      default:
+        return;
+    }
+    e.preventDefault();
+    this.select(options[nextIndex].value, true);
+  };
   /** User selection: update value + announce. No-op if unchanged. */
-  select(value) {
-    if (value === this.value) return;
+  select(value, focus = false) {
+    if (value === this.value) {
+      if (focus) this.focusValue(value);
+      return;
+    }
     this.value = value;
+    if (focus) this.focusValue(value);
     this.dispatchEvent(
       new CustomEvent("talos:change", { detail: { value }, bubbles: true, composed: true })
     );
   }
   render() {
     const options = this.parseOptions();
-    const current = this.value;
-    this.group.innerHTML = options.map(
-      (o) => `<button type="button" part="segment" data-value="${o.value}" aria-pressed="${o.value === current ? "true" : "false"}">${o.label}</button>`
-    ).join("");
+    if (!options.length) {
+      this.group.replaceChildren();
+      return;
+    }
+    const attrValue = this.getAttribute("value");
+    const current = options.some((o) => o.value === attrValue) ? attrValue : options[0].value;
+    if (current !== attrValue) {
+      this.setAttribute("value", current);
+      return;
+    }
+    this.group.replaceChildren(
+      ...options.map((o) => {
+        const selected = o.value === current;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.setAttribute("part", "segment");
+        btn.setAttribute("role", "radio");
+        btn.dataset.value = o.value;
+        btn.setAttribute("aria-checked", selected ? "true" : "false");
+        btn.tabIndex = selected ? 0 : -1;
+        btn.textContent = o.label;
+        return btn;
+      })
+    );
     const lbl = this.getAttribute("label");
     if (lbl) this.group.setAttribute("aria-label", lbl);
+    else this.group.removeAttribute("aria-label");
   }
 };
 

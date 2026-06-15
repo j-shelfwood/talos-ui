@@ -1,4 +1,10 @@
 import {
+  parseNumberList
+} from "./chunk-RSACTRRB.js";
+import {
+  setImageA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   bandOf,
   num
 } from "./chunk-7SB3FGYG.js";
@@ -51,7 +57,7 @@ var TalosSpark = class extends HTMLElement {
   }
   connectedCallback() {
     const attr = this.seedAttr();
-    if (attr) this.buf = attr.split(/[\s,]+/).map(Number).filter(Number.isFinite);
+    if (attr) this.buf = parseNumberList(attr);
     this.schedule();
   }
   disconnectedCallback() {
@@ -60,7 +66,7 @@ var TalosSpark = class extends HTMLElement {
   attributeChangedCallback(name) {
     if (name === "data" || name === "points") {
       const attr = this.seedAttr();
-      this.buf = attr ? attr.split(/[\s,]+/).map(Number).filter(Number.isFinite) : [];
+      this.buf = parseNumberList(attr);
     }
     this.schedule();
   }
@@ -82,14 +88,12 @@ var TalosSpark = class extends HTMLElement {
     const max = num(this, "max", 100);
     const span = max - min || 1;
     const W = 100, H = 16;
-    this.setAttribute("role", "img");
     if (n < 2) {
       this.line.setAttribute("points", "");
       this.area.setAttribute("points", "");
-      this.setAttribute(
-        "aria-label",
-        n === 1 ? `Sparkline, 1 point, current ${this.buf[0]}` : "Sparkline, no data"
-      );
+      setImageA11y(this, {
+        summary: n === 1 ? `Sparkline, 1 point, current ${this.buf[0]}` : "Sparkline, no data"
+      });
       return;
     }
     const pts = this.buf.map((v, i) => {
@@ -107,10 +111,9 @@ var TalosSpark = class extends HTMLElement {
     const band = bandOf(this, this.buf[n - 1]);
     if (band === "nominal") this.removeAttribute("data-band");
     else this.setAttribute("data-band", band);
-    this.setAttribute(
-      "aria-label",
-      `Sparkline, ${n} points, current ${this.buf[n - 1]}, ${band}`
-    );
+    setImageA11y(this, {
+      summary: `Sparkline, ${n} points, current ${this.buf[n - 1]}, ${band}`
+    });
   }
 };
 

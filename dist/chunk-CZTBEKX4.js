@@ -1,4 +1,10 @@
 import {
+  replaceTextWithUnit
+} from "./chunk-FOSYIWTW.js";
+import {
+  setStatusA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   bandOf,
   num,
   prefersReducedMotion
@@ -104,8 +110,10 @@ var TalosReadout = class _TalosReadout extends HTMLElement {
   }
   renderCaption() {
     this.caption.textContent = this.getAttribute("label") ?? "";
-    this.setAttribute("role", "status");
-    this.setAttribute("aria-label", `${this.getAttribute("label") ?? ""} ${this.toText}`.trim());
+    setStatusA11y(this, {
+      label: this.getAttribute("label"),
+      summary: this.toText
+    });
   }
   startScramble() {
     cancelAnimationFrame(this.frame);
@@ -142,10 +150,7 @@ var TalosReadout = class _TalosReadout extends HTMLElement {
   }
   paint(text) {
     const unit = this.getAttribute("unit") ?? "";
-    this.out.innerHTML = `${this.escape(text)}${unit ? `<span class="unit">${this.escape(unit)}</span>` : ""}`;
-  }
-  escape(s) {
-    return s.replace(/[&<>]/g, (c) => c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;");
+    replaceTextWithUnit(this.out, text, unit);
   }
 };
 

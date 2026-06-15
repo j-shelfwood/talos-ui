@@ -26,6 +26,8 @@ import { num } from "./bands";
  *
  * Coordinates: lon in [-180, 180], lat in [-90, 90].
  */
+import { setImageA11y } from "./a11y";
+
 export interface GroundSat {
   lon: number;
   lat: number;
@@ -201,12 +203,11 @@ export class TalosGroundtrack extends HTMLElement {
       ctx.fill();
     }
 
-    this.setAttribute("role", "img");
     const lbl = this.getAttribute("label");
     const active = this._gateways.filter((g) => g.active).length;
-    this.setAttribute(
-      "aria-label",
-      `${lbl ? lbl + ": " : ""}${this._sats.length} satellites, ${active} of ${this._gateways.length} gateways in view`,
-    );
+    setImageA11y(this, {
+      label: lbl,
+      summary: `${this._sats.length} satellites, ${active} of ${this._gateways.length} gateways in view`,
+    });
   }
 }

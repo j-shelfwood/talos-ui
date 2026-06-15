@@ -6,6 +6,39 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-06-15
+
+### Added
+- **Accessibility + render helpers** — new shared `a11y.ts`, `render.ts`, and
+  `parse.ts` utilities centralize semantic-role labelling, safe DOM text/SVG
+  construction, and toggle/number-list parsing for the web-component layer.
+- **Expanded web-component tests** — added focused tests around accessibility
+  helpers, render helpers, guarded registration, and toggle keyboard/ARIA
+  behavior.
+
+### Changed
+- **Telemetry components now expose role-appropriate semantics** — read-only
+  instruments no longer default to `role="img"` across the board. Scalar
+  telemetry surfaces now use `role="meter"` or `role="status"` with matching
+  value text, while picture-like instruments continue to use `role="img"`.
+- **DOM rendering paths were hardened** — several instruments now build SVG/text
+  nodes with shared helpers instead of stitching strings into `innerHTML`,
+  reducing escaping risk while keeping behavior unchanged.
+- **Package side-effect declarations are now explicit** — `package.json`
+  enumerates the concrete per-component `dist/wc/*.js` entries that register
+  custom elements, improving bundler clarity for tree-shaken consumers.
+- **Consumer docs were corrected** — the Laravel/Blade example now points at the
+  shipped `dist/wc/index.js` entry and the copy instructions clarify that the
+  full `dist/wc/` directory should be vendored, not a non-existent `wc.js`.
+
+### Fixed
+- **`<talos-toggle>` ARIA semantics and keyboarding** — the control now behaves
+  as a proper `radiogroup`, uses `aria-checked`, and supports arrow/Home/End
+  navigation plus Enter/Space activation.
+- **Telemetry a11y attribute mismatches** — components that announce live values
+  now avoid invalid role/ARIA combinations by applying semantics through the new
+  shared helpers.
+
 ## [0.2.0] — 2026-06-14
 
 ### Added

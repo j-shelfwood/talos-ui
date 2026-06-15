@@ -1,4 +1,5 @@
 import { num } from "./bands";
+import { setImageA11y } from "./a11y";
 
 /**
  * <talos-histogram> — the DISTRIBUTION of one value across many units. Where a
@@ -128,8 +129,10 @@ export class TalosHistogram extends HTMLElement {
     // Drop any extra rects if bins shrank.
     for (let i = bins; i < rects.length; i++) rects[i].remove();
 
-    this.setAttribute("role", "img");
     const lbl = this.getAttribute("label");
-    this.setAttribute("aria-label", `${lbl ? lbl + ": " : ""}distribution of ${vals.length} values across ${bins} buckets`);
+    setImageA11y(this, {
+      label: lbl,
+      summary: `distribution of ${vals.length} values across ${bins} buckets`,
+    });
   }
 }

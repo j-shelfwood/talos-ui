@@ -1,4 +1,5 @@
 import { bandOf } from "./bands";
+import { setStatusA11y } from "./a11y";
 
 /**
  * <talos-led> — a single status light. The smallest instrument: one dot whose
@@ -111,9 +112,8 @@ export class TalosLed extends HTMLElement {
     this.style.setProperty("--_c", `var(${varName})`);
 
     // Accessibility: the state must survive without colour or motion.
-    this.setAttribute("role", "status");
     const lbl = this.getAttribute("label");
     const live = this.hasAttribute("live") ? ", live" : "";
-    this.setAttribute("aria-label", `${lbl ? lbl + ": " : ""}${label}${live}`);
+    setStatusA11y(this, { label: lbl, summary: `${label}${live}` });
   }
 }

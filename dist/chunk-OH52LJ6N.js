@@ -1,4 +1,7 @@
 import {
+  setImageA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   bandOf,
   num,
   prefersReducedMotion
@@ -191,13 +194,12 @@ var TalosPercentile = class extends HTMLElement {
       text.textContent = m.text;
       this.gMarks.appendChild(text);
     }
-    this.setAttribute("role", "img");
     const lbl = this.getAttribute("label");
     const parts = marks.map((m) => m.text.replace(/\s/, " "));
-    this.setAttribute(
-      "aria-label",
-      `${lbl ? lbl + ": " : ""}${parts.length ? parts.join(", ") : "no percentiles"}`
-    );
+    setImageA11y(this, {
+      label: lbl,
+      summary: parts.length ? parts.join(", ") : "no percentiles"
+    });
     const caption = this.root.querySelector(".caption");
     caption.textContent = lbl ?? "";
   }

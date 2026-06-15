@@ -22,6 +22,8 @@
  *                  warn/crit set; pass ticks="off" to suppress)
  */
 import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import { setMeterA11y } from "./a11y";
+import { replaceTextWithUnit } from "./render";
 
 export class TalosMeter extends HTMLElement {
   static get observedAttributes() {
@@ -224,15 +226,17 @@ export class TalosMeter extends HTMLElement {
     }
 
     const unit = this.getAttribute("unit") ?? "";
-    this.readout.innerHTML =
-      `${Math.round(target)}${unit ? `<span class="unit">${unit}</span>` : ""}`;
+    const display = Math.round(target).toString();
+    replaceTextWithUnit(this.readout, display, unit);
     this.caption.textContent = this.getAttribute("label") ?? "";
 
-    this.setAttribute("role", "meter");
-    this.setAttribute("aria-valuenow", String(Math.round(num(this, "value", 0))));
-    this.setAttribute("aria-valuemin", String(min));
-    this.setAttribute("aria-valuemax", String(max));
     const lbl = this.getAttribute("label");
-    if (lbl) this.setAttribute("aria-label", lbl);
+    setMeterA11y(this, {
+      label: lbl,
+      summary: `${display}${unit} — ${band}`,
+      value: Math.round(num(this, "value", 0)),
+      min,
+      max,
+    });
   }
 }

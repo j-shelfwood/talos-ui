@@ -210,8 +210,10 @@ the selection, Enter/Space activate):
 | `<talos-plane>` | `talos:sat` | `{ slot }` |
 | `<talos-spacecraft>` | `talos:part` | `{ part }` |
 
-Read-only instruments expose `role="img"` + a live `aria-label`; `<talos-ticker>`
-is a `role="log"` with `aria-live="polite"` so new events are announced.
+Read-only instruments expose the role that matches their semantics plus a live
+`aria-label`: picture-like instruments use `role="img"`, scalar telemetry uses
+`role="meter"` or `role="status"`, and `<talos-ticker>` is a `role="log"` with
+`aria-live="polite"` so new events are announced.
 
 ## Use — Laravel / Blade
 
@@ -220,7 +222,7 @@ module script if you want the web components):
 
 ```blade
 <link rel="stylesheet" href="{{ asset('vendor/talos-ui/talos.css') }}">
-<script type="module" src="{{ asset('vendor/talos-ui/wc.js') }}"></script>
+<script type="module" src="{{ asset('vendor/talos-ui/dist/wc/index.js') }}"></script>
 
 <div class="glass-panel interactive-panel">
   <div class="glass-panel-content">…</div>
@@ -228,8 +230,9 @@ module script if you want the web components):
 <talos-panel panel-width="360" panel-height="180">…</talos-panel>
 ```
 
-Copy `src/talos.css`, `src/tokens.css`, `src/fonts/`, and `dist/wc/index.js`
-into `public/vendor/talos-ui/` (e.g. via a Composer/npm postinstall step).
+Copy `src/talos.css`, `src/tokens.css`, `src/fonts/`, and the `dist/wc/`
+directory into `public/vendor/talos-ui/` (e.g. via a Composer/npm postinstall
+step).
 
 ## Tokens
 

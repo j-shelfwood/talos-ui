@@ -1,4 +1,7 @@
 import {
+  setImageA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   num
 } from "./chunk-7SB3FGYG.js";
 
@@ -92,9 +95,11 @@ var TalosHistogram = class extends HTMLElement {
       rect.setAttribute("fill", bandColour(centreValue));
     }
     for (let i = bins; i < rects.length; i++) rects[i].remove();
-    this.setAttribute("role", "img");
     const lbl = this.getAttribute("label");
-    this.setAttribute("aria-label", `${lbl ? lbl + ": " : ""}distribution of ${vals.length} values across ${bins} buckets`);
+    setImageA11y(this, {
+      label: lbl,
+      summary: `distribution of ${vals.length} values across ${bins} buckets`
+    });
   }
 };
 

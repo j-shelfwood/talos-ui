@@ -1,1 +1,1 @@
-export { T as TalosToggle } from '../talos-toggle-CERp4o00.js';
+export { T as TalosToggle } from '../talos-toggle-DLaHbPCj.js';

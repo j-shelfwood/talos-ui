@@ -31,6 +31,8 @@
  * warning; else nominal. `warn`/`crit` may be omitted for a single-band gauge.
  */
 import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import { setMeterA11y } from "./a11y";
+import { replaceTextWithUnit } from "./render";
 
 export class TalosGauge extends HTMLElement {
   // CONVENTION: every Talos web component declares observedAttributes as a
@@ -277,7 +279,7 @@ export class TalosGauge extends HTMLElement {
     // Readout shows the true value (the number is the state, like the colour);
     // the needle eases toward it. Digital-exact + analog-smooth, as instruments do.
     const display = Math.round(target).toString();
-    this.readout.innerHTML = `${display}${unit ? `<span class="unit">${unit}</span>` : ""}`;
+    replaceTextWithUnit(this.readout, display, unit);
     this.readout.style.fontSize = `${size * 0.22}px`;
     this.readout.style.left = `${(textCx / size) * 100}%`;
     this.readout.style.top = `${(textCy / size) * 100}%`;
@@ -317,12 +319,14 @@ export class TalosGauge extends HTMLElement {
 
     this.caption.textContent = this.getAttribute("label") ?? "";
 
-    // Accessibility: the gauge is a live meter.
-    this.setAttribute("role", "meter");
-    this.setAttribute("aria-valuenow", String(Math.round(num(this, "value", 0))));
-    this.setAttribute("aria-valuemin", String(min));
-    this.setAttribute("aria-valuemax", String(max));
     const lbl = this.getAttribute("label");
-    if (lbl) this.setAttribute("aria-label", lbl);
+    const text = `${display}${unit} — ${band}`;
+    setMeterA11y(this, {
+      label: lbl,
+      summary: text,
+      value: Math.round(num(this, "value", 0)),
+      min,
+      max,
+    });
   }
 }

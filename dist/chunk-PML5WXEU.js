@@ -1,4 +1,7 @@
 import {
+  setStatusA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   num,
   prefersReducedMotion
 } from "./chunk-7SB3FGYG.js";
@@ -139,12 +142,12 @@ var TalosOdometer = class extends HTMLElement {
    *  frame. aria-live polite: a running total is status, announced unobtrusively. */
   reflectAria() {
     const n = this.currentValue();
-    this.setAttribute("role", "status");
-    this.setAttribute("aria-live", "polite");
-    this.setAttribute("aria-valuenow", String(n));
     const label = this.getAttribute("label") ?? "";
     const unit = this.getAttribute("unit") ?? "";
-    this.setAttribute("aria-label", `${label} ${this.format(n)}${unit ? " " + unit : ""}`.trim());
+    setStatusA11y(this, {
+      label: label || null,
+      summary: `${this.format(n)}${unit ? ` ${unit}` : ""}`.trim()
+    }, "polite");
   }
   /** Present the integer: zero-pad to `digits`, optional thousands grouping. */
   format(n) {

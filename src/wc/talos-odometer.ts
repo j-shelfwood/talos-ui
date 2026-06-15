@@ -50,6 +50,7 @@
  * helpers; that is the only coupling to bands.ts.
  */
 import { num, prefersReducedMotion } from "./bands";
+import { setStatusA11y } from "./a11y";
 
 export class TalosOdometer extends HTMLElement {
   static get observedAttributes(): string[] {
@@ -197,12 +198,12 @@ export class TalosOdometer extends HTMLElement {
    *  frame. aria-live polite: a running total is status, announced unobtrusively. */
   private reflectAria(): void {
     const n = this.currentValue();
-    this.setAttribute("role", "status");
-    this.setAttribute("aria-live", "polite");
-    this.setAttribute("aria-valuenow", String(n));
     const label = this.getAttribute("label") ?? "";
     const unit = this.getAttribute("unit") ?? "";
-    this.setAttribute("aria-label", `${label} ${this.format(n)}${unit ? " " + unit : ""}`.trim());
+    setStatusA11y(this, {
+      label: label || null,
+      summary: `${this.format(n)}${unit ? ` ${unit}` : ""}`.trim(),
+    }, "polite");
   }
 
   /** Present the integer: zero-pad to `digits`, optional thousands grouping. */

@@ -1,4 +1,10 @@
 import {
+  parseNumberList
+} from "./chunk-RSACTRRB.js";
+import {
+  replaceTextWithUnit
+} from "./chunk-FOSYIWTW.js";
+import {
   bandOf,
   num
 } from "./chunk-7SB3FGYG.js";
@@ -59,7 +65,11 @@ var TalosTrend = class extends HTMLElement {
           color: var(--talos-muted-foreground, hsl(0 0% 60%));
           margin-left: 0.1em;
         }
-        svg { display: block; overflow: visible; }
+        /* The SVG fills its host (width:100%) and stretches its fixed numeric
+           viewBox to fit (preserveAspectRatio=none) \u2014 so a trend in a wide cell
+           draws across the whole cell, not a fixed 220px. The line keeps
+           non-scaling-stroke so the horizontal stretch never thickens it. */
+        svg { display: block; width: 100%; overflow: visible; }
         .baseline { stroke: var(--_grid); stroke-width: 1; }
         /* Band colour snaps (state must not lag the data). */
         .area {
@@ -95,17 +105,36 @@ var TalosTrend = class extends HTMLElement {
   }
   observer;
   lastValueAttr = null;
+  capBuffer() {
+    const cap = Math.max(2, num(this, "points", 48));
+    if (this.buf.length > cap) this.buf = this.buf.slice(-cap);
+  }
+  resetBufferFromData() {
+    this.lastValueAttr = this.getAttribute("value");
+    if (this.hasAttribute("data")) {
+      this.buf = parseNumberList(this.getAttribute("data"));
+      this.capBuffer();
+      return;
+    }
+    if (this.lastValueAttr !== null) {
+      this.buf = [num(this, "value", 0)];
+      return;
+    }
+    this.buf = [];
+  }
   connectedCallback() {
     if (this.hasAttribute("data") && this.buf.length === 0) {
-      this.buf = (this.getAttribute("data") ?? "").split(/[\s,]+/).map(Number).filter(Number.isFinite);
-    }
-    if (this.hasAttribute("value") && this.buf.length === 0) {
+      this.resetBufferFromData();
+    } else if (this.hasAttribute("value") && this.buf.length === 0) {
       this.buf.push(num(this, "value", 0));
       this.lastValueAttr = this.getAttribute("value");
     }
     this.render();
     this.observer = new MutationObserver((records) => {
-      const valueChanged = records.some((r) => r.attributeName === "value");
+      const changed = new Set(records.map((r) => r.attributeName));
+      if (changed.has("data")) this.resetBufferFromData();
+      if (changed.has("points")) this.capBuffer();
+      const valueChanged = changed.has("value");
       if (valueChanged) {
         const v = this.getAttribute("value");
         if (v !== this.lastValueAttr) {
@@ -117,7 +146,7 @@ var TalosTrend = class extends HTMLElement {
       }
     });
     this.observer.observe(this, {
-      attributeFilter: ["value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"]
+      attributeFilter: ["data", "value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"]
     });
   }
   disconnectedCallback() {
@@ -142,9 +171,9 @@ var TalosTrend = class extends HTMLElement {
     const h = num(this, "height", 60);
     const pad = 3;
     const svg = this.root.querySelector("svg");
-    svg.setAttribute("width", String(w));
     svg.setAttribute("height", String(h));
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.setAttribute("preserveAspectRatio", "none");
     const base = this.root.querySelector(".baseline");
     base.setAttribute("x1", "0");
     base.setAttribute("y1", String(h - pad));
@@ -192,7 +221,7 @@ var TalosTrend = class extends HTMLElement {
     }
     const unit = this.getAttribute("unit") ?? "";
     this.readout.style.fontSize = `${Math.max(14, h * 0.3)}px`;
-    this.readout.innerHTML = `${Math.round(current)}${unit ? `<span class="unit">${unit}</span>` : ""}`;
+    replaceTextWithUnit(this.readout, Math.round(current).toString(), unit);
     this.caption.textContent = this.getAttribute("label") ?? "";
     this.setAttribute("role", "img");
     const lbl = this.getAttribute("label");

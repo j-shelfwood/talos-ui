@@ -33,6 +33,8 @@
  * inclusive-from and `invert` works identically to the other instruments.
  */
 import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import { setStatusA11y } from "./a11y";
+import { replaceTextWithUnit } from "./render";
 
 export class TalosReadout extends HTMLElement {
   static get observedAttributes(): string[] {
@@ -153,8 +155,10 @@ export class TalosReadout extends HTMLElement {
   private renderCaption(): void {
     this.caption.textContent = this.getAttribute("label") ?? "";
     // a11y: expose the true value, never a scrambled frame.
-    this.setAttribute("role", "status");
-    this.setAttribute("aria-label", `${this.getAttribute("label") ?? ""} ${this.toText}`.trim());
+    setStatusA11y(this, {
+      label: this.getAttribute("label"),
+      summary: this.toText,
+    });
   }
 
   private startScramble(): void {
@@ -196,10 +200,6 @@ export class TalosReadout extends HTMLElement {
 
   private paint(text: string): void {
     const unit = this.getAttribute("unit") ?? "";
-    this.out.innerHTML = `${this.escape(text)}${unit ? `<span class="unit">${this.escape(unit)}</span>` : ""}`;
-  }
-
-  private escape(s: string): string {
-    return s.replace(/[&<>]/g, (c) => (c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;"));
+    replaceTextWithUnit(this.out, text, unit);
   }
 }

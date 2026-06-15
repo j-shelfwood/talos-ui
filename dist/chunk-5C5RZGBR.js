@@ -1,4 +1,7 @@
 import {
+  setImageA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   bandOf,
   num,
   prefersReducedMotion
@@ -111,11 +114,9 @@ var TalosFlow = class extends HTMLElement {
     } else {
       this.chevrons.style.display = "none";
     }
-    this.setAttribute("role", "img");
-    this.setAttribute(
-      "aria-label",
-      `flow ${rate > 0 ? rate.toFixed(0) + "/" + num(this, "max", 100).toFixed(0) : "idle"} ${this.hasAttribute("reverse") ? "reverse" : "forward"}, ${band}`
-    );
+    setImageA11y(this, {
+      summary: `flow ${rate > 0 ? rate.toFixed(0) + "/" + num(this, "max", 100).toFixed(0) : "idle"} ${this.hasAttribute("reverse") ? "reverse" : "forward"}, ${band}`
+    });
   }
   renderChevrons() {
     const path = this.base;

@@ -1,4 +1,7 @@
 import {
+  setStatusA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   bandOf
 } from "./chunk-7SB3FGYG.js";
 
@@ -76,10 +79,9 @@ var TalosLed = class extends HTMLElement {
       label = state;
     }
     this.style.setProperty("--_c", `var(${varName})`);
-    this.setAttribute("role", "status");
     const lbl = this.getAttribute("label");
     const live = this.hasAttribute("live") ? ", live" : "";
-    this.setAttribute("aria-label", `${lbl ? lbl + ": " : ""}${label}${live}`);
+    setStatusA11y(this, { label: lbl, summary: `${label}${live}` });
   }
 };
 

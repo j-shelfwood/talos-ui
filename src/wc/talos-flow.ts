@@ -30,6 +30,7 @@
  * symptom) reads red via `invert`.
  */
 import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import { setImageA11y } from "./a11y";
 
 export class TalosFlow extends HTMLElement {
   static get observedAttributes() {
@@ -162,12 +163,11 @@ export class TalosFlow extends HTMLElement {
       this.chevrons.style.display = "none";
     }
 
-    this.setAttribute("role", "img");
-    this.setAttribute(
-      "aria-label",
-      `flow ${rate > 0 ? rate.toFixed(0) + "/" + num(this, "max", 100).toFixed(0) : "idle"}` +
+    setImageA11y(this, {
+      summary:
+        `flow ${rate > 0 ? rate.toFixed(0) + "/" + num(this, "max", 100).toFixed(0) : "idle"}` +
         ` ${this.hasAttribute("reverse") ? "reverse" : "forward"}, ${band}`,
-    );
+    });
   }
 
   private renderChevrons(): void {

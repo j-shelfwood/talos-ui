@@ -1,4 +1,10 @@
 import {
+  replaceTextWithUnit
+} from "./chunk-FOSYIWTW.js";
+import {
+  setMeterA11y
+} from "./chunk-4WWY5MOA.js";
+import {
   num,
   prefersReducedMotion
 } from "./chunk-7SB3FGYG.js";
@@ -236,17 +242,17 @@ var TalosRange = class extends HTMLElement {
       this.setpointEl.classList.remove("on");
     }
     const unit = this.getAttribute("unit") ?? "";
-    this.readout.innerHTML = `${Math.round(target)}${unit ? `<span class="unit">${unit}</span>` : ""}`;
+    replaceTextWithUnit(this.readout, Math.round(target).toString(), unit);
     this.caption.textContent = this.getAttribute("label") ?? "";
-    this.setAttribute("role", "meter");
-    this.setAttribute("aria-valuenow", String(Math.round(num(this, "value", 0))));
-    this.setAttribute("aria-valuemin", String(min));
-    this.setAttribute("aria-valuemax", String(max));
     const lbl = this.getAttribute("label");
     const verdict = band === "nominal" ? "in band" : band === "warning" ? "out of band" : "critical";
-    const text = `${lbl ? `${lbl}: ` : ""}${Math.round(target)}${unit} \u2014 ${verdict}`;
-    this.setAttribute("aria-label", text);
-    this.setAttribute("aria-valuetext", text);
+    setMeterA11y(this, {
+      label: lbl,
+      summary: `${Math.round(target)}${unit} \u2014 ${verdict}`,
+      value: Math.round(num(this, "value", 0)),
+      min,
+      max
+    });
   }
 };
 
