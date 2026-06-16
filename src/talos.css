@@ -167,10 +167,11 @@
   }
 }
 
-/* HUD corner brackets were removed: they faded in on hover and encoded nothing
-   the lift + sheen don't already signal. Decoration carrying no information is a
-   Tier-1 violation and unwelcome in Tier-2 chrome too (PHILOSOPHY.md). The
-   activity edge below is the kept pattern — it travels at a rate bound to state. */
+/* HUD corner brackets are not in the core: they fade in on hover and encode
+   nothing the lift + sheen don't already signal (PHILOSOPHY.md — decoration
+   carrying no information). They live in the opt-in `talos-motion.css` layer
+   instead, surfaced via `<GlassPanel brackets>`. The activity edge below is the
+   kept core pattern — it travels at a rate bound to state. */
 
 /* ----------------------------------------------------------------------------
    ACTIVITY EDGE — a conic ring that travels around a panel's border, whose
@@ -423,11 +424,11 @@
   }
 }
 
-/* BENTO CASCADE was removed: a staggered blur/brightness ENTRANCE is exactly
+/* BENTO CASCADE is not in the core: a staggered blur/brightness ENTRANCE is
    "motion as transition," which PHILOSOPHY.md principle 3 rejects ("motion is
-   telemetry, not transition"). It depicted nothing about the system — it just
-   animated elements in. Grid layout (.bento-grid / .talos-grid) stays; only the
-   entrance animation is gone. Content is present in the first frame. */
+   telemetry, not transition"). Grid layout (.bento-grid / .talos-grid) stays in
+   core and content is present in the first frame; the entrance lives in the
+   opt-in `talos-motion.css` layer instead, surfaced via `<BentoGrid stagger>`. */
 
 /* ============================================================================
    LAYOUT SYSTEM — plain-CSS bento/mosaic grid + section helpers.

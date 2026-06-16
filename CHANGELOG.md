@@ -6,6 +6,42 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-06-17
+
+### Added
+- **Decorative motion layer (opt-in)** — new `talos-motion.css` carrying the
+  staggered grid entrance (`.bento-stagger` / `.cascade-in` / `@keyframes
+  cascade-in`) and the HUD viewfinder corner brackets (`.hud-bracket`). Both
+  were removed from the core on Principle 3 ("motion is telemetry, not
+  transition"); they return as a quarantined opt-in module, surfaced via the new
+  `stagger` prop on `BentoGrid.astro` and the new `brackets` prop on
+  `GlassPanel.astro`. Not imported by `all.css`.
+- **New Astro wrappers** — `astro/Tag.astro` (over `.talos-badge`),
+  `astro/BackButton.astro` (card + ghost variants), `astro/BentoGrid.astro`
+  (over `.talos-grid`), and `astro/LinkCard.astro` — one configurable link tile
+  consolidating the former MiniProfileCard / NavigationCard / PreviewCard
+  shapes. Icons stay consumer-side via slots (no icon dependency).
+- New exports: `@j_shelfwood/talos-ui/talos-motion.css` plus the four wrappers
+  via the existing `./astro/*` glob.
+
+- **Marketing chrome layer (opt-in)** — new `talos-marketing.css` plus
+  `astro/Navbar.astro` and `astro/Footer.astro` wrappers. The `Navbar` is a
+  fixed, auto-width HUD pill (top-edge notch, brand · separator · links) that
+  collapses to the brand mark on scroll, with an optional in-pill "On this page"
+  table of contents driven by passed-in markdown headings. The `Footer` is a
+  data-driven three-column lockup (links · brand · contact) over a GlassPanel.
+  Both are config-driven; all visual knobs are CSS custom properties on the
+  layer (`--talos-navbar-notch-w`, `--talos-navbar-compact-w`, …), and the layer
+  publishes `--talos-nav-h` so layouts can offset content below the fixed pill.
+- New exports: `@j_shelfwood/talos-ui/talos-marketing.css`,
+  `@j_shelfwood/talos-ui/astro/Navbar.astro`,
+  `@j_shelfwood/talos-ui/astro/Footer.astro`.
+
+### Changed
+- **Scope note clarified** — README/PHILOSOPHY now record marketing navbar +
+  footer as a deliberately *quarantined* opt-in module (never in the core or
+  `all.css`), distinct from prose styling, which stays out of scope.
+
 ## [0.3.0] — 2026-06-15
 
 ### Added

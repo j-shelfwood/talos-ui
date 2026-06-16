@@ -28,6 +28,12 @@ Laravel/Blade, or plain HTML.
 > plus a handful of layout utilities (`talos-layout.css`: `.talos-grid`,
 > `.talos-pad`, `.talos-stack`/`.talos-row`, …). It is **not** a layout framework —
 > bring your own (Tailwind, a grid system, or hand-rolled) for page structure.
+>
+> **Marketing chrome is opt-in.** The one concession to front-of-site needs:
+> `talos-marketing.css` + the `Navbar.astro` / `Footer.astro` wrappers ship a
+> fixed compact-on-scroll navbar pill (with an optional in-pill table of
+> contents) and a data-driven footer. It is a separate import — **not** in the
+> core or in `all.css` — so the rest of the pack stays free of page chrome.
 
 ## Install
 
@@ -71,6 +77,26 @@ import Button from "@j_shelfwood/talos-ui/astro/Button.astro";
   <h2>Projects</h2>
 </GlassPanel>
 <Button href="/contact">Get in touch</Button>
+```
+
+Astro wrappers: `GlassPanel`, `Button`, `BrandMark`, `Tag`, `BackButton`,
+`BentoGrid`, `LinkCard`, the panel suite (`Hero/Mission/Project/Service/Title/
+Toolkit`, `FeatureItem`), and the opt-in marketing chrome (`Navbar`, `Footer`).
+
+```astro
+---
+import "@j_shelfwood/talos-ui/talos.css";
+import "@j_shelfwood/talos-ui/talos-layout.css";
+import "@j_shelfwood/talos-ui/talos-motion.css"; // opt-in: stagger + brackets
+import BentoGrid from "@j_shelfwood/talos-ui/astro/BentoGrid.astro";
+import GlassPanel from "@j_shelfwood/talos-ui/astro/GlassPanel.astro";
+import LinkCard from "@j_shelfwood/talos-ui/astro/LinkCard.astro";
+---
+<BentoGrid stagger>
+  <GlassPanel brackets class="col-span-4 lg:col-span-6"><h2>HUD</h2></GlassPanel>
+  <LinkCard href="/work" title="Projects" eyebrow="What we ship"
+            class="col-span-4 lg:col-span-6" />
+</BentoGrid>
 ```
 
 ## Use — web components (notched panels)

@@ -1,0 +1,161 @@
+---
+/**
+ * LinkCard — a GlassPanel link tile with a title, a hover-revealed arrow, and
+ * composable content. Consolidates three earlier one-off cards
+ * (MiniProfileCard / NavigationCard / PreviewCard) into one configurable shape.
+ *
+ * Requires "@j_shelfwood/talos-ui/talos.css" (uses GlassPanel).
+ * Icons / images stay consumer-side via slots (no icon dep).
+ *
+ * Render order: media → header(icon + title + arrow) → eyebrow → items → slot.
+ *
+ *   Navigation tile:  <LinkCard href title eyebrow><Icon slot="icon"/></LinkCard>
+ *   Preview tile:     <LinkCard href title items={[...]}><Icon slot="icon"/></LinkCard>
+ *   Profile tile:     <LinkCard href title eyebrow>
+ *                       <img slot="media" .../>
+ *                       <span>Meet the expert →</span>   {/* default slot CTA */}
+ *                     </LinkCard>
+ */
+import GlassPanel from "./GlassPanel.astro";
+
+interface Props {
+  href: string;
+  title: string;
+  /** Muted, uppercase secondary line under the title. */
+  eyebrow?: string;
+  /** Bulleted body list (dot markers). */
+  items?: string[];
+  /** Show the top-right hover arrow. */
+  hoverArrow?: boolean;
+  class?: string;
+  [key: string]: any;
+}
+
+const {
+  href,
+  title,
+  eyebrow,
+  items,
+  hoverArrow = true,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const hasIcon = Astro.slots.has("icon");
+const hasMedia = Astro.slots.has("media");
+const hasArrow = Astro.slots.has("arrow");
+---
+
+<GlassPanel
+  as="a"
+  href={href}
+  class={["talos-linkcard", className].filter(Boolean).join(" ")}
+  {...rest}
+>
+  {hasMedia && <div class="talos-linkcard__media"><slot name="media" /></div>}
+
+  <div class="talos-linkcard__header">
+    <div class="talos-linkcard__heading">
+      {hasIcon && <span class="talos-linkcard__icon"><slot name="icon" /></span>}
+      <h3 class="talos-linkcard__title">{title}</h3>
+    </div>
+    {hoverArrow && (
+      <span class="talos-linkcard__arrow" aria-hidden="true">
+        {hasArrow ? <slot name="arrow" /> : "↗"}
+      </span>
+    )}
+  </div>
+
+  {eyebrow && <p class="talos-linkcard__eyebrow">{eyebrow}</p>}
+
+  {items && items.length > 0 && (
+    <ul class="talos-linkcard__items">
+      {items.map((item) => (
+        <li><span class="talos-linkcard__dot" aria-hidden="true"></span>{item}</li>
+      ))}
+    </ul>
+  )}
+
+  <slot />
+</GlassPanel>
+
+<style>
+  .talos-linkcard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--talos-space-4, 1rem);
+    text-decoration: none;
+    text-align: left;
+  }
+  .talos-linkcard__media { display: flex; }
+
+  .talos-linkcard__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .talos-linkcard__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+  .talos-linkcard__icon {
+    display: inline-flex;
+    flex: none;
+    color: var(--talos-foreground);
+  }
+  .talos-linkcard__title {
+    font-family: var(--talos-font-display);
+    font-weight: 300;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: var(--talos-tracking-hud);
+    color: var(--talos-foreground);
+    margin: 0;
+  }
+  .talos-linkcard__arrow {
+    flex: none;
+    color: var(--talos-muted-foreground);
+    transition: transform 200ms var(--talos-ease-glass, ease), color 200ms ease;
+  }
+  .talos-linkcard:hover .talos-linkcard__arrow {
+    color: var(--talos-foreground);
+    transform: translate(3px, -3px);
+  }
+
+  .talos-linkcard__eyebrow {
+    margin: 0;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: var(--talos-tracking-hud-tight);
+    color: var(--talos-muted-foreground);
+  }
+
+  .talos-linkcard__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--talos-muted-foreground);
+  }
+  .talos-linkcard__items li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .talos-linkcard__dot {
+    width: 0.375rem;
+    height: 0.375rem;
+    flex: none;
+    border-radius: 50%;
+    background: hsl(var(--talos-foreground-hsl) / 0.5);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .talos-linkcard__arrow { transition: color 200ms ease; }
+  }
+</style>

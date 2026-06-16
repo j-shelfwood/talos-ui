@@ -1,0 +1,209 @@
+---
+/**
+ * Navbar — fixed, auto-width HUD pill that collapses on scroll (the marketing
+ * navbar). Brand · hairline separator · links, with an optional "On this page"
+ * TOC that injects into the pill and grows it.
+ *
+ * Opt-in marketing chrome — requires `@j_shelfwood/talos-ui/talos-marketing.css`
+ * (or all.css) in addition to talos.css. The compact-on-scroll + TOC behaviour
+ * ships as the inline script below (idempotent, Astro view-transition aware).
+ *
+ * Fully data-driven; every visual knob is a CSS custom property on the layer
+ * (see talos-marketing.css), so theming is done in CSS, not props.
+ *
+ * @example Basic
+ *   <Navbar links={[{ label: "Work", href: "/work" }]} active="work" />
+ * @example Blog post with table of contents
+ *   <Navbar links={nav} active="blog" toc={headings} />
+ * @example Custom brand + a CTA on the right
+ *   <Navbar links={nav}>
+ *     <a slot="brand" href="/"><MyLogo /></a>
+ *     <a slot="right" class="talos-button" href="/contact">Contact</a>
+ *   </Navbar>
+ */
+import BrandMark from "./BrandMark.astro";
+
+export interface NavLink {
+  label: string;
+  href: string;
+  /** Match key for active state; falls back to href prefix matching. */
+  key?: string;
+}
+export interface TocHeading {
+  /** Anchor target id (without the leading #). */
+  slug: string;
+  text: string;
+  /** Heading level; 2 and 3 are rendered, 3 is indented. */
+  depth: number;
+}
+
+interface Props {
+  links?: NavLink[];
+  /** key (or href) of the current page, for active styling. */
+  active?: string;
+  /** Pass markdown headings to render the in-pill "On this page" TOC. */
+  toc?: TocHeading[];
+  /** Home link the brand points at. */
+  homeHref?: string;
+  /** Extra classes on the <header>. */
+  class?: string;
+  [key: string]: any;
+}
+
+const {
+  links = [],
+  active,
+  toc,
+  homeHref = "/",
+  class: className,
+  ...rest
+} = Astro.props;
+
+const pathname = Astro.url.pathname;
+const isActive = (l: NavLink) =>
+  (l.key && active === l.key) ||
+  active === l.href ||
+  (l.href !== "/" && pathname.startsWith(l.href));
+
+const tocItems = (toc ?? []).filter((h) => h.depth > 1 && h.depth < 4);
+const hasToc = tocItems.length > 0;
+const hasBrandSlot = Astro.slots.has("brand");
+const hasLeftSlot = Astro.slots.has("left");
+const hasRightSlot = Astro.slots.has("right");
+---
+
+<header class:list={["talos-navbar", className]} data-compact="false" {...rest}>
+  <div class="talos-navbar-pill glass-panel interactive-panel" style="overflow:visible">
+    <div class="glass-panel-content">
+      <div class="talos-navbar-inner">
+        <a class="talos-nav-link talos-nav-brand" href={homeHref} aria-label="Home">
+          {hasBrandSlot ? <slot name="brand" /> : <BrandMark />}
+        </a>
+
+        {hasLeftSlot && <slot name="left" />}
+
+        {(links.length > 0 || hasToc || hasRightSlot) && (
+          <span class="talos-navbar-sep" aria-hidden="true"></span>
+        )}
+
+        <nav class="talos-navbar-links">
+          {links.map((l) => (
+            <a
+              class="talos-nav-link"
+              href={l.href}
+              aria-current={isActive(l) ? "page" : undefined}
+              data-active={isActive(l) ? "true" : undefined}
+            >
+              <span class="talos-nav-text">{l.label}</span>
+            </a>
+          ))}
+        </nav>
+
+        {hasRightSlot && <slot name="right" />}
+
+        {hasToc && (
+          <div class="talos-toc">
+            <button
+              class="talos-toc-button"
+              type="button"
+              aria-expanded="false"
+              aria-controls="talos-toc-content"
+            >
+              <span class="talos-nav-text">On this page</span>
+            </button>
+            <div class="talos-toc-content" id="talos-toc-content">
+              <ul class="talos-toc-list">
+                {tocItems.map((h) => (
+                  <li>
+                    <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Compact-on-scroll + (optional) TOC-expand. Idempotent and re-bound on Astro
+  // client-side navigation. State lives on the <header data-compact> / the
+  // .talos-navbar--toc-open class so all visuals are CSS-driven (see
+  // talos-marketing.css); this script only flips state + sizes the pill.
+  function initTalosNavbar() {
+    document
+      .querySelectorAll<HTMLElement>(".talos-navbar")
+      .forEach((nav) => {
+        if (nav.dataset.talosNavbarBound) return;
+        nav.dataset.talosNavbarBound = "1";
+
+        const pill = nav.querySelector<HTMLElement>(".talos-navbar-pill");
+        const tocBtn = nav.querySelector<HTMLElement>(".talos-toc-button");
+        const tocContent = nav.querySelector<HTMLElement>(".talos-toc-content");
+
+        // --- compact-on-scroll
+        const onScroll = () => {
+          if (nav.classList.contains("talos-navbar--toc-open")) return;
+          nav.setAttribute("data-compact", String(window.scrollY > 48));
+        };
+        addEventListener("scroll", onScroll, { passive: true });
+        onScroll();
+
+        if (!tocBtn || !tocContent || !pill) return;
+
+        // --- TOC expand: grow the pill to fit the injected panel
+        const close = () => {
+          nav.classList.remove("talos-navbar--toc-open");
+          tocBtn.setAttribute("aria-expanded", "false");
+          tocContent.style.maxHeight = "0px";
+          tocContent.style.opacity = "0";
+          pill.style.maxHeight = "";
+          onScroll();
+        };
+        const open = () => {
+          nav.classList.add("talos-navbar--toc-open");
+          tocBtn.setAttribute("aria-expanded", "true");
+          tocContent.style.opacity = "1";
+          tocContent.style.maxHeight = tocContent.scrollHeight + "px";
+          pill.style.maxHeight =
+            (pill.scrollHeight || 72) + tocContent.scrollHeight + 24 + "px";
+        };
+
+        tocContent.style.maxHeight = "0px";
+        tocContent.style.opacity = "0";
+
+        tocBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          nav.classList.contains("talos-navbar--toc-open") ? close() : open();
+        });
+        addEventListener("scroll", () => {
+          if (nav.classList.contains("talos-navbar--toc-open")) close();
+        }, { passive: true });
+        document.addEventListener("click", (e) => {
+          if (
+            nav.classList.contains("talos-navbar--toc-open") &&
+            !pill.contains(e.target as Node)
+          ) close();
+        });
+        tocContent.querySelectorAll<HTMLAnchorElement>("a").forEach((link) => {
+          link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const id = link.getAttribute("href")?.slice(1);
+            const target = id && document.getElementById(id);
+            if (target) {
+              const top =
+                target.getBoundingClientRect().top +
+                window.scrollY - nav.offsetHeight - 24;
+              window.scrollTo({ top, behavior: "smooth" });
+            }
+            close();
+          });
+        });
+      });
+  }
+
+  initTalosNavbar();
+  document.addEventListener("astro:page-load", initTalosNavbar);
+</script>

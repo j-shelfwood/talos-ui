@@ -1,0 +1,29 @@
+---
+/**
+ * Tag — a compact HUD pill (label, optional leading icon).
+ * Thin wrapper over the `.talos-badge` class; requires
+ * "@j_shelfwood/talos-ui/talos-feedback.css".
+ *
+ * Icons stay consumer-side (the package adds no icon dependency): pass one
+ * through the `icon` slot.
+ *
+ * @example
+ *   <Tag size="sm"><Icon slot="icon" name="lucide:tag" />yeet</Tag>
+ */
+interface Props {
+  /** "sm" tightens padding + tracking; "md" is the default badge size. */
+  size?: "sm" | "md";
+  class?: string;
+  [key: string]: any;
+}
+
+const { size = "md", class: className, ...rest } = Astro.props;
+const cls = ["talos-badge", size === "sm" && "talos-badge--sm", className]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<span class={cls} {...rest}>
+  <slot name="icon" />
+  <slot />
+</span>

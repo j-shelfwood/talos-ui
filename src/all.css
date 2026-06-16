@@ -25,7 +25,21 @@
 @import "./talos-nav.css";    /* T2 tabs, breadcrumbs, menu, sidebar, stepper   */
 @import "./talos-console.css"; /* T1 the instrument console: zoned non-doc shell */
 
-/* talos-blog.css (prose, marketing navbar/footer, tags) was removed: a static
-   long-form/marketing module contradicts the "live, not static" thesis and was
-   pure Tier-2 scope creep. Consumers needing prose styling bring their own; the
-   marketing navbar moved to the showcase site, which owns its own chrome. */
+/* PROSE remains out of scope: a static long-form module contradicts the
+   "live, not static" thesis. Consumers needing prose styling bring their own.
+
+   MARKETING CHROME (navbar + footer) lives in talos-marketing.css — an opt-in
+   module, intentionally NOT imported here. It carries page-level
+   `position:fixed` chrome that most all.css consumers (app / docs shells)
+   don't want injected globally, so it stays a deliberate separate import:
+
+     import "@j_shelfwood/talos-ui/talos-marketing.css";
+     import Navbar from "@j_shelfwood/talos-ui/astro/Navbar.astro";
+     import Footer from "@j_shelfwood/talos-ui/astro/Footer.astro";
+
+   DECORATIVE MOTION (staggered entrance + HUD hover brackets) lives in
+   talos-motion.css — also opt-in, also NOT imported here. It is aesthetic
+   chrome the core deliberately omits (Principle 3); reach for it via the
+   `<BentoGrid stagger>` / `<GlassPanel brackets>` props:
+
+     import "@j_shelfwood/talos-ui/talos-motion.css"; */

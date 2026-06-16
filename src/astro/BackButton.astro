@@ -1,0 +1,124 @@
+---
+/**
+ * BackButton — a back-navigation affordance in two shapes:
+ *   • "card"  — a GlassPanel tile (arrow + label + optional subtitle)
+ *   • "ghost" — a muted inline text link (arrow + label)
+ *
+ * Requires "@j_shelfwood/talos-ui/talos.css" (the card variant uses GlassPanel).
+ * The arrow glyph stays consumer-side via the `arrow` slot (no icon dep); it
+ * falls back to a text glyph so the component works with no slot.
+ *
+ * @example
+ *   <BackButton variant="ghost" href="/blog" text="Back to blog">
+ *     <Icon slot="arrow" name="lucide:arrow-left" />
+ *   </BackButton>
+ */
+import GlassPanel from "./GlassPanel.astro";
+
+interface Props {
+  href: string;
+  /** Label text; can also be supplied via the default slot. */
+  text?: string;
+  /** Secondary line (card variant only). */
+  subtitle?: string;
+  variant?: "card" | "ghost";
+  class?: string;
+  [key: string]: any;
+}
+
+const {
+  href,
+  text = "Back",
+  subtitle,
+  variant = "card",
+  class: className,
+  ...rest
+} = Astro.props;
+const hasArrow = Astro.slots.has("arrow");
+---
+
+{
+  variant === "card" ? (
+    <GlassPanel
+      as="a"
+      href={href}
+      class={["talos-backbtn talos-backbtn--card", className].filter(Boolean).join(" ")}
+      {...rest}
+    >
+      <span class="talos-backbtn__arrow" aria-hidden="true">
+        {hasArrow ? <slot name="arrow" /> : "↖"}
+      </span>
+      <span class="talos-backbtn__body">
+        <span class="talos-backbtn__label"><slot>{text}</slot></span>
+        {subtitle && <span class="talos-backbtn__subtitle">{subtitle}</span>}
+      </span>
+    </GlassPanel>
+  ) : (
+    <a
+      href={href}
+      class={["talos-backbtn talos-backbtn--ghost", className].filter(Boolean).join(" ")}
+      {...rest}
+    >
+      <span class="talos-backbtn__arrow" aria-hidden="true">
+        {hasArrow ? <slot name="arrow" /> : "←"}
+      </span>
+      <span class="talos-backbtn__label"><slot>{text}</slot></span>
+    </a>
+  )
+}
+
+<style>
+  .talos-backbtn { text-decoration: none; }
+
+  /* --- card --------------------------------------------------------------- */
+  .talos-backbtn--card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--talos-space-4, 1rem);
+  }
+  .talos-backbtn--card .talos-backbtn__arrow {
+    font-size: 1.1rem;
+    color: var(--talos-muted-foreground);
+    transition: transform 200ms var(--talos-ease-glass, ease), color 200ms ease;
+  }
+  .talos-backbtn--card:hover .talos-backbtn__arrow {
+    color: var(--talos-foreground);
+    transform: translate(-3px, -3px);
+  }
+  .talos-backbtn__label {
+    font-family: var(--talos-font-display);
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: var(--talos-tracking-hud);
+    color: var(--talos-foreground);
+  }
+  .talos-backbtn__subtitle {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: var(--talos-tracking-hud-tight);
+    color: var(--talos-muted-foreground);
+  }
+
+  /* --- ghost -------------------------------------------------------------- */
+  .talos-backbtn--ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--talos-muted-foreground);
+    transition: color 200ms ease;
+  }
+  .talos-backbtn--ghost:hover { color: var(--talos-foreground); }
+  .talos-backbtn--ghost .talos-backbtn__arrow {
+    display: inline-flex;
+    transition: transform 200ms var(--talos-ease-glass, ease);
+  }
+  .talos-backbtn--ghost:hover .talos-backbtn__arrow { transform: translateX(-3px); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .talos-backbtn__arrow { transition: color 200ms ease; }
+  }
+</style>

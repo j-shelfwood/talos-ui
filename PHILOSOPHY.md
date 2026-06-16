@@ -156,8 +156,22 @@ The relationship between the tiers is the discipline:
 - **Tier 2 serves Tier 1.** A new control is measured by whether it helps house
   or drive instruments. Tier 2 does not grow for its own sake; if a component
   belongs to a generic SaaS kit and does nothing for an instrument console, it
-  is out of scope (this is why prose/marketing styling is *not* part of the
-  pack — see DESIGN.md).
+  is out of scope (this is why *prose* styling is *not* part of the pack — see
+  DESIGN.md).
+
+  There are two sanctioned exceptions, both *quarantined* opt-in modules — never
+  imported by the core or `all.css`, held outside the Tier-1/Tier-2 test, each
+  measured by one job: letting the design system dress its own front-end in the
+  same aesthetic rather than forcing every site to re-hand-roll the chrome.
+
+  - `talos-marketing.css` — a fixed navbar pill + footer. It frames no
+    instrument; it is page chrome a marketing front-end needs.
+  - `talos-motion.css` — the staggered grid entrance and the HUD hover brackets.
+    Both directly violate Principle 3 ("motion is telemetry, not transition"):
+    the entrance depicts nothing, the brackets encode nothing the lift + sheen
+    don't already signal. That is *why* they are quarantined rather than core —
+    available only via the `<BentoGrid stagger>` / `<GlassPanel brackets>` props
+    for sites that knowingly want the decoration.
 
 Every Tier 1 addition is measured against the thesis, the law, and the test
 above. Every Tier 2 addition is measured against: *does this frame an

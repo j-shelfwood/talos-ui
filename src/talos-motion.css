@@ -1,0 +1,123 @@
+/* ============================================================================
+   @j_shelfwood/talos-ui — TALOS-MOTION.CSS   (Tier 2, opt-in)
+   The decorative-motion layer: a staggered grid entrance and the HUD
+   viewfinder brackets. Pairs with the `BentoGrid.astro` `stagger` prop and the
+   `GlassPanel.astro` `brackets` prop.
+
+     <link rel="stylesheet" href=".../talos-ui/talos-motion.css">
+     // or:  import "@j_shelfwood/talos-ui/talos-motion.css";
+
+   SCOPE NOTE. PHILOSOPHY.md Principle 3 holds that "motion is telemetry, not
+   transition": a staggered blur/brightness ENTRANCE depicts nothing about the
+   system, and the corner brackets that fade in on hover encode nothing — so
+   both were removed from the core. This module is the sanctioned exception:
+   purely aesthetic chrome a marketing front-end may want, shipped opt-in. It is
+   NOT imported by talos.css and is NOT part of the core promise; reach for it
+   only when you deliberately want the entrance / brackets, via the component
+   props (`<BentoGrid stagger>` / `<GlassPanel brackets>`) or the classes below.
+
+   Requires tokens.css (transitively via talos.css) for --talos-* vars.
+   ========================================================================== */
+
+/* ----------------------------------------------------------------------------
+   STAGGERED GRID ENTRANCE — applied to children of `.bento-stagger`
+   (BentoGrid's `stagger` prop adds the class).
+
+   The keyframe touches opacity + filter ONLY. A CSS animation claims its
+   animated properties at the animation cascade level for the full
+   duration + fill lifetime, which would block a panel's own
+   `:hover { transform }`. Keeping `transform` out of the keyframe preserves
+   hover lift. First-frame opacity stays above zero: Paint Timing excludes
+   opacity:0 content from FCP, which would make Lighthouse report NO_FCP.
+   -------------------------------------------------------------------------- */
+.bento-stagger > * {
+  animation: cascade-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
+  animation-delay: calc(var(--bento-i, 0) * 60ms);
+}
+.bento-stagger > *:nth-child(1)  { --bento-i: 0; }
+.bento-stagger > *:nth-child(2)  { --bento-i: 1; }
+.bento-stagger > *:nth-child(3)  { --bento-i: 2; }
+.bento-stagger > *:nth-child(4)  { --bento-i: 3; }
+.bento-stagger > *:nth-child(5)  { --bento-i: 4; }
+.bento-stagger > *:nth-child(6)  { --bento-i: 5; }
+.bento-stagger > *:nth-child(7)  { --bento-i: 6; }
+.bento-stagger > *:nth-child(8)  { --bento-i: 7; }
+.bento-stagger > *:nth-child(9)  { --bento-i: 8; }
+.bento-stagger > *:nth-child(10) { --bento-i: 9; }
+.bento-stagger > *:nth-child(11) { --bento-i: 10; }
+.bento-stagger > *:nth-child(12) { --bento-i: 11; }
+.bento-stagger > *:nth-child(13) { --bento-i: 12; }
+.bento-stagger > *:nth-child(14) { --bento-i: 13; }
+.bento-stagger > *:nth-child(15) { --bento-i: 14; }
+.bento-stagger > *:nth-child(16) { --bento-i: 15; }
+.bento-stagger > *:nth-child(17) { --bento-i: 16; }
+.bento-stagger > *:nth-child(n + 18) { --bento-i: 17; }
+
+/* Standalone entrance for a single element (a navbar, a hero) — same keyframe,
+   with an optional --cascade-delay. */
+.cascade-in {
+  animation: cascade-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
+  animation-delay: var(--cascade-delay, 0ms);
+}
+
+@keyframes cascade-in {
+  0% {
+    opacity: 0.01;
+    filter: blur(10px) brightness(0.9);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(2px) brightness(1.02);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0) brightness(1);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   HUD CORNER BRACKETS — camera-viewfinder L-shapes on the two SQUARE corners
+   of an interactive panel. `GlassPanel`'s `brackets` prop renders four
+   `<span class="hud-bracket hud-bracket--{tl,tr,bl,br}">`; only top-left +
+   bottom-right paint — the chamfered top-right / bottom-left already read as a
+   corner treatment, so their spans are hidden (kept in the DOM for symmetry).
+   Hidden by default, fade in on `.interactive-panel:hover`.
+   -------------------------------------------------------------------------- */
+.hud-bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 220ms ease, transform 220ms var(--talos-ease-glass);
+  z-index: 3;
+  /* Matches the chamfered hairline at peak. */
+  --_bracket: hsl(0 0% 100% / 0.85);
+}
+.hud-bracket--tl {
+  top: 6px;
+  left: 6px;
+  border-top: 1px solid var(--_bracket);
+  border-left: 1px solid var(--_bracket);
+}
+.hud-bracket--br {
+  bottom: 6px;
+  right: 6px;
+  border-bottom: 1px solid var(--_bracket);
+  border-right: 1px solid var(--_bracket);
+}
+/* Top-right + bottom-left coincide with the chamfered cuts — render nothing. */
+.hud-bracket--tr,
+.hud-bracket--bl { display: none; }
+
+.interactive-panel:hover .hud-bracket {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bento-stagger > *,
+  .cascade-in { animation: none; }
+  .hud-bracket { transition: none; }
+}

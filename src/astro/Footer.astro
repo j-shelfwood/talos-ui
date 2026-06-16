@@ -1,0 +1,128 @@
+---
+/**
+ * Footer — three-column marketing footer (links · brand · contact) over a
+ * GlassPanel, with a hairline copyright rule.
+ *
+ * Opt-in marketing chrome — requires `@j_shelfwood/talos-ui/talos-marketing.css`
+ * (or all.css) plus talos.css for the GlassPanel.
+ *
+ * Icons stay consumer-side (the package adds no icon dependency): pass them
+ * through the per-row `icon-<key>` slots, or omit for a text-only footer.
+ *
+ * @example
+ *   <Footer
+ *     nav={[{ key: "work", title: "Work", href: "/work" }]}
+ *     contact={{ email: "you@site.co", phone: "+31 6 …", location: "NL" }}
+ *     calendarUrl="https://cal.com/you"
+ *     copyright="Shelfwood.co"
+ *   >
+ *     <Icon slot="icon-work" name="lucide:folder" />
+ *     <Icon slot="icon-email" name="lucide:mail" />
+ *   </Footer>
+ */
+import GlassPanel from "./GlassPanel.astro";
+import BrandMark from "./BrandMark.astro";
+
+export interface FooterNavLink {
+  key: string;
+  title: string;
+  href: string;
+}
+export interface FooterContact {
+  email?: string;
+  phone?: string;
+  location?: string;
+}
+
+interface Props {
+  nav?: FooterNavLink[];
+  contact?: FooterContact;
+  /** "Book a consultation" link target; omit to hide the row. */
+  calendarUrl?: string;
+  /** Heading above the contact column. */
+  contactHeading?: string;
+  /** Entity name in the copyright line. */
+  copyright?: string;
+  /** Tagline after the copyright separator. */
+  tagline?: string;
+  /** Home link the brand points at. */
+  homeHref?: string;
+  class?: string;
+  [key: string]: any;
+}
+
+const {
+  nav = [],
+  contact = {},
+  calendarUrl,
+  contactHeading = "Get in touch",
+  copyright,
+  tagline = "All systems nominal",
+  homeHref = "/",
+  class: className,
+  ...rest
+} = Astro.props;
+
+const year = new Date().getFullYear();
+const hasBrandSlot = Astro.slots.has("brand");
+---
+
+<footer class:list={["talos-footer", className]} {...rest}>
+  <GlassPanel class="talos-footer-panel" style="padding:2rem">
+    <div class="talos-footer-grid">
+      <div class="talos-footer-col--links">
+        {nav.map((link) => (
+          <a class="talos-footer-link" href={link.href}>
+            <slot name={`icon-${link.key}`} />
+            <span class="talos-nav-text">{link.title}</span>
+          </a>
+        ))}
+      </div>
+
+      <div class="talos-footer-col--brand">
+        <a href={homeHref} aria-label="Home">
+          {hasBrandSlot ? <slot name="brand" /> : <BrandMark />}
+        </a>
+      </div>
+
+      <div class="talos-footer-col--contact">
+        {contactHeading && <h3 class="talos-footer-heading">{contactHeading}</h3>}
+        <div class="talos-footer-contact">
+          {contact.email && (
+            <a href={`mailto:${contact.email}`}>
+              <span class="talos-nav-text">{contact.email}</span>
+              <slot name="icon-email" />
+            </a>
+          )}
+          {contact.phone && (
+            <a href={`tel:${contact.phone}`}>
+              <span class="talos-nav-text">{contact.phone}</span>
+              <slot name="icon-phone" />
+            </a>
+          )}
+          {contact.location && (
+            <span>
+              <span class="talos-nav-text">{contact.location}</span>
+              <slot name="icon-location" />
+            </span>
+          )}
+          {calendarUrl && (
+            <a href={calendarUrl} target="_blank" rel="noopener noreferrer">
+              <span class="talos-nav-text">Book a consultation</span>
+              <slot name="icon-calendar" />
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <p class="talos-footer-copy">
+      &copy; {year}{copyright ? ` ${copyright}` : ""}
+      {tagline && (
+        <>
+          <span class="talos-footer-copy-sep">/</span>{tagline}
+        </>
+      )}
+    </p>
+  </GlassPanel>
+</footer>

@@ -1,0 +1,34 @@
+---
+/**
+ * BentoGrid — a responsive 4/8/12-column mosaic grid. Thin wrapper over the
+ * `.talos-grid` + `.col-span-*` utilities (talos-layout.css). Pair children
+ * with `class="col-span-N md:col-span-N lg:col-span-N"`.
+ *
+ * Requires "@j_shelfwood/talos-ui/talos-layout.css".
+ *
+ * @prop stagger — adds the `.bento-stagger` entrance (a staggered blur/bright
+ *   fade-in). This is decorative motion: it requires
+ *   "@j_shelfwood/talos-ui/talos-motion.css" to be imported, and is off by
+ *   default to honor the core "motion is telemetry, not transition" stance.
+ *
+ * @example
+ *   <BentoGrid stagger>
+ *     <GlassPanel class="col-span-4 lg:col-span-6">…</GlassPanel>
+ *   </BentoGrid>
+ */
+interface Props {
+  /** Opt into the decorative staggered entrance (needs talos-motion.css). */
+  stagger?: boolean;
+  class?: string;
+  [key: string]: any;
+}
+
+const { stagger = false, class: className, ...rest } = Astro.props;
+const cls = ["talos-grid", stagger && "bento-stagger", className]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div class={cls} {...rest}>
+  <slot />
+</div>
