@@ -65,18 +65,25 @@ const {
 
 const year = new Date().getFullYear();
 const hasBrandSlot = Astro.slots.has("brand");
+// When the consumer needs per-link icons, it renders the whole nav column via
+// the `links` slot (Astro requires static slot names, so the package can't emit
+// one icon slot per dynamic key). Otherwise the `nav` prop renders text links.
+const hasLinksSlot = Astro.slots.has("links");
 ---
 
 <footer class:list={["talos-footer", className]} {...rest}>
   <GlassPanel class="talos-footer-panel" style="padding:2rem">
     <div class="talos-footer-grid">
       <div class="talos-footer-col--links">
-        {nav.map((link) => (
-          <a class="talos-footer-link" href={link.href}>
-            <slot name={`icon-${link.key}`} />
-            <span class="talos-nav-text">{link.title}</span>
-          </a>
-        ))}
+        {hasLinksSlot ? (
+          <slot name="links" />
+        ) : (
+          nav.map((link) => (
+            <a class="talos-footer-link" href={link.href}>
+              <span class="talos-nav-text">{link.title}</span>
+            </a>
+          ))
+        )}
       </div>
 
       <div class="talos-footer-col--brand">
