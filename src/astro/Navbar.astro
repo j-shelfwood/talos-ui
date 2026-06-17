@@ -70,6 +70,7 @@ const hasToc = tocItems.length > 0;
 const hasBrandSlot = Astro.slots.has("brand");
 const hasLeftSlot = Astro.slots.has("left");
 const hasRightSlot = Astro.slots.has("right");
+const hasTocIcon = Astro.slots.has("toc-icon");
 ---
 
 <header class:list={["talos-navbar", className]} data-compact="false" {...rest}>
@@ -111,9 +112,12 @@ const hasRightSlot = Astro.slots.has("right");
               aria-label="On this page"
             >
               <span class="talos-nav-text">On this page</span>
-              <!-- Persists when the label collapses on scroll, so the TOC stays
-                   reachable in the compact pill instead of leaving dead space. -->
-              <span class="talos-toc-glyph" aria-hidden="true">§</span>
+              <!-- The icon persists when the label collapses on scroll, so the
+                   TOC stays reachable in the compact pill. Consumer supplies it
+                   via the `toc-icon` slot (no icon dep); falls back to a glyph. -->
+              <span class="talos-toc-glyph" aria-hidden="true">
+                {hasTocIcon ? <slot name="toc-icon" /> : "≡"}
+              </span>
             </button>
           </div>
         )}

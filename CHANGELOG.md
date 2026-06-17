@@ -6,6 +6,22 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-06-17
+
+### Changed
+- **Navbar compact state is now a symmetric, centered icon cluster.** On scroll
+  the pill collapses to `[back] · [brand] · [toc]` on a `1fr·auto·1fr` grid, so
+  the brand mark sits dead-centre with the two icon affordances equidistant on
+  either side (previously the brand was left-aligned with dead space to the
+  right). The pill takes a fixed compact width (`--talos-navbar-compact-w`,
+  default `12rem`) so the grid has room to balance. Collapse animates via
+  max-width / opacity only (no `display:none` / `order` swaps, which had killed
+  the grow/shrink transition).
+- **TOC toggle icon via slot.** The "On this page" button now renders a
+  `toc-icon` slot (consumer-supplied, no icon dep; falls back to a `≡` glyph),
+  which persists when the label collapses on scroll. Lets consumers use their
+  own icon set (e.g. a lucide list icon) for the compact TOC affordance.
+
 ## [0.5.1] — 2026-06-17
 
 ### Fixed
