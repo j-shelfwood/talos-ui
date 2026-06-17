@@ -1,16 +1,18 @@
 ---
 /**
- * ToolkitPanel — skills/toolkit card: title header + grouped chip clusters.
- * Each group exposes a level heading and a flex-wrap of pills; emphasis "high"
- * brightens the chips, "low" mutes them. De-Tailwinded; self-contained styles.
+ * ToolkitPanel — skills/toolkit card: title header (with optional leading icon
+ * via the "icon" slot) + grouped chip clusters. Each group exposes a level
+ * heading and a flex-wrap of pills; emphasis "high" brightens the chips, "low"
+ * mutes them. When emphasis is omitted it's derived — the first group renders
+ * "high", the rest "low". De-Tailwinded; self-contained styles.
  * Requires "@j_shelfwood/talos-ui/talos.css".
  */
 import GlassPanel from "./GlassPanel.astro";
 
 interface Group {
   level: string;
-  emphasis?: "high" | "low";
   items: string[];
+  emphasis?: "high" | "low";
 }
 interface Props {
   title?: string;
@@ -18,15 +20,29 @@ interface Props {
   class?: string;
 }
 const { title = "Toolkit", groups, class: className } = Astro.props;
+
+// Derive emphasis when a group omits it: the first group reads "high"
+// (primary skills), the rest "low". Explicit emphasis always wins.
+const resolved = groups.map((group, i) => ({
+  ...group,
+  emphasis: group.emphasis ?? (i === 0 ? "high" : "low"),
+}));
+
+const hasIcon = Astro.slots.has("icon");
 ---
 
 <GlassPanel class={["toolkit-card", "talos-pad-lg", className].filter(Boolean).join(" ")}>
   <div class="toolkit-card__head">
-    <span class="toolkit-card__title">{title}</span>
+    {hasIcon && (
+      <span class="toolkit-card__icon" aria-hidden="true">
+        <slot name="icon" />
+      </span>
+    )}
+    <h2 class="toolkit-card__title">{title}</h2>
   </div>
 
   <div class="toolkit-card__groups">
-    {groups.map((group) => (
+    {resolved.map((group) => (
       <div class="toolkit-card__group">
         <h3
           class={[
@@ -56,12 +72,19 @@ const { title = "Toolkit", groups, class: className } = Astro.props;
 <style>
   .toolkit-card { display: flex; flex-direction: column; }
   .toolkit-card__head {
-    display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
   }
+  .toolkit-card__icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; flex: 0 0 auto;
+    background: hsl(0 0% 100% / 0.1); color: hsl(0 0% 100%);
+    border: 1px solid hsl(0 0% 100% / 0.12);
+  }
+  .toolkit-card__icon :global(svg) { width: 1.5rem; height: 1.5rem; }
   .toolkit-card__title {
     font-family: var(--talos-font-display); font-size: 0.78rem; font-weight: 400;
     text-transform: uppercase; letter-spacing: var(--talos-tracking-hud);
-    color: hsl(0 0% 100% / 0.92);
+    color: hsl(0 0% 100% / 0.92); margin: 0;
   }
   .toolkit-card__groups {
     display: flex; flex-direction: column; gap: 1.5rem; flex: 1;

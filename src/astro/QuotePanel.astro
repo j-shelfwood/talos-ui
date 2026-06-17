@@ -1,0 +1,66 @@
+---
+/**
+ * QuotePanel — a centered pull-quote over a GlassPanel, with an optional
+ * leading icon (slot) and a right-aligned attribution.
+ * Requires "@j_shelfwood/talos-ui/talos.css".
+ *
+ * Icons stay consumer-side (no icon dependency): pass a quote glyph via
+ * `<slot name="icon">`; omit it for a plain quote.
+ *
+ * @example
+ *   <QuotePanel quote="Build the thing right." source="Shelfwood">
+ *     <Icon slot="icon" name="lucide:quote" />
+ *   </QuotePanel>
+ */
+import GlassPanel from "./GlassPanel.astro";
+
+interface Props {
+  quote: string;
+  source?: string;
+  class?: string;
+  [key: string]: any;
+}
+const { quote, source, class: className, ...rest } = Astro.props;
+const hasIcon = Astro.slots.has("icon");
+---
+
+<GlassPanel
+  class={["quote-card", "talos-pad", className].filter(Boolean).join(" ")}
+  {...rest}
+>
+  {hasIcon && <span class="quote-card__icon" aria-hidden="true"><slot name="icon" /></span>}
+  <blockquote class="quote-card__quote">&ldquo;{quote}&rdquo;</blockquote>
+  {source && <cite class="quote-card__source">&mdash; {source}</cite>}
+</GlassPanel>
+
+<style>
+  .quote-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .quote-card__icon {
+    display: inline-flex;
+    color: var(--talos-primary, hsl(0 0% 100%));
+    margin-bottom: 1rem;
+  }
+  .quote-card__icon :global(svg) { width: 2rem; height: 2rem; }
+  .quote-card__quote {
+    margin: 0;
+    font-size: 1.25rem;
+    font-style: italic;
+    line-height: 1.6;
+    color: hsl(0 0% 100% / 0.92);
+    text-wrap: pretty;
+  }
+  .quote-card__source {
+    margin-top: 1rem;
+    align-self: flex-end;
+    font-style: normal;
+    color: var(--talos-muted-foreground, hsl(0 0% 100% / 0.6));
+    font-family: var(--talos-font-display);
+    font-size: 0.78rem;
+    letter-spacing: var(--talos-tracking-hud-tight);
+    text-transform: uppercase;
+  }
+</style>

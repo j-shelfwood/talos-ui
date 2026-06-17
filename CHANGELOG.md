@@ -6,6 +6,46 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-06-17
+
+This release finishes the panel extraction: the panel suite now carries the
+a11y/animation polish that had drifted into shelfwood.co's local copies, so a
+consumer can adopt the package panels without regressing. Adds a prose layer and
+two new generic panels.
+
+### Added
+- **`talos-prose.css` (opt-in)** — article/long-form typography tinted to the
+  talos palette. Built for `@tailwindcss/typography`: maps `--tw-prose-invert-*`
+  onto talos channels (use with `class="prose prose-invert"`), and exposes
+  `--talos-prose-*` aliases for no-plugin consumers. The core still ships no
+  prose by design; this is opt-in. New export `@j_shelfwood/talos-ui/talos-prose.css`.
+- **`ProfileHeroPanel.astro`** — profile lockup (avatar slot + name/headline/
+  location); avatar via `<slot name="image">`, location glyph via
+  `<slot name="location-icon">`. Generalized from a site panel.
+- **`QuotePanel.astro`** — centered pull-quote with optional `<slot name="icon">`
+  and attribution. Generalized from a site panel.
+
+### Changed
+- **Panel polish ported (no API break for these):** `HeroPanel` gains a pulsing
+  status dot (with reduced-motion fallback), a gradient hairline rule, headline
+  `text-wrap: balance`, and aria-hidden on decorative chrome. `MissionPanel`
+  gains the gradient rule, semantic `<header>`/`<h3>`/`<footer>`, refined index
+  alignment, and aria-hidden chrome. `FeatureItem` and `ProjectPanel` gain
+  optional `<slot name="icon">` / `<slot name="arrow">` (with the prior glyphs as
+  fallbacks) for icon-slot convention parity.
+- **`Footer` nav prop aligned with `Navbar`:** new canonical `links` prop with
+  `{ label, href }` items — the same shape `Navbar` takes — so one nav array
+  feeds both. `nav` and the `title` field still work as deprecated aliases.
+
+### Breaking
+- **`ToolkitPanel` prop schema:** `groups: { level, items, emphasis? }[]`
+  (was `{ level, emphasis, items }` with required `emphasis`). `emphasis` is now
+  optional and derived (first group → "high", rest → "low") when omitted.
+  Restores an optional leading `<slot name="icon">`.
+- **`GlassPanel` `brackets` default:** now defaults to `true` for interactive
+  panels (`as="a"`/`"button"`) and `false` otherwise, instead of always `false`.
+  Pass an explicit boolean to override. (Brackets still require `talos-motion.css`.)
+
 ## [0.4.1] — 2026-06-17
 
 ### Fixed

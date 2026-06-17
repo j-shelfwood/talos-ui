@@ -3,6 +3,9 @@
  * FeatureItem — inner list item: small left marker + title + muted description.
  * No GlassPanel wrapper (composed inside panels like ServicePanel).
  * Requires "@j_shelfwood/talos-ui/talos.css".
+ *
+ * The marker stays consumer-side via the `icon` slot (no icon dep); it falls
+ * back to a "+" text glyph so the component works with no slot.
  */
 interface Props {
   title: string;
@@ -10,10 +13,14 @@ interface Props {
   class?: string;
 }
 const { title, description, class: className } = Astro.props;
+
+const hasIcon = Astro.slots.has("icon");
 ---
 
 <div class={["feature-item", className].filter(Boolean).join(" ")}>
-  <span class="feature-item__marker" aria-hidden="true">+</span>
+  <span class="feature-item__marker" aria-hidden="true">
+    {hasIcon ? <slot name="icon" /> : "+"}
+  </span>
   <div class="feature-item__body">
     <h3 class="feature-item__title">{title}</h3>
     <p class="feature-item__desc">{description}</p>

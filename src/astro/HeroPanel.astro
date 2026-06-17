@@ -37,29 +37,30 @@ const {
 
 <GlassPanel class={["hero-card", "talos-pad-lg", className].filter(Boolean).join(" ")}>
   <div class="hero-card__head">
-    <span class="hero-card__label">{label}</span>
-    <span class="hero-card__div"></span>
+    <span class="hero-card__label" aria-hidden="true">{label}</span>
+    <span class="hero-card__div" aria-hidden="true"></span>
     <span class="hero-card__status">
-      <span class="talos-dot"></span>{status}
+      <span class="hero-card__dot" aria-hidden="true"></span>
+      <span class="hero-card__status-text">{status}</span>
     </span>
-    <span class="hero-card__slug">{version}</span>
+    <span class="hero-card__slug" aria-hidden="true">{version}</span>
   </div>
 
   <div class="hero-card__hero">
-    {eyebrow && <span class="hero-card__eyebrow">{eyebrow}</span>}
-    <h1 class="hero-card__headline">{headline}<span class="hero-card__dot">.</span></h1>
+    {eyebrow && <span class="hero-card__eyebrow" aria-label={eyebrow}>{eyebrow}</span>}
+    <h1 class="hero-card__headline">{headline}<span class="hero-card__dot-end" aria-hidden="true">.</span></h1>
   </div>
 
-  <hr class="talos-rule" style="margin:0 0 2rem" />
+  <hr class="hero-card__rule" />
 
   <div class="hero-card__split">
     {summary && <p class="hero-card__summary">{summary}</p>}
     {vitals.length > 0 && (
-      <dl class="hero-card__vitals">
+      <dl class="hero-card__vitals" aria-label="Identity vitals">
         {vitals.map((v) => (
           <div class="hero-card__vital">
             <dt class="hero-card__vital-key">{v.key}</dt>
-            <dd class="hero-card__vital-val"><span class="slash">/</span>{v.value}</dd>
+            <dd class="hero-card__vital-val"><span class="slash" aria-hidden="true">/</span>{v.value}</dd>
           </div>
         ))}
       </dl>
@@ -67,7 +68,7 @@ const {
   </div>
 
   <div class="hero-card__foot">
-    <span>{footer}</span><span class="caret">◢</span>
+    <span aria-hidden="true">{footer}</span><span class="caret" aria-hidden="true">◢</span>
   </div>
 </GlassPanel>
 
@@ -82,6 +83,15 @@ const {
   .hero-card__label { color: hsl(0 0% 100% / 0.6); }
   .hero-card__div { flex: 0 0 1.25rem; height: 1px; background: hsl(0 0% 100% / 0.18); }
   .hero-card__status { display: inline-flex; align-items: center; gap: 0.5rem; color: hsl(0 0% 100% / 0.8); }
+  /* Live status dot — pulses to read as telemetry (Principle 3: motion encodes
+     "online"), with a reduced-motion fallback. */
+  .hero-card__dot {
+    width: 6px; height: 6px; border-radius: 999px;
+    background: hsl(140 90% 60%); box-shadow: 0 0 8px hsl(140 90% 60% / 0.6);
+    animation: hero-card-pulse 2.4s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .hero-card__dot { animation: none; } }
+  @keyframes hero-card-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
   .hero-card__slug { margin-left: auto; font-variant-numeric: tabular-nums; color: hsl(0 0% 100% / 0.5); }
 
   .hero-card__hero { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2rem; }
@@ -92,9 +102,16 @@ const {
   .hero-card__headline {
     font-family: var(--talos-font-display); font-weight: 300;
     font-size: clamp(2.25rem, 4.5vw, 4rem); line-height: 1.02; letter-spacing: 0.005em;
-    text-transform: uppercase; color: hsl(0 0% 100%); margin: 0;
+    text-transform: uppercase; color: hsl(0 0% 100%); margin: 0; text-wrap: balance;
   }
-  .hero-card__dot { color: hsl(0 0% 100% / 0.35); margin-left: 0.1em; }
+  .hero-card__dot-end { color: hsl(0 0% 100% / 0.35); margin-left: 0.1em; }
+
+  /* Gradient hairline — brighter at the left, fading right (HUD scan line). */
+  .hero-card__rule {
+    border: 0; height: 1px; margin: 0 0 2rem;
+    background: linear-gradient(to right,
+      hsl(0 0% 100% / 0.2) 0%, hsl(0 0% 100% / 0.06) 70%, transparent 100%);
+  }
 
   .hero-card__split { display: grid; grid-template-columns: 1fr; gap: 1.5rem; flex: 1; }
   @media (min-width: 768px) {
@@ -102,8 +119,9 @@ const {
   }
   .hero-card__summary {
     font-size: 0.95rem; line-height: 1.65; color: hsl(0 0% 100% / 0.78);
-    max-width: 38ch; margin: 0;
+    max-width: 38ch; margin: 0; text-wrap: pretty;
   }
+  .hero-card__status-text { color: inherit; }
   .hero-card__vitals {
     margin: 0; padding: 0 0 0 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;
     border-left: 1px solid hsl(0 0% 100% / 0.12);

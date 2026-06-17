@@ -4,6 +4,10 @@
  * muted description, and a tag row. Renders as an anchor when `href` is set so
  * the GlassPanel HUD brackets light up on hover. De-Tailwinded.
  * Requires "@j_shelfwood/talos-ui/talos.css" + "/talos-feedback.css" (tag badges).
+ *
+ * The corner glyph stays consumer-side via the `arrow` slot (no icon dep); it
+ * falls back to a unicode glyph ("↗" external / "→" internal) so the component
+ * works with no slot.
  */
 import GlassPanel from "./GlassPanel.astro";
 
@@ -28,6 +32,8 @@ const glyph = external ? "↗" : "→"; // ↗ external / → internal
 const linkProps = href
   ? { as: "a" as const, href, ...(external ? { target: "_blank", rel: "noreferrer noopener" } : {}) }
   : {};
+
+const hasArrow = Astro.slots.has("arrow");
 ---
 
 <GlassPanel
@@ -36,7 +42,9 @@ const linkProps = href
 >
   <div class="project-card__head">
     <h3 class="project-card__title">{title}</h3>
-    <span class="project-card__glyph" aria-hidden="true">{glyph}</span>
+    <span class="project-card__glyph" aria-hidden="true">
+      {hasArrow ? <slot name="arrow" /> : glyph}
+    </span>
   </div>
 
   <p class="project-card__desc">{description}</p>

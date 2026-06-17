@@ -32,8 +32,11 @@ import GlassPanel from "./GlassPanel.astro";
 import BrandMark from "./BrandMark.astro";
 
 export interface FooterNavLink {
-  key: string;
-  title: string;
+  key?: string;
+  /** Canonical label field (aligned with Navbar's NavLink). */
+  label?: string;
+  /** @deprecated use `label`. Kept as a fallback for older call sites. */
+  title?: string;
   href: string;
 }
 export interface FooterContact {
@@ -43,6 +46,10 @@ export interface FooterContact {
 }
 
 interface Props {
+  /** Nav links for the left column. Same shape as Navbar's `links` so one
+   *  array can feed both ({ label, href }). */
+  links?: FooterNavLink[];
+  /** @deprecated use `links`. */
   nav?: FooterNavLink[];
   contact?: FooterContact;
   /** "Book a consultation" link target; omit to hide the row. */
@@ -60,7 +67,8 @@ interface Props {
 }
 
 const {
-  nav = [],
+  links,
+  nav,
   contact = {},
   calendarUrl,
   contactHeading = "Get in touch",
@@ -70,6 +78,8 @@ const {
   class: className,
   ...rest
 } = Astro.props;
+// `links` is canonical; `nav` is the deprecated alias.
+const navItems = links ?? nav ?? [];
 
 const year = new Date().getFullYear();
 const hasBrandSlot = Astro.slots.has("brand");
@@ -86,9 +96,9 @@ const hasLinksSlot = Astro.slots.has("links");
         {hasLinksSlot ? (
           <slot name="links" />
         ) : (
-          nav.map((link) => (
+          navItems.map((link) => (
             <a class="talos-footer-link" href={link.href}>
-              <span class="talos-nav-text">{link.title}</span>
+              <span class="talos-nav-text">{link.label ?? link.title}</span>
             </a>
           ))
         )}

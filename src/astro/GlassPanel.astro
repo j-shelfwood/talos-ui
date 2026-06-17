@@ -9,21 +9,24 @@ interface Props {
   as?: "div" | "button" | "a";
   href?: string;
   /** Render HUD viewfinder corner brackets (hover-revealed). Requires
-   *  "@j_shelfwood/talos-ui/talos-motion.css". */
+   *  "@j_shelfwood/talos-ui/talos-motion.css". Defaults to true for
+   *  interactive panels (as="a"/"button"), false otherwise; pass an explicit
+   *  boolean to override. */
   brackets?: boolean;
   [key: string]: any;
 }
 
-const { as: Element = "div", class: className, brackets = false, ...rest } =
+const { as: Element = "div", class: className, brackets, ...rest } =
   Astro.props;
 const isInteractive = Element === "a" || Element === "button";
+const showBrackets = brackets ?? isInteractive;
 const cls = ["glass-panel", isInteractive && "interactive-panel", className]
   .filter(Boolean)
   .join(" ");
 ---
 
 <Element class={cls} {...rest}>
-  {brackets && (
+  {showBrackets && (
     <>
       <span class="hud-bracket hud-bracket--tl" aria-hidden="true"></span>
       <span class="hud-bracket hud-bracket--tr" aria-hidden="true"></span>

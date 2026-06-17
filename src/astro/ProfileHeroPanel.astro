@@ -1,0 +1,90 @@
+---
+/**
+ * ProfileHeroPanel — a profile lockup over a GlassPanel: round avatar beside
+ * name + headline + a location line. The avatar and the location icon are
+ * supplied by the consumer via slots (no icon/image dependency in the package).
+ * Requires "@j_shelfwood/talos-ui/talos.css".
+ *
+ * @example
+ *   <ProfileHeroPanel name="Joris" headline="Software · AI" location="Amsterdam, NL">
+ *     <img slot="image" src="/me.jpg" alt="Joris" />
+ *     <Icon slot="location-icon" name="lucide:map-pin" />
+ *   </ProfileHeroPanel>
+ */
+import GlassPanel from "./GlassPanel.astro";
+
+interface Props {
+  name: string;
+  headline: string;
+  location?: string;
+  class?: string;
+  [key: string]: any;
+}
+const { name, headline, location, class: className, ...rest } = Astro.props;
+const hasImage = Astro.slots.has("image");
+const hasLocationIcon = Astro.slots.has("location-icon");
+---
+
+<GlassPanel
+  class={["profile-hero", "talos-pad-lg", className].filter(Boolean).join(" ")}
+  {...rest}
+>
+  {hasImage && <div class="profile-hero__avatar"><slot name="image" /></div>}
+  <div class="profile-hero__body">
+    <h1 class="profile-hero__name">{name}</h1>
+    <p class="profile-hero__headline">{headline}</p>
+    {location && (
+      <div class="profile-hero__location">
+        {hasLocationIcon && <span class="profile-hero__loc-icon" aria-hidden="true"><slot name="location-icon" /></span>}
+        <span>{location}</span>
+      </div>
+    )}
+  </div>
+</GlassPanel>
+
+<style>
+  .profile-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+  @media (min-width: 768px) {
+    .profile-hero { flex-direction: row; }
+  }
+  .profile-hero__avatar { flex-shrink: 0; }
+  .profile-hero__avatar :global(img) {
+    width: 10rem;
+    height: 10rem;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 4px solid hsl(0 0% 100% / 0.1);
+    box-shadow: 0 18px 48px hsl(0 0% 0% / 0.36);
+  }
+  .profile-hero__body { text-align: center; }
+  @media (min-width: 768px) {
+    .profile-hero__body { text-align: left; }
+  }
+  .profile-hero__name {
+    margin: 0 0 0.5rem;
+    font-family: var(--talos-font-display);
+    font-weight: 300;
+    font-size: clamp(1.875rem, 3vw, 2.25rem);
+    text-transform: uppercase;
+    letter-spacing: var(--talos-tracking-hud);
+    color: hsl(0 0% 100%);
+  }
+  .profile-hero__headline {
+    margin: 0 0 1rem;
+    font-size: 1.125rem;
+    color: var(--talos-muted-foreground, hsl(0 0% 100% / 0.6));
+  }
+  .profile-hero__location {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--talos-muted-foreground, hsl(0 0% 100% / 0.6));
+  }
+  .profile-hero__loc-icon { display: inline-flex; }
+  .profile-hero__loc-icon :global(svg) { width: 1rem; height: 1rem; }
+</style>

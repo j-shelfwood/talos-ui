@@ -31,27 +31,29 @@ const {
 ---
 
 <GlassPanel class={["mission-card", "talos-pad-lg", className].filter(Boolean).join(" ")}>
-  <div class="mission-card__head">
-    <span class="mission-card__title">{title}</span>
-    <span class="mission-card__slug">{slug}</span>
-  </div>
-  <p class="mission-card__label">{label}</p>
+  <header class="mission-card__head">
+    <h2 class="mission-card__title">{title}</h2>
+    <span class="mission-card__slug" aria-hidden="true">{slug}</span>
+  </header>
+  <p class="mission-card__label" aria-hidden="true">{label}</p>
   <p class="mission-card__statement">{statement}</p>
-  <hr class="talos-rule" style="margin:0 0 1.5rem" />
+  <hr class="mission-card__rule" />
   {axes.length > 0 && (
     <ol class="mission-card__axes">
       {axes.map((a, i) => (
         <li class="mission-card__axis">
-          <span class="mission-card__index">{String(i + 1).padStart(2, "0")}</span>
-          <div>
-            <p class="mission-card__axis-key">{a.key}</p>
+          <span class="mission-card__index" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+          <div class="mission-card__axis-body">
+            <h3 class="mission-card__axis-key">{a.key}</h3>
             <p class="mission-card__axis-desc">{a.description}</p>
           </div>
         </li>
       ))}
     </ol>
   )}
-  <div class="mission-card__foot"><span>{footer}</span><span class="caret">◢</span></div>
+  <footer class="mission-card__foot">
+    <span aria-hidden="true">{footer}</span><span class="caret" aria-hidden="true">◢</span>
+  </footer>
 </GlassPanel>
 
 <style>
@@ -77,6 +79,12 @@ const {
     line-height: 1.35; letter-spacing: 0.01em; color: hsl(0 0% 100% / 0.95);
     margin: 0 0 1.5rem; text-wrap: balance;
   }
+  /* Gradient hairline — brighter at the left, fading right (HUD scan line). */
+  .mission-card__rule {
+    border: 0; height: 1px; margin: 0 0 1.5rem;
+    background: linear-gradient(to right,
+      hsl(0 0% 100% / 0.18) 0%, hsl(0 0% 100% / 0.06) 60%, transparent 100%);
+  }
   .mission-card__axes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.1rem; flex: 1; }
   .mission-card__axis { display: grid; grid-template-columns: 2.25rem 1fr; gap: 0.75rem; align-items: baseline; }
   .mission-card__index {
@@ -84,6 +92,8 @@ const {
     letter-spacing: var(--talos-tracking-hud-tight); color: hsl(0 0% 100% / 0.5);
     font-variant-numeric: tabular-nums; text-align: right;
     border-right: 1px solid hsl(0 0% 100% / 0.12); padding-right: 0.6rem;
+    align-self: stretch; display: flex; align-items: baseline; justify-content: flex-end;
+    padding-top: 0.15rem;
   }
   .mission-card__axis-key {
     font-family: var(--talos-font-display); font-size: 0.72rem; font-weight: 500;

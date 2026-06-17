@@ -1,0 +1,72 @@
+/* ============================================================================
+   @j_shelfwood/talos-ui — TALOS-PROSE.CSS   (opt-in)
+   Article/long-form typography, tinted to the talos palette.
+
+     import "@j_shelfwood/talos-ui/talos-prose.css";
+
+   The core layers deliberately ship no prose styling — long-form body copy is a
+   consumer concern, and most consumers don't render articles. This opt-in layer
+   exists for the ones that do (docs, blogs).
+
+   It is built for the @tailwindcss/typography plugin: that plugin renders
+   `.prose` / `.prose-invert` by reading CSS custom properties named
+   `--tw-prose-*` and `--tw-prose-invert-*`. talos is a dark-monochrome system,
+   so this maps the INVERT channel (the dark-theme variant) onto talos tokens.
+   Use it with `class="prose prose-invert"`.
+
+   No-plugin consumers can still read the `--talos-prose-*` aliases below to
+   build their own prose rules.
+
+   Requires tokens.css (transitively via talos.css) for the --talos-* channels.
+   ========================================================================== */
+
+:root {
+  /* talos-native prose tokens (source of truth for the mapping below). */
+  --talos-prose-body: hsl(var(--talos-foreground-hsl) / 0.9);
+  --talos-prose-headings: hsl(var(--talos-foreground-hsl));
+  --talos-prose-lead: hsl(var(--talos-foreground-hsl) / 0.8);
+  --talos-prose-links: hsl(var(--talos-primary-hsl));
+  --talos-prose-bold: hsl(var(--talos-foreground-hsl));
+  --talos-prose-counters: hsl(var(--talos-muted-foreground-hsl));
+  --talos-prose-bullets: hsl(var(--talos-muted-foreground-hsl) / 0.5);
+  --talos-prose-hr: hsl(var(--talos-border-hsl));
+  --talos-prose-quotes: hsl(var(--talos-foreground-hsl) / 0.8);
+  --talos-prose-quote-borders: hsl(var(--talos-primary-hsl) / 0.2);
+  --talos-prose-captions: hsl(var(--talos-muted-foreground-hsl) / 0.7);
+  --talos-prose-code: hsl(var(--talos-primary-hsl));
+  --talos-prose-pre-code: hsl(var(--talos-foreground-hsl) / 0.85);
+  --talos-prose-pre-bg: hsl(0 0% 10%);
+  --talos-prose-th-borders: hsl(var(--talos-border-hsl));
+  --talos-prose-td-borders: hsl(var(--talos-border-hsl) / 0.5);
+}
+
+/* Drive the @tailwindcss/typography invert channel from the talos tokens.
+   Scoped to `.prose` so it only costs when prose is actually rendered. */
+.prose {
+  --tw-prose-invert-body: var(--talos-prose-body);
+  --tw-prose-invert-headings: var(--talos-prose-headings);
+  --tw-prose-invert-lead: var(--talos-prose-lead);
+  --tw-prose-invert-links: var(--talos-prose-links);
+  --tw-prose-invert-bold: var(--talos-prose-bold);
+  --tw-prose-invert-counters: var(--talos-prose-counters);
+  --tw-prose-invert-bullets: var(--talos-prose-bullets);
+  --tw-prose-invert-hr: var(--talos-prose-hr);
+  --tw-prose-invert-quotes: var(--talos-prose-quotes);
+  --tw-prose-invert-quote-borders: var(--talos-prose-quote-borders);
+  --tw-prose-invert-captions: var(--talos-prose-captions);
+  --tw-prose-invert-code: var(--talos-prose-code);
+  --tw-prose-invert-pre-code: var(--talos-prose-pre-code);
+  --tw-prose-invert-pre-bg: var(--talos-prose-pre-bg);
+  --tw-prose-invert-th-borders: var(--talos-prose-th-borders);
+  --tw-prose-invert-td-borders: var(--talos-prose-td-borders);
+}
+
+/* HUD heading treatment inside prose: talos headings are uppercase display
+   type elsewhere, but article headings read better in sentence case — so prose
+   keeps the display family + light weight but drops the uppercasing/tracking. */
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--talos-font-display);
+  font-weight: 300;
+  text-transform: none;
+  letter-spacing: normal;
+}
