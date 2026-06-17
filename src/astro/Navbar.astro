@@ -108,23 +108,33 @@ const hasRightSlot = Astro.slots.has("right");
               type="button"
               aria-expanded="false"
               aria-controls="talos-toc-content"
+              aria-label="On this page"
             >
               <span class="talos-nav-text">On this page</span>
+              <!-- Persists when the label collapses on scroll, so the TOC stays
+                   reachable in the compact pill instead of leaving dead space. -->
+              <span class="talos-toc-glyph" aria-hidden="true">§</span>
             </button>
-            <div class="talos-toc-content" id="talos-toc-content">
-              <ul class="talos-toc-list">
-                {tocItems.map((h) => (
-                  <li>
-                    <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         )}
       </div>
     </div>
   </div>
+
+  {hasToc && (
+    <!-- The TOC dropdown lives OUTSIDE the pill: the pill's notch clip-path
+         would otherwise clip this panel to the pill bounds. It's positioned
+         under the navbar via talos-marketing.css. -->
+    <div class="talos-toc-content" id="talos-toc-content">
+      <ul class="talos-toc-list">
+        {tocItems.map((h) => (
+          <li>
+            <a href={`#${h.slug}`} data-depth={h.depth}>{h.text}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
 </header>
 
 <script>
@@ -153,26 +163,18 @@ const hasRightSlot = Astro.slots.has("right");
 
         if (!tocBtn || !tocContent || !pill) return;
 
-        // --- TOC expand: grow the pill to fit the injected panel
+        // --- TOC dropdown: a CSS-driven card anchored below the toggle (see
+        // talos-marketing.css). The script only flips state; all sizing lives in
+        // CSS, so the pill never grows and the panel never reflows the row.
         const close = () => {
           nav.classList.remove("talos-navbar--toc-open");
           tocBtn.setAttribute("aria-expanded", "false");
-          tocContent.style.maxHeight = "0px";
-          tocContent.style.opacity = "0";
-          pill.style.maxHeight = "";
           onScroll();
         };
         const open = () => {
           nav.classList.add("talos-navbar--toc-open");
           tocBtn.setAttribute("aria-expanded", "true");
-          tocContent.style.opacity = "1";
-          tocContent.style.maxHeight = tocContent.scrollHeight + "px";
-          pill.style.maxHeight =
-            (pill.scrollHeight || 72) + tocContent.scrollHeight + 24 + "px";
         };
-
-        tocContent.style.maxHeight = "0px";
-        tocContent.style.opacity = "0";
 
         tocBtn.addEventListener("click", (e) => {
           e.stopPropagation();

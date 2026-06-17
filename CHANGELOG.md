@@ -6,6 +6,23 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-06-17
+
+### Fixed
+- **Navbar TOC dead space on scroll** — the compact (scrolled) pill kept the
+  width of the collapsed "On this page" panel, leaving a large empty region
+  beside the brand. The TOC dropdown now lives outside the pill's flex row, so
+  the compact pill hugs brand + back + a `§` toggle glyph (which keeps the TOC
+  reachable while scrolled instead of leaving a gap).
+- **Navbar TOC dropdown rendering** — the "On this page" panel was clipped by the
+  pill's notch `clip-path` (and laid its entries out horizontally inside the
+  pill). It now renders as a proper chamfered dropdown card centered below the
+  pill — a child of the unclipped `.talos-navbar`, revealed via CSS max-height
+  (the wrapper script no longer hand-sizes the pill).
+- **Navbar content separation** — added a `backdrop-filter: blur()` to the pill
+  so article content scrolling beneath the floating navbar reads cleanly up to
+  the pill edge instead of colliding with it.
+
 ## [0.5.0] — 2026-06-17
 
 This release finishes the panel extraction: the panel suite now carries the

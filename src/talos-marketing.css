@@ -49,12 +49,18 @@
 }
 .talos-navbar > * { pointer-events: auto; }
 
-/* Auto-width pill: hugs its contents (no forced fixed width / centred void). */
+/* Auto-width pill: hugs its contents (no forced fixed width / centred void).
+   A backdrop blur separates the floating pill from article content scrolling
+   beneath it, so text reads cleanly up to the pill edge instead of colliding. */
 .talos-navbar-pill {
   width: auto;
   max-width: calc(100vw - 2rem);
   padding: 0.6rem 1.5rem;
-  transition: padding 0.35s var(--talos-ease-out, cubic-bezier(0, 0, 0.2, 1));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition:
+    padding 0.35s var(--talos-ease-out, cubic-bezier(0, 0, 0.2, 1)),
+    max-width 0.4s var(--talos-ease-out, cubic-bezier(0, 0, 0.2, 1));
 }
 
 /* HUD notch in the pill's top edge — a centred trapezoidal bite (the
@@ -215,19 +221,72 @@
 }
 .talos-toc-button:hover,
 .talos-navbar--toc-open .talos-toc-button { color: var(--talos-foreground); }
+
+/* The TOC glyph only appears once the "On this page" label has collapsed on
+   scroll — it keeps the TOC reachable in the compact pill (no dead space where
+   the label used to be). Expanded, the label carries the affordance and the
+   glyph is hidden. */
+.talos-toc-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  font-size: 0.95rem;
+  line-height: 1;
+  transition:
+    width 0.4s var(--talos-ease-out, cubic-bezier(0, 0, 0.2, 1)),
+    opacity 0.35s var(--talos-ease-out, cubic-bezier(0, 0, 0.2, 1));
+}
+.talos-navbar[data-compact="true"]:not(.talos-navbar--toc-open) .talos-toc-glyph {
+  width: 1.1rem;
+  opacity: 1;
+}
+/* While the TOC is open, the glyph reads as an active/expanded marker. */
+.talos-navbar--toc-open .talos-toc-glyph { opacity: 0; width: 0; }
+/* The TOC opens as a dropdown CARD below the pill. It is a child of the (fixed,
+   unclipped) .talos-navbar — NOT the pill — because the pill's notch clip-path
+   would otherwise clip this panel to the pill's bounds. Centered under the pill,
+   it reveals via max-height; closed it has zero height + no pointer events, so
+   it never interferes with the pill. */
 .talos-toc-content {
+  position: absolute;
+  top: 4.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  min-width: 14rem;
+  max-width: min(24rem, 80vw);
   max-height: 0;
   opacity: 0;
   overflow: hidden;
+  pointer-events: none;
+  background: var(--talos-hud-fill, hsl(0 0% 5%));
+  border: 1px solid var(--talos-edge-default, hsl(0 0% 100% / 0.18));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
   transition: max-height 300ms ease, opacity 200ms ease;
+}
+.talos-navbar--toc-open .talos-toc-content {
+  max-height: 20rem;
+  opacity: 1;
+  pointer-events: auto;
 }
 .talos-toc-list {
   list-style: none;
   margin: 0;
-  padding: 0.5rem 0 0;
-  max-height: 16rem;
+  padding: 0.5rem;
+  max-height: 18rem;
   overflow-y: auto;
-  border-top: 1px solid var(--talos-edge-subtle, hsl(0 0% 100% / 0.12));
 }
 .talos-toc-list a {
   display: block;
