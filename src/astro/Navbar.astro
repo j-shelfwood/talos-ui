@@ -43,8 +43,16 @@ interface Props {
   active?: string;
   /** Pass markdown headings to render the in-pill "On this page" TOC. */
   toc?: TocHeading[];
+  /** Label for the TOC toggle (default "On this page"). */
+  tocLabel?: string;
   /** Home link the brand points at. */
   homeHref?: string;
+  /** Centre the brand mark with the left/TOC affordances flanking it
+   *  symmetrically (one grid layout for both the expanded and compact states,
+   *  so width animates smoothly both ways). Suits a reading/article nav
+   *  (back · brand · TOC). Leave off for the default brand-left marketing nav
+   *  (brand · links). */
+  centered?: boolean;
   /** Extra classes on the <header>. */
   class?: string;
   [key: string]: any;
@@ -54,7 +62,9 @@ const {
   links = [],
   active,
   toc,
+  tocLabel = "On this page",
   homeHref = "/",
+  centered = false,
   class: className,
   ...rest
 } = Astro.props;
@@ -73,7 +83,7 @@ const hasRightSlot = Astro.slots.has("right");
 const hasTocIcon = Astro.slots.has("toc-icon");
 ---
 
-<header class:list={["talos-navbar", className]} data-compact="false" {...rest}>
+<header class:list={["talos-navbar", { "talos-navbar--centered": centered }, className]} data-compact="false" {...rest}>
   <div class="talos-navbar-pill glass-panel interactive-panel" style="overflow:visible">
     <div class="glass-panel-content">
       <div class="talos-navbar-inner">
@@ -109,9 +119,9 @@ const hasTocIcon = Astro.slots.has("toc-icon");
               type="button"
               aria-expanded="false"
               aria-controls="talos-toc-content"
-              aria-label="On this page"
+              aria-label={tocLabel}
             >
-              <span class="talos-nav-text">On this page</span>
+              <span class="talos-nav-text">{tocLabel}</span>
               <!-- The icon persists when the label collapses on scroll, so the
                    TOC stays reachable in the compact pill. Consumer supplies it
                    via the `toc-icon` slot (no icon dep); falls back to a glyph. -->

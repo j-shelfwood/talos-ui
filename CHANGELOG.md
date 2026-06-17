@@ -6,6 +6,30 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.5.3] — 2026-06-17
+
+### Changed
+- **Centered navbar: constant height + text↔icon crossfade.** The `centered`
+  variant now keeps a CONSTANT pill height across the expanded and compact
+  states — only the width animates (expanded fits the text labels; compact hugs
+  the icons), so the bar no longer jumps vertically on scroll. The flank
+  affordances crossfade between a text label (expanded) and an icon (compact):
+  e.g. "Home" ↔ back arrow, "Table of Contents" ↔ list icon.
+- **`tocLabel` prop** on `Navbar` (default `"On this page"`) sets the TOC
+  toggle's label.
+
+### Fixed
+- The default brand-left compact rules were leaking onto the `centered` variant
+  (both matched `.talos-navbar[data-compact]`), overriding its padding and
+  causing an 8px height jump. Scoped them `:not(.talos-navbar--centered)` so the
+  two variants' compact behaviours are fully isolated.
+
+### Internal
+- Deduplicated the navbar CSS accumulated across iterations: collapsed the
+  redundant `.talos-toc-glyph` state rules (now presentation-only; the centered
+  variant owns the show/hide), merged the four crossfade pieces into one shared
+  transition, removed an orphaned label margin hack.
+
 ## [0.5.2] — 2026-06-17
 
 ### Changed
