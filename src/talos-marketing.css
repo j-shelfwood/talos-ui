@@ -82,6 +82,12 @@
 .talos-navbar-pill::before {
   clip-path: polygon(var(--_notch-poly)) !important;
 }
+/* The cursor-sheen layer (.glass-panel::after) inherits the original chamfer
+   clip from talos.css; re-clip it to the notch so the hover sheen doesn't
+   paint past the notched top edge. */
+.talos-navbar-pill::after {
+  clip-path: polygon(var(--_notch-poly)) !important;
+}
 
 /* Single dense row: brand · hairline separator · links. No flex:1 spread —
    the pill is only as wide as its contents need. */

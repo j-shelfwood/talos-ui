@@ -99,6 +99,22 @@ import LinkCard from "@j_shelfwood/talos-ui/astro/LinkCard.astro";
 </BentoGrid>
 ```
 
+`Tag` styles come from `talos-feedback.css`; `BackButton` from `talos.css`.
+Icons are passed in by slot — the package ships no icon dependency.
+
+```astro
+---
+import "@j_shelfwood/talos-ui/talos.css";        // BackButton
+import "@j_shelfwood/talos-ui/talos-feedback.css"; // Tag (.talos-badge)
+import Tag from "@j_shelfwood/talos-ui/astro/Tag.astro";
+import BackButton from "@j_shelfwood/talos-ui/astro/BackButton.astro";
+---
+<Tag size="sm">Astro</Tag>
+<BackButton href="/work" text="Back to work">
+  <Icon slot="arrow" name="lucide:arrow-left" />
+</BackButton>
+```
+
 ## Use — web components (notched panels)
 
 ```html

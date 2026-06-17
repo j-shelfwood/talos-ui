@@ -6,8 +6,12 @@
  * Opt-in marketing chrome — requires `@j_shelfwood/talos-ui/talos-marketing.css`
  * (or all.css) plus talos.css for the GlassPanel.
  *
- * Icons stay consumer-side (the package adds no icon dependency): pass them
- * through the per-row `icon-<key>` slots, or omit for a text-only footer.
+ * Icons stay consumer-side (the package adds no icon dependency). The links
+ * column is text-only from the `nav` prop by default; to put an icon beside
+ * each link, render the whole column yourself via the `links` slot (Astro
+ * requires static slot names, so the package can't emit one slot per dynamic
+ * nav key). The contact rows accept per-row `icon-email` / `icon-phone` /
+ * `icon-location` / `icon-calendar` slots.
  *
  * @example
  *   <Footer
@@ -16,7 +20,11 @@
  *     calendarUrl="https://cal.com/you"
  *     copyright="Shelfwood.co"
  *   >
- *     <Icon slot="icon-work" name="lucide:folder" />
+ *     <Fragment slot="links">
+ *       <a class="talos-footer-link" href="/work">
+ *         <Icon name="lucide:folder" /><span class="talos-nav-text">Work</span>
+ *       </a>
+ *     </Fragment>
  *     <Icon slot="icon-email" name="lucide:mail" />
  *   </Footer>
  */

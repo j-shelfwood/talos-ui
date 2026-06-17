@@ -6,6 +6,23 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-06-17
+
+### Fixed
+- **`Footer.astro` doc contract** — the JSDoc + `@example` still advertised
+  per-link `icon-<key>` nav slots removed in the `links`-slot refactor; a
+  consumer copying the example got a silently-dropped icon. Docs now describe
+  the real contract (text-only `nav` prop, or the `links` slot for per-link
+  icons; contact rows keep `icon-email`/`icon-phone`/`icon-location`/`icon-calendar`).
+- **Navbar sheen clip** — `.talos-navbar-pill::after` (cursor sheen) inherited
+  the original chamfer clip and could paint past the notched top edge on hover;
+  re-clipped to the notch polygon.
+
+### Documentation
+- README now shows `Tag` / `BackButton` usage and names their per-component CSS
+  dependencies (`talos-feedback.css` / `talos.css`), which were previously
+  listed in the wrapper inventory without an example or import cue.
+
 ## [0.4.0] — 2026-06-17
 
 ### Added
