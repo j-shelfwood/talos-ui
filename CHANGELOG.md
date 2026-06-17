@@ -6,6 +6,15 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.5.4] — 2026-06-17
+
+### Changed
+- **`LinkCard` itemized lists now use the indexed-hairline ladder** (the same
+  `01 │ …` treatment as `MissionPanel` axes) instead of plain round bullet dots,
+  so itemized content reads consistently across tiles. Items get a tabular
+  zero-padded index, a vertical hairline rule, the display font, and slightly
+  more breathing room (gap `0.5rem` → `0.7rem`, text `0.9rem`).
+
 ## [0.5.3] — 2026-06-17
 
 ### Changed
