@@ -6,6 +6,16 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.5.5] — 2026-06-18
+
+### Fixed
+- **`LinkCard` title→list spacing.** The parent flex `gap` collapsed against the
+  title's line-box, so the item ladder butted directly against the title (0px)
+  while items sat ~1.1rem apart from each other — inverted hierarchy. Gave the
+  items list an explicit `margin-top: 1.25rem` and matched the internal gap to
+  MissionPanel (`1.1rem`), so the title now separates from the group slightly
+  more than items separate from each other.
+
 ## [0.5.4] — 2026-06-17
 
 ### Changed

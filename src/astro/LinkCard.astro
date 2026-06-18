@@ -143,11 +143,14 @@ const hasArrow = Astro.slots.has("arrow");
      tiles instead of as plain bullet dots. */
   .talos-linkcard__items {
     list-style: none;
-    margin: 0;
+    /* Explicit top margin sets the title→list rhythm to match MissionPanel's
+       header→axes gap (~1.5rem); the parent flex `gap` collapses against the
+       title's line-box here, so it can't be relied on for this transition. */
+    margin: 1.25rem 0 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.7rem;
+    gap: 1.1rem;
     color: hsl(var(--talos-foreground-hsl) / 0.7);
   }
   .talos-linkcard__items li {
