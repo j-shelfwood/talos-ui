@@ -6,6 +6,16 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.5.7] — 2026-07-12
+
+### Added
+- **`ProjectPanel` media slot.** Pass an `<img slot="media">` to render a
+  full-bleed screenshot banner above the card header. The banner bleeds through
+  the `talos-pad` inset (tracking its 768px step), inherits the GlassPanel
+  chamfer clip, ships desaturated/dimmed with a bottom scrim, and reveals to
+  full color with a subtle scale on hover — monochrome-first, per the HUD
+  language. Honors `prefers-reduced-motion`.
+
 ## [0.5.6] — 2026-07-12
 
 ### Fixed

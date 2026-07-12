@@ -1,13 +1,18 @@
 ---
 /**
- * ProjectPanel — project link card: header (title + directional corner glyph),
- * muted description, and a tag row. Renders as an anchor when `href` is set so
- * the GlassPanel HUD brackets light up on hover. De-Tailwinded.
+ * ProjectPanel — project link card: optional media banner (screenshot),
+ * header (title + directional corner glyph), muted description, and a tag row.
+ * Renders as an anchor when `href` is set so the GlassPanel HUD brackets light
+ * up on hover. De-Tailwinded.
  * Requires "@j_shelfwood/talos-ui/talos.css" + "/talos-feedback.css" (tag badges).
  *
  * The corner glyph stays consumer-side via the `arrow` slot (no icon dep); it
  * falls back to a unicode glyph ("↗" external / "→" internal) so the component
  * works with no slot.
+ *
+ * The `media` slot renders a full-bleed banner above the header — pass an
+ * <img>. It ships desaturated/dimmed and reveals to full color on hover,
+ * matching the HUD's monochrome-first language.
  */
 import GlassPanel from "./GlassPanel.astro";
 
@@ -34,12 +39,20 @@ const linkProps = href
   : {};
 
 const hasArrow = Astro.slots.has("arrow");
+const hasMedia = Astro.slots.has("media");
 ---
 
 <GlassPanel
   class={["project-card", "talos-pad", className].filter(Boolean).join(" ")}
   {...linkProps}
 >
+  {hasMedia && (
+    <div class="project-card__media">
+      <slot name="media" />
+      <span class="project-card__media-scrim" aria-hidden="true" />
+    </div>
+  )}
+
   <div class="project-card__head">
     <h3 class="project-card__title">{title}</h3>
     <span class="project-card__glyph" aria-hidden="true">
@@ -58,6 +71,51 @@ const hasArrow = Astro.slots.has("arrow");
 
 <style>
   .project-card { display: flex; flex-direction: column; }
+
+  /* --- media banner ------------------------------------------------------- */
+  /* Full-bleed against .talos-pad's inset; the chamfer clip comes from the
+     parent GlassPanel so the banner follows the notched corner for free. */
+  .project-card__media {
+    position: relative;
+    margin: -1.5rem -1.5rem 1.25rem;
+    overflow: hidden;
+  }
+  @media (min-width: 768px) {
+    /* Track .talos-pad's 2rem step so the banner stays full-bleed. */
+    .project-card__media { margin: -2rem -2rem 1.25rem; }
+  }
+  .project-card__media :global(img) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: top;
+    filter: grayscale(0.9) brightness(0.72) contrast(1.05);
+    transform: scale(1.001);
+    transition:
+      filter var(--talos-dur-med, 300ms) var(--talos-ease-out, ease),
+      transform var(--talos-dur-med, 300ms) var(--talos-ease-out, ease);
+  }
+  .project-card:hover .project-card__media :global(img) {
+    filter: grayscale(0) brightness(1) contrast(1);
+    transform: scale(1.03);
+  }
+  /* Bottom scrim fades the shot into the panel fill so text stays legible. */
+  .project-card__media-scrim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent 55%,
+      hsl(0 0% 4% / 0.85) 100%
+    );
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .project-card__media :global(img) { transition: filter 200ms ease; }
+    .project-card:hover .project-card__media :global(img) { transform: none; }
+  }
+
   .project-card__head {
     display: flex; align-items: flex-start; justify-content: space-between;
     gap: 1rem; margin-bottom: 0.75rem;
