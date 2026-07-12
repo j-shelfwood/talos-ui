@@ -10,11 +10,12 @@
  * falls back to a unicode glyph ("↗" external / "→" internal) so the component
  * works with no slot.
  *
- * The `media` slot renders a fixed-height "feed strip" above the header —
- * pass an <img>. The shot is heavily darkened toward the panel tone so it
- * reads as a dim camera feed inside the HUD (never a glaring photo), carries
- * a FEED:// label derived from `href` (override via `mediaLabel`), and lifts
- * its tint on hover.
+ * The `media` slot renders an inset "display" between the header and the
+ * description — pass an <img>. The shot sits inside the panel padding in a
+ * hairline frame (never bleeding into the chamfer/bracket furniture), is
+ * darkened toward the panel tone so it reads as a dim feed rather than a
+ * photo, carries a FEED:// label derived from `href` (override via
+ * `mediaLabel`), and lifts its tint on hover.
  */
 import GlassPanel from "./GlassPanel.astro";
 
@@ -61,6 +62,13 @@ const hasMedia = Astro.slots.has("media");
   class={["project-card", "talos-pad", className].filter(Boolean).join(" ")}
   {...linkProps}
 >
+  <div class="project-card__head">
+    <h3 class="project-card__title">{title}</h3>
+    <span class="project-card__glyph" aria-hidden="true">
+      {hasArrow ? <slot name="arrow" /> : glyph}
+    </span>
+  </div>
+
   {hasMedia && (
     <div class="project-card__media">
       <slot name="media" />
@@ -68,13 +76,6 @@ const hasMedia = Astro.slots.has("media");
       <span class="project-card__media-label" aria-hidden="true">{feedLabel}</span>
     </div>
   )}
-
-  <div class="project-card__head">
-    <h3 class="project-card__title">{title}</h3>
-    <span class="project-card__glyph" aria-hidden="true">
-      {hasArrow ? <slot name="arrow" /> : glyph}
-    </span>
-  </div>
 
   <p class="project-card__desc">{description}</p>
 
@@ -91,24 +92,21 @@ const hasMedia = Astro.slots.has("media");
      can absorb surplus height in tall (row-span) cards. */
   .project-card > :global(.glass-panel-content) { flex: 1; }
 
-  /* --- media feed strip ---------------------------------------------------- */
-  /* Fixed-height viewport bled against .talos-pad's inset; the chamfer clip
-     comes from the parent GlassPanel. The shot is pulled DOWN to the panel's
-     tonal range (dark tint + desaturation) so it reads as instrumentation,
-     not photography; hover lifts the tint without ever going full-bright. */
+  /* --- media display -------------------------------------------------------- */
+  /* Inset "screen" between header and description: sits INSIDE the panel
+     padding so the GlassPanel chamfer and hover brackets keep their normal
+     geometry. Hairline frame; the shot is pulled DOWN to the panel's tonal
+     range (dark tint + desaturation) so it reads as instrumentation, not
+     photography; hover lifts the tint without ever going full-bright. */
   .project-card__media {
     position: relative;
-    /* 10.5rem floor; in tall (row-span) cards the strip absorbs the surplus
-       height so the text block never floats over dead space. */
+    /* 9rem floor; in taller cards the display absorbs surplus height so the
+       text block never floats over dead space. */
     flex: 1 1 auto;
-    min-height: 10.5rem;
-    margin: -1.5rem -1.5rem 1.25rem;
+    min-height: 9rem;
+    margin: 0 0 1.25rem;
     overflow: hidden;
-    border-bottom: 1px solid hsl(0 0% 100% / 0.08);
-  }
-  @media (min-width: 768px) {
-    /* Track .talos-pad's 2rem step so the strip stays full-bleed. */
-    .project-card__media { margin: -2rem -2rem 1.25rem; }
+    border: 1px solid hsl(0 0% 100% / 0.12);
   }
   .project-card__media :global(img) {
     display: block;
@@ -128,14 +126,17 @@ const hasMedia = Astro.slots.has("media");
       linear-gradient(to bottom, hsl(0 0% 4% / 0.45) 0%, hsl(0 0% 4% / 0.72) 100%);
     transition: opacity var(--talos-dur-med, 300ms) var(--talos-ease-out, ease);
   }
+  .project-card:hover .project-card__media {
+    border-color: hsl(0 0% 100% / 0.25);
+  }
   .project-card:hover .project-card__media :global(img) {
     filter: grayscale(0.15) brightness(0.95) contrast(1);
   }
   .project-card:hover .project-card__media-tint { opacity: 0.45; }
-  /* FEED:// designation, bottom-left of the strip. */
+  /* FEED:// designation, bottom-left inside the frame. */
   .project-card__media-label {
     position: absolute;
-    left: 1.5rem;
+    left: 0.75rem;
     bottom: 0.5rem;
     font-family: var(--talos-font-display);
     font-size: 0.6rem;
@@ -143,9 +144,6 @@ const hasMedia = Astro.slots.has("media");
     text-transform: uppercase;
     color: hsl(0 0% 100% / 0.55);
     text-shadow: 0 1px 2px hsl(0 0% 0% / 0.8);
-  }
-  @media (min-width: 768px) {
-    .project-card__media-label { left: 2rem; }
   }
 
   .project-card__head {
