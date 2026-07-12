@@ -4,7 +4,8 @@
  *   • "card"  — a GlassPanel tile (arrow + label + optional subtitle)
  *   • "ghost" — a muted inline text link (arrow + label)
  *
- * Requires "@j_shelfwood/talos-ui/talos.css" (the card variant uses GlassPanel).
+ * Requires "@j_shelfwood/talos-ui/talos.css" (the card variant uses GlassPanel)
+ * and talos-layout.css for the card variant's `talos-pad` inset.
  * The arrow glyph stays consumer-side via the `arrow` slot (no icon dep); it
  * falls back to a text glyph so the component works with no slot.
  *
@@ -42,7 +43,7 @@ const hasArrow = Astro.slots.has("arrow");
     <GlassPanel
       as="a"
       href={href}
-      class={["talos-backbtn talos-backbtn--card", className].filter(Boolean).join(" ")}
+      class={["talos-backbtn talos-backbtn--card", "talos-pad", className].filter(Boolean).join(" ")}
       {...rest}
     >
       <span class="talos-backbtn__arrow" aria-hidden="true">
@@ -74,6 +75,12 @@ const hasArrow = Astro.slots.has("arrow");
   .talos-backbtn--card {
     display: flex;
     flex-direction: column;
+  }
+  /* GlassPanel interposes .glass-panel-content between the panel and our
+     arrow/body, so the vertical spread must live on the wrapper — putting
+     justify-content on the panel itself never reaches the children. */
+  .talos-backbtn--card > :global(.glass-panel-content) {
+    flex: 1;
     justify-content: space-between;
     gap: var(--talos-space-4, 1rem);
   }

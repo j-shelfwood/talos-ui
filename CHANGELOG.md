@@ -6,6 +6,18 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.5.6] — 2026-07-12
+
+### Fixed
+- **`BackButton` card variant was unpadded and never spread its content.** The
+  card was the only GlassPanel consumer that didn't add a `talos-pad` inset, so
+  the arrow and label sat flush against the chamfered edge. Its
+  `justify-content: space-between` also targeted the panel element, but
+  GlassPanel interposes `.glass-panel-content`, so the spread never reached the
+  arrow/body and tall cards showed dead space at the bottom. The card now ships
+  with `talos-pad` (requires `talos-layout.css`) and the vertical spread lives
+  on the content wrapper (`flex: 1` + `justify-content: space-between`).
+
 ## [0.5.5] — 2026-06-18
 
 ### Fixed
