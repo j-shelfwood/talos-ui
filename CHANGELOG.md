@@ -6,6 +6,26 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-07-28
+
+### Added
+- **Tailwind v4 adapter (`tailwind.css`).** Optional `@theme inline` block
+  mapping the talos token surface into Tailwind utilities
+  (`bg-talos-accent`, `text-talos-muted-foreground`, `font-talos-display`,
+  `tracking-talos-hud`, …). Values reference the runtime `--talos-*` custom
+  properties, so re-theming on `:root` re-themes the utilities. Plain-CSS
+  consumers are unaffected (the file does nothing without Tailwind).
+
+### Changed
+- **All stylesheets now live in cascade layers** — tokens in `base.talos`,
+  component rules in `components.talos`. In a Tailwind v4 consumer these nest
+  under Tailwind's own `base`/`components` slots, so **utilities can now
+  override talos component declarations** (`class="talos-pad p-0"` works;
+  previously the unlayered talos rules beat every layered utility). Plain-CSS
+  consumers see no visual change; their own unlayered overrides now also win
+  without specificity games. `@font-face`/`@property` registrations stay
+  top-level (spec requirement).
+
 ## [0.5.7] — 2026-07-12
 
 ### Added

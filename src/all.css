@@ -17,6 +17,8 @@
    say which is which. The live instruments themselves are web components,
    imported from "@j_shelfwood/talos-ui/wc", not CSS. */
 
+@layer base.talos, components.talos;
+
 @import "./talos.css";        /* T2 core: tokens + panels, button, ambient      */
 @import "./talos-layout.css"; /* T2 grid + spans, padding, flex, eyebrow, dot   */
 @import "./talos-forms.css";  /* T2 inputs, select, checkbox/radio/switch, range*/

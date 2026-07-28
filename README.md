@@ -24,6 +24,15 @@ Framework-agnostic by design — three layers, take what you need:
 No Tailwind, no build step required for the CSS layer. Works in Astro,
 Laravel/Blade, or plain HTML.
 
+> **Tailwind v4 interop.** The CSS ships in cascade layers (`base.talos`,
+> `components.talos`) that nest under Tailwind's `base`/`components` slots, so
+> Tailwind utilities override talos component rules per instance
+> (`class="talos-pad p-0"` works). Import `@j_shelfwood/talos-ui/tailwind.css`
+> after `tailwindcss` to additionally get token-mapped utilities
+> (`bg-talos-accent`, `font-talos-display`, `tracking-talos-hud`, ...). If your
+> app uses `source(none)`, remember to `@source` any templates that compose
+> these classes.
+
 > **Layout is out of scope.** Talos ships the HUD *chrome* and the *instruments*,
 > plus a handful of layout utilities (`talos-layout.css`: `.talos-grid`,
 > `.talos-pad`, `.talos-stack`/`.talos-row`, …). It is **not** a layout framework —

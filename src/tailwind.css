@@ -1,0 +1,35 @@
+/* ============================================================================
+   @j_shelfwood/talos-ui — TAILWIND V4 ADAPTER (optional)
+   For consumers running Tailwind CSS v4. Maps the talos token surface into
+   Tailwind's @theme so talos-branded utilities exist alongside the plain-CSS
+   components: bg-talos-accent, text-talos-muted-foreground,
+   font-talos-display, tracking-talos-hud, …
+
+     @import "tailwindcss";
+     @import "@j_shelfwood/talos-ui/tailwind.css";
+     @import "@j_shelfwood/talos-ui/all.css";   (or individual modules)
+
+   @theme inline: values reference the runtime custom properties, so a
+   consumer re-theming --talos-* on :root re-themes the utilities too.
+   Plain-CSS consumers never import this file; it adds nothing without
+   Tailwind. tokens.css is NOT imported here — import a component module (or
+   tokens.css itself) alongside, as usual.
+   ========================================================================== */
+
+@theme inline {
+  /* Colors → bg-talos-*, text-talos-*, border-talos-*, … */
+  --color-talos-background: var(--talos-background);
+  --color-talos-foreground: var(--talos-foreground);
+  --color-talos-primary: var(--talos-primary);
+  --color-talos-primary-foreground: var(--talos-primary-foreground);
+  --color-talos-muted: var(--talos-muted);
+  --color-talos-muted-foreground: var(--talos-muted-foreground);
+  --color-talos-border: var(--talos-border);
+  --color-talos-accent: var(--talos-accent);
+
+  /* Typography → font-talos-display / font-talos-body, tracking-talos-hud */
+  --font-talos-display: var(--talos-font-display);
+  --font-talos-body: var(--talos-font-body);
+  --tracking-talos-hud: var(--talos-tracking-hud);
+  --tracking-talos-hud-tight: var(--talos-tracking-hud-tight);
+}

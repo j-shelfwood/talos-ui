@@ -27,6 +27,8 @@
     U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+
+@layer base.talos {
 :root {
   /* --- Typography -------------------------------------------------------- */
   /* Display face for HUD/sci-fi headings (anti.space lineage). */
@@ -197,3 +199,5 @@
   outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
   outline-offset: var(--talos-focus-ring-offset);
 }
+
+} /* @layer base.talos */

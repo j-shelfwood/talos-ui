@@ -1,3 +1,5 @@
+
+@layer components.talos {
 /* ============================================================================
    @j_shelfwood/talos-ui — TALOS-MOTION.CSS   (Tier 2, opt-in)
    The decorative-motion layer: a staggered grid entrance and the HUD
@@ -121,3 +123,5 @@
   .cascade-in { animation: none; }
   .hud-bracket { transition: none; }
 }
+
+} /* @layer components.talos */

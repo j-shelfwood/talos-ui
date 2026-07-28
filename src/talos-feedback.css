@@ -23,6 +23,8 @@
   initial-value: 0;
 }
 
+@layer components.talos {
+
 /* Per-component status-channel plumbing. Every status modifier just rebinds
    --_status-hsl (a bare `H S% L%` channel triplet); the base rules build the
    tint/border/text from it. One source of truth per component, four colours. */
@@ -583,3 +585,5 @@
 @media (prefers-reduced-motion: reduce) {
   .talos-status__item::before { animation: none; }
 }
+
+} /* @layer components.talos */

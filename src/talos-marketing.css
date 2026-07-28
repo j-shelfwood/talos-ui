@@ -1,3 +1,5 @@
+
+@layer components.talos {
 /* ============================================================================
    @j_shelfwood/talos-ui — TALOS-MARKETING.CSS   (Tier 2, opt-in)
    The marketing-site chrome layer: a fixed compact-on-scroll navbar pill and a
@@ -449,3 +451,5 @@
   .talos-brand-word,
   .talos-toc-content { transition: none; }
 }
+
+} /* @layer components.talos */

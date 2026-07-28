@@ -1,3 +1,5 @@
+
+@layer components.talos {
 /* ============================================================================
    @j_shelfwood/talos-ui — TALOS-LAYOUT.CSS
    Layout utilities: bento grid + spans, panel padding, flex primitives, and the
@@ -143,3 +145,5 @@
   background-size: 200px 200px;
   mix-blend-mode: multiply;
 }
+
+} /* @layer components.talos */

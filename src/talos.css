@@ -12,6 +12,10 @@
 
 @import "./tokens.css";
 
+/* Layer contract: tokens < components. Both lose to any unlayered consumer
+   CSS and to Tailwind v4 utilities — per-instance overrides stay possible. */
+@layer base.talos, components.talos;
+
 /* ----------------------------------------------------------------------------
    @property registrations — enable smooth transitions of the custom props
    that drive the sheen + lift. Safe no-op in engines without @property.
@@ -190,6 +194,8 @@
   inherits: false;
   initial-value: 0deg;
 }
+
+@layer components.talos {
 
 .activity-edge {
   --talos-rate: 0;
@@ -486,3 +492,5 @@ a.glass-panel .glass-panel-content { text-decoration: none; color: inherit; }
   .glass-panel { transition: none; }
   .interactive-panel:hover { --talos-lift: 0px; }
 }
+
+} /* @layer components.talos */

@@ -21,6 +21,8 @@
   initial-value: 0;
 }
 
+@layer components.talos {
+
 /* --- Table ------------------------------------------------------------------ */
 .talos-table-wrap {
   width: 100%;
@@ -486,3 +488,5 @@
   .talos-readout__live { animation: none; }
   .talos-table tbody tr { transition: none; }
 }
+
+} /* @layer components.talos */

@@ -1,3 +1,5 @@
+
+@layer components.talos {
 /* ============================================================================
    @j_shelfwood/talos-ui — TALOS-PROSE.CSS   (opt-in)
    Article/long-form typography, tinted to the talos palette.
@@ -70,3 +72,5 @@
   text-transform: none;
   letter-spacing: normal;
 }
+
+} /* @layer components.talos */
