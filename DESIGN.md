@@ -46,11 +46,17 @@ Corners are **cut, never rounded**. Geometry replaces `border-radius`.
 - Buttons: `--talos-chamfer-btn` 10px, bottom-right only.
 - Flags/pills: `--talos-chamfer-flag` 8px, top-right only.
 
-Two-layer hairline technique: host element = edge color clipped to the
-chamfered shape; `::before` inset 1px clipped to a 1px-smaller chamfer = the
-fill. Produces an even 1px border along every edge including the cuts.
-(`border` can't follow `clip-path`; `mask-composite` was unreliable on
-Chromium.)
+One engine draws every cut (`talos.css`, "CHAMFER ENGINE"): a real 1px `border`,
+a `clip-path` polygon that cuts the corners, and one 1px diagonal per cut drawn
+as a background gradient in that corner's own box. `clip-path` alone slices the
+border off the cut; the gradient draws the line the border cannot. Per element
+you set `--_edge`, `--_fill` and the per-corner cut sizes `--_tl/--_tr/--_br/--_bl`;
+states rebind `--_edge`/`--_fill`. Every cut is an exact N px at any element
+size (an SVG path stretched with `preserveAspectRatio="none"` drifts off 45° as
+the width changes), the fill may be translucent, and no pseudo-element is spent.
+Use it on your own markup with `.talos-chamfer` (+ `--md` 10px both corners,
+`--sm` 8px both, `--btn`, `--flag`). Panel, button, flag, input, textarea,
+select, alert, toast, stat, readout, avatar and the navbar TOC already ride it.
 
 Web components render the same family of outlines as an **SVG path** via
 `PanelShapeBuilder`, which additionally supports **notches** (centered edge

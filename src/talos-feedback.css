@@ -84,7 +84,6 @@
 /* --- Alert / Callout -------------------------------------------------------- */
 .talos-alert {
   --_status-hsl: var(--talos-foreground-hsl);
-  --_ch: var(--talos-chamfer);
   --_edge: hsl(var(--_status-hsl) / 0.4);
   --_fill: var(--talos-surface-2);
 
@@ -97,39 +96,12 @@
     "icon body  close";
   gap: var(--talos-space-1) var(--talos-space-3);
   padding: var(--talos-space-4) var(--talos-space-5);
-  /* Two-layer chamfer hairline: host carries the edge colour + outer cut,
-     ::before insets 1px with the fill + a 1px-smaller cut, leaving a uniform
-     1px line that follows the chamfered corners too. */
-  background: var(--_edge);
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--_ch)) 0,
-    100% var(--_ch),
-    100% 100%,
-    var(--_ch) 100%,
-    0 calc(100% - var(--_ch))
-  );
-}
-.talos-alert::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  z-index: -1;
-  background: var(--_fill);
-  clip-path: polygon(
-    0 0,
-    calc(100% - (var(--_ch) - 1px)) 0,
-    100% calc(var(--_ch) - 1px),
-    100% 100%,
-    calc(var(--_ch) - 1px) 100%,
-    0 calc(100% - (var(--_ch) - 1px))
-  );
 }
 /* Left status accent edge — a 2px bar of the status colour on the inner fill. */
 .talos-alert::after {
   content: "";
   position: absolute;
-  inset: 1px auto 1px 1px;
+  inset: 0 auto 0 0;
   width: 2px;
   background: hsl(var(--_status-hsl));
 }
@@ -191,11 +163,12 @@
 
 /* Bare — drop the chamfer machinery, keep just a left status border. */
 .talos-alert--bare {
-  background: var(--talos-surface-1);
+  --_fill: var(--talos-surface-1);
+  background-image: none;
   clip-path: none;
+  border: 0;
   border-left: 2px solid hsl(var(--_status-hsl));
 }
-.talos-alert--bare::before,
 .talos-alert--bare::after { display: none; }
 
 /* --- Toast ------------------------------------------------------------------ */
@@ -213,7 +186,6 @@
 
 .talos-toast {
   --_status-hsl: var(--talos-foreground-hsl);
-  --_ch: var(--talos-chamfer);
   --_edge: hsl(var(--_status-hsl) / 0.4);
   --_fill: var(--talos-surface-3);
 
@@ -228,36 +200,12 @@
   padding: var(--talos-space-3) var(--talos-space-4);
   pointer-events: auto;
   box-shadow: var(--talos-shadow-float);
-  background: var(--_edge);
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--_ch)) 0,
-    100% var(--_ch),
-    100% 100%,
-    var(--_ch) 100%,
-    0 calc(100% - var(--_ch))
-  );
   animation: talos-toast-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
-}
-.talos-toast::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  z-index: -1;
-  background: var(--_fill);
-  clip-path: polygon(
-    0 0,
-    calc(100% - (var(--_ch) - 1px)) 0,
-    100% calc(var(--_ch) - 1px),
-    100% 100%,
-    calc(var(--_ch) - 1px) 100%,
-    0 calc(100% - (var(--_ch) - 1px))
-  );
 }
 .talos-toast::after {
   content: "";
   position: absolute;
-  inset: 1px auto 1px 1px;
+  inset: 0 auto 0 0;
   width: 2px;
   background: hsl(var(--_status-hsl));
 }

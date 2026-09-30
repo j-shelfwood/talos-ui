@@ -6,6 +6,48 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-09-30
+
+### Added
+- **Chamfer engine + `.talos-chamfer`.** One shared mechanism for every cut
+  corner: `border` + `clip-path` + a 1px gradient diagonal per cut (see
+  DESIGN.md). Modifiers `--md`, `--sm`, `--btn`, `--flag`; per-corner cuts via
+  `--_tl/--_tr/--_br/--_bl`. Specificity 0, so consumer classes win.
+- **`.talos-flag`** — HUD tag/status chip (top-right cut) with `--active`,
+  `--muted`, `--warning`, `--danger`.
+- **Button:** `--xs` size, `--solid` variant, selected state for
+  `aria-pressed` / `aria-current`.
+- **Tabs:** `.talos-tab` shows its active state for `aria-current` (link
+  navigation) as well as `aria-selected`; `.talos-tab__count` for a trailing
+  count.
+
+### Changed
+- **Buttons, inputs, textareas, selects, input groups, panels, alerts, toasts,
+  stats, readouts, avatars and the navbar TOC now draw their cut with the
+  engine.** `.talos-button` no longer needs an SVG child (`Button.astro` drops
+  it; bare `<a class="talos-button">` is now chamfered too). The cut is an exact
+  px at any width; before, the SVG-stretched button and input cut drifted off
+  45° as the element widened.
+- **`.talos-select` and `.talos-input-group` are chamfered** like the input, per
+  the corner policy (selects were square).
+- Form controls reset `letter-spacing`/`text-transform` so they no longer
+  inherit a HUD label's tracking and clip their own text.
+- `.glass-panel` and the rest of the panel rules now sit inside the
+  `components.talos` layer (they were unlayered, contrary to the 0.6.0 note).
+  `.glass-panel::before` is gone (the fill is the host's own background);
+  hover/focus brighten `--_edge` instead of the host background.
+- `.talos-tabs--segmented` rides the chamfer engine (flag cut) and marks the
+  active segment for `aria-current` too.
+- Validation states rebind `--_edge`/`--_fill` (inputs, textareas, selects).
+
+### Fixed
+- `./tailwind.css` was listed in `exports` but missing from the published
+  `files`, so it could not be imported from 0.6.0. It now ships.
+
+### Removed
+- `.talos-button__shape` and the `--_ch` fill/outline pseudo-element pattern on
+  alert, toast, stat, readout and avatar.
+
 ## [0.6.0] — 2026-07-28
 
 ### Added

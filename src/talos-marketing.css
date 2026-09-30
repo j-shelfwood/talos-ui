@@ -66,35 +66,44 @@
 }
 
 /* HUD notch in the pill's top edge — a centred trapezoidal bite (the
-   <talos-notch> motif applied to the container). One shared 8-point polygon
-   carries the two corner chamfers PLUS the notch, and overrides the
-   GlassPanel chamfer clip-path on BOTH layers (host outline + ::before fill).
-   Set --talos-navbar-notch-w:0 to drop the notch and keep a plain chamfer. */
+   <talos-notch> motif applied to the container). The engine's clip is swapped
+   for one 10-point polygon that carries the two corner chamfers PLUS the
+   notch; the notch's two diagonals and its floor get their own 1px lines as
+   extra background layers, so the hairline runs round the bite like it does
+   round the corners. Set --talos-navbar-notch-w:0 to drop the notch and keep a
+   plain chamfer. */
 .talos-navbar-pill {
-  --_ch: var(--talos-navbar-chamfer, 14px);
+  --_tr: var(--talos-navbar-chamfer, 14px);
+  --_bl: var(--talos-navbar-chamfer, 14px);
   --_nw: var(--talos-navbar-notch-w, 22px);
   --_nd: var(--talos-navbar-notch-d, 7px);
-  --_notch-poly:
+  --_clip: polygon(
     0 0,
     calc(50% - var(--_nw)) 0,
     calc(50% - var(--_nw) + var(--_nd)) var(--_nd),
     calc(50% + var(--_nw) - var(--_nd)) var(--_nd),
     calc(50% + var(--_nw)) 0,
-    calc(100% - var(--_ch)) 0,
-    100% var(--_ch),
+    calc(100% - var(--_tr)) 0,
+    100% var(--_tr),
     100% 100%,
-    var(--_ch) 100%,
-    0 calc(100% - var(--_ch));
-  clip-path: polygon(var(--_notch-poly));
-}
-.talos-navbar-pill::before {
-  clip-path: polygon(var(--_notch-poly)) !important;
-}
-/* The cursor-sheen layer (.glass-panel::after) inherits the original chamfer
-   clip from talos.css; re-clip it to the notch so the hover sheen doesn't
-   paint past the notched top edge. */
-.talos-navbar-pill::after {
-  clip-path: polygon(var(--_notch-poly)) !important;
+    var(--_bl) 100%,
+    0 calc(100% - var(--_bl))
+  );
+  background-image:
+    var(--_cut-lines),
+    linear-gradient(to top right, transparent calc(50% - 1px), var(--_edge) calc(50% - 1px), var(--_edge) 50%, transparent 50%),
+    linear-gradient(to top left, transparent calc(50% - 1px), var(--_edge) calc(50% - 1px), var(--_edge) 50%, transparent 50%),
+    linear-gradient(var(--_edge), var(--_edge));
+  background-size:
+    var(--_cut-sizes),
+    var(--_nd) var(--_nd),
+    var(--_nd) var(--_nd),
+    max(0px, calc(2 * (var(--_nw) - var(--_nd)))) 1px;
+  background-position:
+    var(--_cut-pos),
+    calc(50% + var(--_nd) / 2 - var(--_nw)) 0,
+    calc(50% + var(--_nw) - var(--_nd) / 2) 0,
+    50% var(--_nd);
 }
 
 /* Single dense row: brand · hairline separator · links. No flex:1 spread —
@@ -325,18 +334,11 @@
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
-  background: var(--talos-hud-fill, hsl(0 0% 5%));
-  border: 1px solid var(--talos-edge-default, hsl(0 0% 100% / 0.18));
+  --_fill: var(--talos-hud-fill, hsl(0 0% 5%));
+  --_tr: var(--talos-chamfer-btn);
+  --_bl: var(--talos-chamfer-btn);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
-  clip-path: polygon(
-    0 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% 100%,
-    10px 100%,
-    0 calc(100% - 10px)
-  );
   transition: max-height 300ms ease, opacity 200ms ease;
 }
 .talos-navbar--toc-open .talos-toc-content {

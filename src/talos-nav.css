@@ -50,30 +50,47 @@
   transform-origin: left;
   transition: transform var(--talos-dur-fast) var(--talos-ease-glass);
 }
-.talos-tab[aria-selected="true"] {
+/* Active: aria-selected for tablists, aria-current for link navigation. */
+.talos-tab[aria-selected="true"],
+.talos-tab[aria-current]:not([aria-current="false"]) {
   color: var(--talos-text-primary);
 }
-.talos-tab[aria-selected="true"]::after { transform: scaleX(1); }
+.talos-tab[aria-selected="true"]::after,
+.talos-tab[aria-current]:not([aria-current="false"])::after { transform: scaleX(1); }
+/* Trailing count — tabular, dimmed, kept tight to its label so "Label 10 Next"
+   never reads as one string. */
+.talos-tab__count {
+  margin-left: var(--talos-space-1);
+  font-variant-numeric: tabular-nums;
+  color: var(--talos-text-tertiary);
+}
 .talos-tab:focus-visible {
   outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
   outline-offset: var(--talos-focus-ring-offset);
 }
 .talos-tabpanel { padding-top: var(--talos-space-5); }
 
-/* Segmented variant — boxed segments sharing a border; active = filled edge. */
+/* Segmented variant — boxed segments sharing a hairline; active = filled
+   segment. The box rides the chamfer engine with the flag cut (top-right). */
 .talos-tabs--segmented {
+  --_edge: var(--talos-edge-default);
+  --_tr: var(--talos-chamfer-flag);
+  --_bl: 0px;
   display: inline-flex;
   gap: 0;
-  border: 1px solid var(--talos-edge-default);
-  border-radius: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--_edge); /* .talos-tabs sets its own bottom rule */
 }
 .talos-tabs--segmented .talos-tab {
   padding: var(--talos-space-2) var(--talos-space-4);
   border-right: 1px solid var(--talos-edge-subtle);
+  white-space: nowrap;
 }
 .talos-tabs--segmented .talos-tab:last-child { border-right: 0; }
 .talos-tabs--segmented .talos-tab::after { display: none; }
-.talos-tabs--segmented .talos-tab[aria-selected="true"] {
+.talos-tabs--segmented .talos-tab[aria-selected="true"],
+.talos-tabs--segmented .talos-tab[aria-current]:not([aria-current="false"]) {
   background: var(--talos-surface-3);
   color: var(--talos-text-primary);
 }

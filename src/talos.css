@@ -40,35 +40,107 @@
   inherits: false;
   initial-value: 0px;
 }
+@property --talos-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@layer components.talos {
 
 /* ----------------------------------------------------------------------------
-   HUD PANEL — anti.space-style chamfered chrome (two-layer hairline).
-     - Host element: clip-path = full chamfered shape; background = edge color.
-     - ::before:      inset 1px, slightly smaller chamfer; background = fill.
-                      → uniform 1px hairline along all edges incl. the cuts.
-     - ::after:       cursor-tracked sheen (radial-gradient via --talos-mx/my).
-   Corner convention: top-right + bottom-left chamfered; top-left +
-   bottom-right square (brackets attach there on hover).
+   CHAMFER ENGINE — the one way talos draws a cut corner.
+
+   Every chamfered surface (panel, button, flag, input, select, alert, toast,
+   stat, readout, avatar) is a real `border` plus a `clip-path` that cuts the
+   corners, plus one 1px diagonal per cut drawn as a background gradient in the
+   corner's own box. clip-path alone slices the border off the cut and leaves a
+   bare "chopped corner"; the gradient draws the hairline the border cannot.
+
+   Why not an SVG path (the previous button/input technique): a fixed viewBox
+   stretched with preserveAspectRatio="none" scales the cut with the element,
+   so the angle drifts from 45° as the width changes. Here every cut is an
+   exact N px at any size, the fill may be translucent (no edge colour bleeds
+   through it), any element can carry it (an <input> cannot host a pseudo),
+   and no pseudo-element or extra z-index layer is spent on it.
+
+   Per element, set:
+     --_edge  hairline colour              --_fill  background colour
+     --_tl / --_tr / --_br / --_bl   cut size per corner (0px = square)
+   State changes rebind --_edge / --_fill; nothing else needs to move.
+   Specificity is 0 (:where), so any component rule or consumer class wins.
+   Elements that clip their own box can't show an outline: give them a
+   :focus-visible edge instead.
+   -------------------------------------------------------------------------- */
+:where(
+  .talos-chamfer, .glass-panel, .talos-button, .talos-flag, .talos-alert,
+  .talos-toast, .talos-stat, .talos-readout, .talos-avatar,
+  .talos-input, .talos-textarea, .talos-select, .talos-input-group,
+  .talos-toc-content, .talos-tabs--segmented
+) {
+  --_edge: var(--talos-edge-default);
+  --_fill: transparent;
+  --_tl: 0px;
+  --_tr: var(--talos-chamfer);
+  --_br: 0px;
+  --_bl: var(--talos-chamfer);
+
+  /* Each gradient points at the corner it serves; its 1px band sits just
+     inside the clip edge so it reads as the border continuing round the cut. */
+  --_cut-lines:
+    linear-gradient(to top left, transparent calc(50% - 1px), var(--_edge) calc(50% - 1px), var(--_edge) 50%, transparent 50%),
+    linear-gradient(to top right, transparent calc(50% - 1px), var(--_edge) calc(50% - 1px), var(--_edge) 50%, transparent 50%),
+    linear-gradient(to bottom right, transparent calc(50% - 1px), var(--_edge) calc(50% - 1px), var(--_edge) 50%, transparent 50%),
+    linear-gradient(to bottom left, transparent calc(50% - 1px), var(--_edge) calc(50% - 1px), var(--_edge) 50%, transparent 50%);
+  --_cut-sizes: var(--_tl) var(--_tl), var(--_tr) var(--_tr), var(--_br) var(--_br), var(--_bl) var(--_bl);
+  --_cut-pos: 0 0, 100% 0, 100% 100%, 0 100%;
+  --_clip: polygon(
+    var(--_tl) 0,
+    calc(100% - var(--_tr)) 0,
+    100% var(--_tr),
+    100% calc(100% - var(--_br)),
+    calc(100% - var(--_br)) 100%,
+    var(--_bl) 100%,
+    0 calc(100% - var(--_bl)),
+    0 var(--_tl)
+  );
+
+  box-sizing: border-box;
+  border: 1px solid var(--_edge);
+  border-radius: 0;
+  background-color: var(--_fill);
+  background-image: var(--_cut-lines);
+  background-size: var(--_cut-sizes);
+  background-position: var(--_cut-pos);
+  background-origin: border-box;
+  background-repeat: no-repeat;
+  clip-path: var(--_clip);
+}
+
+/* Generic chamfered box. Default = panel geometry (top-right + bottom-left);
+   modifiers pick the other house shapes by role. */
+.talos-chamfer--md   { --_tr: var(--talos-chamfer-btn);  --_bl: var(--talos-chamfer-btn); }
+.talos-chamfer--sm   { --_tr: var(--talos-chamfer-flag); --_bl: var(--talos-chamfer-flag); }
+.talos-chamfer--btn  { --_tr: 0px; --_bl: 0px; --_br: var(--talos-chamfer-btn); }
+.talos-chamfer--flag { --_tr: var(--talos-chamfer-flag); --_bl: 0px; }
+
+/* ----------------------------------------------------------------------------
+   HUD PANEL — chamfered chrome on the engine above.
+     - Corner convention: top-right + bottom-left cut; top-left + bottom-right
+       square (brackets attach there on hover).
+     - ::after: cursor-tracked sheen (radial-gradient via --talos-mx/my).
    -------------------------------------------------------------------------- */
 .glass-panel {
   --_chamfer: var(--talos-chamfer);
   --_fill: var(--talos-hud-fill);
   --_edge: var(--talos-hud-edge);
   --_edge-hot: var(--talos-hud-edge-hot);
+  --_tr: var(--_chamfer);
+  --_bl: var(--_chamfer);
 
   position: relative;
   isolation: isolate;
   color: hsl(0 0% 92%);
-
-  background: var(--_edge);
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--_chamfer)) 0,
-    100% var(--_chamfer),
-    100% 100%,
-    var(--_chamfer) 100%,
-    0 calc(100% - var(--_chamfer))
-  );
 
   --talos-mx: 50%;
   --talos-my: 0%;
@@ -77,33 +149,15 @@
   transform: translateY(var(--talos-lift));
   transition: --talos-sheen 240ms ease,
     --talos-lift var(--talos-dur-mid) var(--talos-ease-glass),
-    filter var(--talos-dur-mid) var(--talos-ease-glass),
-    background 220ms ease;
+    filter var(--talos-dur-mid) var(--talos-ease-glass);
 }
 
-/* Inner fill — 1px inset, smaller chamfer to ride the bevel cleanly. */
-.glass-panel::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  background: var(--_fill);
-  clip-path: polygon(
-    0 0,
-    calc(100% - (var(--_chamfer) - 1px)) 0,
-    100% calc(var(--_chamfer) - 1px),
-    100% 100%,
-    calc(var(--_chamfer) - 1px) 100%,
-    0 calc(100% - (var(--_chamfer) - 1px))
-  );
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* Cursor sheen — soft white spotlight following the pointer, above the fill. */
+/* Cursor sheen — soft white spotlight following the pointer. The host's
+   clip-path trims it to the chamfered silhouette. */
 .glass-panel::after {
   content: "";
   position: absolute;
-  inset: 1px;
+  inset: 0;
   background: radial-gradient(
     240px circle at var(--talos-mx) var(--talos-my),
     hsl(0 0% 100% / calc(0.07 * var(--talos-sheen))),
@@ -111,18 +165,10 @@
   );
   pointer-events: none;
   z-index: 1;
-  clip-path: polygon(
-    0 0,
-    calc(100% - (var(--_chamfer) - 1px)) 0,
-    100% calc(var(--_chamfer) - 1px),
-    100% 100%,
-    calc(var(--_chamfer) - 1px) 100%,
-    0 calc(100% - (var(--_chamfer) - 1px))
-  );
   transition: background 80ms linear;
 }
 
-/* Content wrapper — sits above sheen + border layers. */
+/* Content wrapper — sits above the sheen. */
 .glass-panel > .glass-panel-content {
   position: relative;
   z-index: 2;
@@ -135,7 +181,7 @@
 .interactive-panel:hover {
   --talos-sheen: 1;
   --talos-lift: -3px;
-  background: var(--_edge-hot);
+  --_edge: var(--_edge-hot);
   filter: drop-shadow(0 8px 18px hsl(0 0% 0% / 0.6));
 }
 .interactive-panel:active {
@@ -145,7 +191,7 @@
 .interactive-panel:focus-visible,
 .glass-panel:focus-visible {
   outline: none;
-  background: hsl(0 0% 100% / 0.85);
+  --_edge: hsl(0 0% 100% / 0.85);
   animation: talos-focus-pulse var(--talos-dur-slow) var(--talos-ease-out) 1;
 }
 @keyframes talos-focus-pulse {
@@ -189,13 +235,6 @@
    Opt-in via .activity-edge; layers UNDER the fill (z-index -1 via ::before of
    the host's stacking context), so it haloes the chamfered silhouette.
    -------------------------------------------------------------------------- */
-@property --talos-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
-@layer components.talos {
 
 .activity-edge {
   --talos-rate: 0;
@@ -214,18 +253,20 @@
 .activity-edge::before {
   content: "";
   position: absolute;
-  inset: 0;
+  /* cover the border box (engine hosts carry a 1px border) */
+  inset: -1px;
   z-index: -1;
   padding: var(--talos-edge-w);
-  /* hug the chamfered silhouette like .glass-panel */
-  clip-path: polygon(
+  /* hug the chamfered silhouette: the engine's resolved clip when the host
+     carries one, panel geometry otherwise */
+  clip-path: var(--_clip, polygon(
     0 0,
-    calc(100% - var(--_chamfer, var(--talos-chamfer))) 0,
-    100% var(--_chamfer, var(--talos-chamfer)),
+    calc(100% - var(--talos-chamfer)) 0,
+    100% var(--talos-chamfer),
     100% 100%,
-    var(--_chamfer, var(--talos-chamfer)) 100%,
-    0 calc(100% - var(--_chamfer, var(--talos-chamfer)))
-  );
+    var(--talos-chamfer) 100%,
+    0 calc(100% - var(--talos-chamfer))
+  ));
   /* A narrow hot segment + short falloff = a moving stroke, not a wedge. A dim
      baseline keeps the whole edge faintly lit so "there is a track" reads even
      between sweeps. */
@@ -274,8 +315,8 @@
 }
 
 /* ----------------------------------------------------------------------------
-   CHAMFER UTILITIES — single-corner clip-path cuts for pills / flags / CTAs.
-   Pair with a host/inset pseudo pair for a hairline border (see .talos-button).
+   BARE CUT UTILITIES — clip-path only, no hairline. For surfaces that paint
+   their own edge. Anything with a border wants .talos-chamfer--* instead.
    -------------------------------------------------------------------------- */
 .chamfer-tr {
   clip-path: polygon(
@@ -297,19 +338,17 @@
 }
 
 /* ----------------------------------------------------------------------------
-   BUTTON — chamfered (bottom-right cut) drawn as ONE SVG <path> (fill + 1px
-   non-scaling stroke). A single path is the only source of truth for the cut,
-   so the diagonal gets a clean uniform border — no doubled-edge "shadow"
-   (two stacked clip diagonals) and no "chopped corner" (fill-only, no edge).
-   The host carries NO background/clip-path, so it never clips the SVG.
-   Verified in real Chrome at zoom. The Astro <Button> emits the SVG; plain
-   .talos-button markup without it falls back to a square 1px border. */
+   BUTTON — bottom-right cut on the chamfer engine. Works on bare markup
+   (<a class="talos-button">, <button class="talos-button">); no SVG child.
+   -------------------------------------------------------------------------- */
 .talos-button {
   --_fill: hsl(0 0% 9%);
   --_edge: hsl(0 0% 100% / 0.55);
+  --_tr: 0px;
+  --_bl: 0px;
+  --_br: var(--talos-chamfer-btn);
 
   position: relative;
-  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -320,6 +359,7 @@
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud);
   text-decoration: none;
+  white-space: nowrap;
   color: hsl(0 0% 100% / 0.9);
 
   /* default size = md */
@@ -328,44 +368,22 @@
   font-size: 0.75rem;
 
   cursor: pointer;
-  background: none;
-  border: 0;
   transition: color 200ms ease;
 }
-
-/* The SVG shape: fill + crisp stroke, uniform on the diagonal. */
-.talos-button__shape {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  display: block;
-  pointer-events: none;
-  overflow: visible;
-}
-.talos-button__shape path {
-  fill: var(--_fill);
-  stroke: var(--_edge);
-  stroke-width: 1;
-  transition: fill 200ms ease, stroke 200ms ease;
-}
 .talos-button__label {
-  position: relative;
-  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: inherit;
 }
 
-/* Fallback for bare .talos-button (Blade/plain HTML, no SVG child): square. */
-.talos-button:not(:has(.talos-button__shape)) {
-  background: var(--_fill);
-  border: 1px solid var(--_edge);
-}
-
 .talos-button:hover { --_fill: hsl(0 0% 14%); --_edge: var(--talos-hud-edge-hot); color: hsl(0 0% 100%); }
 .talos-button:focus-visible { outline: none; --_edge: hsl(0 0% 100% / 0.9); }
+/* Selected — toggles and current-location buttons (aria-pressed / aria-current). */
+.talos-button[aria-pressed="true"],
+.talos-button[aria-current]:not([aria-current="false"]) {
+  --_edge: var(--talos-accent);
+  color: var(--talos-accent);
+}
 .talos-button[disabled],
 .talos-button:disabled {
   opacity: 0.5;
@@ -373,6 +391,7 @@
 }
 
 /* Sizes. */
+.talos-button--xs { height: 1.75rem; padding-inline: 0.7rem; font-size: var(--talos-text-2xs); gap: 0.3rem; }
 .talos-button--sm { height: 2.25rem; padding-inline: 1rem; font-size: 0.7rem; gap: 0.375rem; }
 .talos-button--lg { height: 3rem; padding-inline: 2rem; font-size: 0.875rem; }
 
@@ -380,6 +399,40 @@
 .talos-button--secondary { --_edge: hsl(0 0% 100% / 0.32); color: hsl(0 0% 100% / 0.8); }
 .talos-button--ghost { --_fill: hsl(0 0% 0% / 0); --_edge: hsl(0 0% 100% / 0.3); color: hsl(0 0% 100% / 0.7); }
 .talos-button--ghost:hover { --_fill: hsl(0 0% 10%); }
+/* Solid — the loud call to action: light fill, dark label. */
+.talos-button--solid { --_fill: var(--talos-foreground); --_edge: var(--talos-foreground); color: var(--talos-background); }
+.talos-button--solid:hover { --_fill: hsl(0 0% 85%); --_edge: hsl(0 0% 85%); color: var(--talos-background); }
+
+/* ----------------------------------------------------------------------------
+   FLAG — HUD tag / status chip: top-right cut, display-face label. Non-
+   interactive by default; status modifiers rebind edge + fill + colour.
+   -------------------------------------------------------------------------- */
+.talos-flag {
+  --_edge: var(--talos-edge-subtle);
+  --_fill: hsl(var(--talos-foreground-hsl) / 0.04);
+  --_tr: var(--talos-chamfer-flag);
+  --_bl: 0px;
+  --_br: 0px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--talos-space-2);
+  padding: 0.35rem 0.65rem; /* lines up with .talos-button--xs (1.75rem) */
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-2xs);
+  font-weight: 300;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  white-space: nowrap;
+  color: var(--talos-text-secondary);
+  transition: color var(--talos-dur-fast) var(--talos-ease-out);
+}
+.talos-flag--active  { --_edge: var(--talos-edge-strong); --_fill: hsl(var(--talos-foreground-hsl) / 0.1); color: var(--talos-foreground); }
+.talos-flag--muted   { color: var(--talos-text-tertiary); }
+.talos-flag--warning { --_edge: hsl(var(--talos-warning-hsl) / 0.3); --_fill: hsl(var(--talos-warning-hsl) / 0.12); color: var(--talos-warning); }
+.talos-flag--danger  { --_edge: hsl(var(--talos-danger-hsl) / 0.3);  --_fill: hsl(var(--talos-danger-hsl) / 0.12);  color: var(--talos-danger); }
 
 /* ----------------------------------------------------------------------------
    AMBIENT GRID + CURSOR CROSSHAIR — fixed full-viewport overlay. JS writes
