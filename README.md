@@ -109,8 +109,9 @@ import Button from "@j_shelfwood/talos-ui/astro/Button.astro";
 ```
 
 Astro wrappers: `GlassPanel`, `Button`, `BrandMark`, `Tag`, `BackButton`,
-`BentoGrid`, `LinkCard`, the panel suite (`Hero/Mission/Project/Service/Title/
-Toolkit`, `FeatureItem`), and the opt-in marketing chrome (`Navbar`, `Footer`).
+`BentoGrid`, `LinkCard`, and the opt-in marketing chrome (`Navbar`, `Footer`).
+Content-shaped cards (hero, mission, service, project, title, toolkit, quote,
+profile) belong in the consuming site: compose them from `GlassPanel`.
 
 ```astro
 ---

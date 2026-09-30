@@ -138,14 +138,13 @@ const hasArrow = Astro.slots.has("arrow");
     color: var(--talos-muted-foreground);
   }
 
-  /* Indexed hairline rows — the same "01 │ …" ladder the marketing panels use
-     (cf. MissionPanel axes), so itemized content reads consistently across
-     tiles instead of as plain bullet dots. */
+  /* Indexed hairline rows, the "01 │ …" ladder, so itemized content reads
+     consistently across tiles instead of as plain bullet dots. */
   .talos-linkcard__items {
     list-style: none;
-    /* Explicit top margin sets the title→list rhythm to match MissionPanel's
-       header→axes gap (~1.5rem); the parent flex `gap` collapses against the
-       title's line-box here, so it can't be relied on for this transition. */
+    /* Explicit top margin sets the title→list rhythm (~1.5rem); the parent flex
+       `gap` collapses against the title's line-box here, so it can't be relied
+       on for this transition. */
     margin: 1.25rem 0 0;
     padding: 0;
     display: flex;

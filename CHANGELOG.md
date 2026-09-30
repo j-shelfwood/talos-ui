@@ -6,6 +6,18 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-09-30
+
+### Removed
+- **The content-shaped Astro panels** `HeroPanel`, `MissionPanel`,
+  `ProfileHeroPanel`, `ProjectPanel`, `QuotePanel`, `ServicePanel`,
+  `TitlePanel`, `ToolkitPanel` and their `FeatureItem` row. They encoded one
+  site's content model (mission statement, service features, profile lockup),
+  were imported by a single consumer and were not documented. They now live in
+  that consumer; compose equivalents from `GlassPanel`. `GlassPanel`, `Button`,
+  `Tag`, `BackButton`, `BentoGrid`, `LinkCard`, `BrandMark`, `Navbar` and
+  `Footer` are unchanged.
+
 ## [0.8.0] — 2026-09-30
 
 ### Removed
