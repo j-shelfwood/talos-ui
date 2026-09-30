@@ -168,10 +168,14 @@
   transition: background 80ms linear;
 }
 
-/* Content wrapper — sits above the sheen. */
+/* Content wrapper — sits above the sheen, fills the panel and stacks, so
+   padded cards lay out predictably. */
 .glass-panel > .glass-panel-content {
   position: relative;
   z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Interactive variants — lift + edge brighten. */
@@ -499,13 +503,6 @@
    .talos-dot, .talos-stack/.talos-row/.talos-muted) live in talos-layout.css —
    imported alongside this file via all.css, or on its own. */
 
-/* The .glass-panel content wrapper should fill + stack by default so padded
-   cards lay out predictably (matches shelfwood.co's w-full flex-col). */
-.glass-panel > .glass-panel-content {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
 /* When a panel is itself the link (as="a"), don't let the browser underline
    its child text — the panel is the affordance, not the words. */
 a.glass-panel,

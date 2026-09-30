@@ -6,6 +6,20 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-09-30
+
+### Added
+- **`.talos-hud`** (+ `--tight`) — the HUD label voice (display face, weight 300,
+  uppercase, wide tracking) as one class; size and colour stay the caller's.
+- `src/chamfer-engine.test.ts` — fails when a selector sets a corner variable
+  without being listed in the chamfer engine registry.
+
+### Changed
+- `.glass-panel > .glass-panel-content` is one rule (was declared twice).
+
+### Fixed
+- `.talos-tab` on an `<a>` no longer shows the browser underline.
+
 ## [0.7.0] — 2026-09-30
 
 ### Added
