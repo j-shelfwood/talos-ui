@@ -62,6 +62,26 @@ bun add @j_shelfwood/talos-ui
 <a class="talos-button" href="#">Launch</a>
 ```
 
+### Chamfered surfaces
+
+Every cut corner is drawn by one engine: a real 1px `border`, a `clip-path` that cuts the corners, and a 1px diagonal per cut (see [`DESIGN.md`](./DESIGN.md)). The cut is an exact pixel size at any element width. Use `.talos-chamfer` on your own markup (`--md`, `--sm`, `--btn`, `--flag` pick the shape), or a component that already carries it. State changes rebind two variables: `--_edge` (hairline colour) and `--_fill`.
+
+| Class | Use |
+|---|---|
+| `.glass-panel` (+ `.interactive-panel`) | HUD panel, top-right and bottom-left cuts |
+| `.talos-button` | bottom-right cut; `--xs` `--sm` `--lg`, `--secondary` `--ghost` `--solid`; `aria-pressed` / `aria-current` mark it selected |
+| `.talos-flag` | tag / status chip, top-right cut; `--active` `--muted` `--warning` `--danger` |
+| `.talos-chamfer` | the engine on any element |
+| `.talos-input` `.talos-textarea` `.talos-select` `.talos-input-group` | form controls, bottom-right cut |
+| `.talos-alert` `.talos-toast` `.talos-stat` `.talos-readout` `.talos-avatar` | feedback and data surfaces |
+| `.talos-tabs` (`--segmented`), `.talos-tab`, `.talos-tab__count` | tabs; active state for `aria-selected` and `aria-current` |
+| `.talos-hud` (`--tight`) | HUD label voice: display face, uppercase, wide tracking (size and colour are yours) |
+
+```html
+<span class="talos-flag talos-flag--warning">Stale</span>
+<div class="talos-chamfer talos-chamfer--md" style="--_fill: hsl(0 0% 6%)">…</div>
+```
+
 The ambient grid needs the cursor position written to two custom properties:
 
 ```html

@@ -319,29 +319,6 @@
 }
 
 /* ----------------------------------------------------------------------------
-   BARE CUT UTILITIES — clip-path only, no hairline. For surfaces that paint
-   their own edge. Anything with a border wants .talos-chamfer--* instead.
-   -------------------------------------------------------------------------- */
-.chamfer-tr {
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--talos-chamfer-flag)) 0,
-    100% var(--talos-chamfer-flag),
-    100% 100%,
-    0 100%
-  );
-}
-.chamfer-br {
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - var(--talos-chamfer-btn)),
-    calc(100% - var(--talos-chamfer-btn)) 100%,
-    0 100%
-  );
-}
-
-/* ----------------------------------------------------------------------------
    BUTTON — bottom-right cut on the chamfer engine. Works on bare markup
    (<a class="talos-button">, <button class="talos-button">); no SVG child.
    -------------------------------------------------------------------------- */

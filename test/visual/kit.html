@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>talos-ui chamfer contract kit</title>
+<link rel="stylesheet" href="../../src/all.css" />
+<link rel="stylesheet" href="../../src/talos-marketing.css" />
+<!-- Fixture for test/visual/chamfer.ts. The page background is a saturated blue no
+     talos surface uses, so a clipped corner is distinguishable from a dark fill.
+     Each [data-cuts] element declares the corner cuts it must show, in CSS px. -->
+<style>
+  body { margin: 0; padding: 24px; background: rgb(24, 56, 96); color: #ddd; font-family: var(--talos-font-body); display: flex; flex-direction: column; gap: 20px; width: 760px; }
+  .row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  .glass-panel, .talos-chamfer, .talos-alert, .talos-stat { padding: 20px; min-width: 160px; }
+</style>
+
+<div class="row">
+  <a id="btn-160" class="talos-button" data-cuts="br:10" style="width:160px">Launch</a>
+  <a id="btn-520" class="talos-button" data-cuts="br:10" style="width:520px">Launch wide</a>
+  <a id="btn-xs" class="talos-button talos-button--xs talos-button--secondary" data-cuts="br:10">XS</a>
+  <button id="btn-solid" class="talos-button talos-button--solid" data-cuts="br:10" data-edge="same-as-fill">Solid</button>
+</div>
+<div class="row">
+  <span id="flag" class="talos-flag" data-cuts="tr:8">Ready</span>
+  <span id="flag-warning" class="talos-flag talos-flag--warning" data-cuts="tr:8">Stale</span>
+</div>
+<div class="row">
+  <input id="input-240" class="talos-input" data-cuts="br:10" style="width:240px" placeholder="Search" />
+  <input id="input-600" class="talos-input" data-cuts="br:10" style="width:600px" placeholder="Search" />
+</div>
+<div class="row">
+  <select id="select" class="talos-select" data-cuts="br:10" style="width:240px"><option>All</option></select>
+  <textarea id="textarea" class="talos-textarea" data-cuts="br:10" style="width:240px;height:80px"></textarea>
+</div>
+<div class="row">
+  <div id="panel" class="glass-panel" data-cuts="tr:14,bl:14">glass-panel</div>
+  <div id="chamfer-md" class="talos-chamfer talos-chamfer--md" data-cuts="tr:10,bl:10" style="--_fill: hsl(0 0% 6%)">md</div>
+  <div id="chamfer-sm" class="talos-chamfer talos-chamfer--sm" data-cuts="tr:8,bl:8" style="--_fill: hsl(0 0% 6%)">sm</div>
+  <div id="stat" class="talos-stat" data-cuts="tr:14,bl:14"><span class="talos-stat__label">Uptime</span><span class="talos-stat__value">99.9</span></div>
+</div>
+<div class="row">
+  <div id="alert" class="talos-alert talos-alert--danger" data-cuts="tr:14,bl:14" style="width:320px"><span class="talos-alert__title">Danger</span><span class="talos-alert__body">Something failed.</span></div>
+  <div id="tabs" class="talos-tabs talos-tabs--segmented" data-cuts="tr:8"><a class="talos-tab" href="#" aria-current="page">All</a><a class="talos-tab" href="#">Feelgood <span class="talos-tab__count">1</span></a></div>
+</div>
+<div class="row">
+  <span id="hud" class="talos-hud">HUD label</span>
+  <a id="tab-link" class="talos-tab" href="#">Link tab</a>
+  <span id="hud-tight" class="talos-hud talos-hud--tight">Tight</span>
+</div>

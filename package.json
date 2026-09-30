@@ -1,7 +1,7 @@
 {
   "name": "@j_shelfwood/talos-ui",
-  "version": "0.7.1",
-  "description": "Dark-monochrome HUD design system \u2014 chamfered panels, Oxanium type, ambient grid, and composable notched-panel web components. Framework-agnostic CSS + opt-in web components + Astro wrappers.",
+  "version": "0.8.0",
+  "description": "Dark-monochrome HUD design system — chamfered panels, Oxanium type, ambient grid, and composable notched-panel web components. Framework-agnostic CSS + opt-in web components + Astro wrappers.",
   "license": "MIT",
   "author": "Joris Schelfhout <joris@shelfwood.co>",
   "homepage": "https://talos-ui.shelfwood.co",
@@ -112,6 +112,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "bun test",
+    "test:visual": "bun test/visual/chamfer.ts",
     "prepublishOnly": "tsup"
   },
   "peerDependencies": {
@@ -124,6 +125,7 @@
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
+    "playwright-core": "1.57.0",
     "tsup": "^8.3.0",
     "typescript": "^5.7.0"
   },

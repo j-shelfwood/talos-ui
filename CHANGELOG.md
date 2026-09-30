@@ -6,6 +6,22 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-09-30
+
+### Removed
+- **`.chamfer-tr` and `.chamfer-br`** — bare clip-path cuts with no hairline, used
+  by nothing. Use `.talos-chamfer--flag` / `.talos-chamfer--btn`, which draw the
+  edge too.
+
+### Added
+- `test/visual/chamfer.ts` (`bun run test:visual`, CI job `visual`) — a real-browser
+  contract for the chamfer engine: every declared corner is cut by its exact px
+  at any width, other corners stay square, a hairline runs the whole diagonal,
+  plus select/input height, `.talos-hud` and tab-underline checks.
+
+### Changed
+- `dist/` is no longer tracked in git; `publish.yml` builds it before publishing.
+
 ## [0.7.1] — 2026-09-30
 
 ### Added

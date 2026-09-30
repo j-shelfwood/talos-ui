@@ -89,11 +89,11 @@ write-back can't loop.
 
 ```sh
 bun install
-bun run build   # tsup → dist/  (the showcase site consumes this repo as a git
-                # dependency, so dist/ is COMMITTED — not gitignored — to ship
-                # prebuilt artifacts to git-dep consumers; rebuild + commit it
-                # when src/ changes. There is no `prepare`/install-time build.)
-bun run test    # bun test (currently bands.test.ts; coverage is thin — expand it)
+bun run build   # tsup → dist/ (gitignored; `npm publish` and `publish.yml` build it, and
+                # consumers install from npm — there are no git-dependency consumers.
+                # There is no `prepare`/install-time build.)
+bun run test    # bun test: unit tests + the chamfer engine registry guard
+bun run test:visual  # real-browser contract for the chamfer engine (test/visual); needs Chromium
 bun run dev     # tsup --watch
 ```
 
