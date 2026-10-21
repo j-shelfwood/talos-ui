@@ -135,10 +135,10 @@ const hasTocIcon = Astro.slots.has("toc-icon");
     </div>
   </div>
 
+  {/* The TOC dropdown lives OUTSIDE the pill: the pill's notch clip-path
+       would otherwise clip this panel to the pill bounds. It's positioned
+       under the navbar via talos-marketing.css. */}
   {hasToc && (
-    <!-- The TOC dropdown lives OUTSIDE the pill: the pill's notch clip-path
-         would otherwise clip this panel to the pill bounds. It's positioned
-         under the navbar via talos-marketing.css. -->
     <div class="talos-toc-content" id="talos-toc-content">
       <ul class="talos-toc-list">
         {tocItems.map((h) => (
