@@ -72,6 +72,7 @@ Every cut corner is drawn by one engine: a real 1px `border`, a `clip-path` that
 | `.talos-button` | bottom-right cut; `--xs` `--sm` `--lg`, `--secondary` `--ghost` `--solid`; `aria-pressed` / `aria-current` mark it selected |
 | `.talos-flag` | tag / status chip, top-right cut; `--active` `--muted` `--warning` `--danger`; on a `<button>` with `aria-pressed` it is a toggle (a legend that filters) |
 | `.talos-timeline__head` `.talos-timeline__lane` `.talos-drawer` | timeline lane (head cut bottom-left, track cut top-right) and the side drawer, see *Use — timeline* |
+| `.talos-graph__minimap` `.talos-graph__scrubber` `.talos-graph__panel` | graph canvas chrome, see *Use — graph canvas* |
 | `.talos-chamfer` | the engine on any element |
 | `.talos-input` `.talos-textarea` `.talos-select` `.talos-input-group` | form controls, bottom-right cut |
 | `.talos-alert` `.talos-toast` `.talos-stat` `.talos-readout` `.talos-avatar` | feedback and data surfaces |
@@ -337,6 +338,30 @@ root), so the same numbers place the SVG edge paths:
 Add `.is-tracing` to the root and `.is-lit` to the bars, events and paths of one chain to dim the rest. The
 variant classes set paint only, so they also dress a legend swatch (`.talos-timeline__swatch`). Reference
 consumer: `fleet-trace.ts` in `j-shelfwood/fleet`.
+
+## Use — graph canvas
+
+`talos-graph.css` (in `all.css`, or `@j_shelfwood/talos-ui/talos-graph.css`) is the chrome of a pannable,
+zoomable node-graph view: the void with its ambient dot grid, a toolbar, a zoom cluster, a minimap, a time
+scrubber and a collapsible side panel. The graph itself is drawn by the consumer on a `<canvas>` (or `<svg>`)
+in `.talos-graph__stage`, reading the talos tokens with `getComputedStyle` so it stays on palette. It needs
+`talos.css` and `talos-forms.css` (`.talos-range`, `.talos-input`, `.talos-select`).
+
+```html
+<main class="talos-graph" style="height:100vh">
+  <canvas class="talos-graph__stage"></canvas>
+  <div class="talos-graph__toolbar"><input class="talos-input" type="search"> <button class="talos-flag" aria-pressed="true">Joris</button></div>
+  <div class="talos-graph__zoom"><button class="talos-button talos-button--xs">+</button><span class="talos-graph__readout">100%</span></div>
+  <div class="talos-graph__minimap"><canvas></canvas></div>
+  <div class="talos-graph__scrubber"><button class="talos-button talos-button--xs">Play</button><input class="talos-range" type="range"><span class="talos-graph__time">15-11 14:00</span></div>
+  <aside class="talos-graph__panel"><div class="talos-graph__panel-body">…</div></aside>
+</main>
+```
+
+Set `--talos-graph-zoom`, `--talos-graph-x` and `--talos-graph-y` on `.talos-graph` as the camera moves and the
+dot grid stays in world space. `[data-collapsed]` folds the panel to its header; `.is-panning` / `.is-pointing`
+set the cursor. The minimap, scrubber and panel ride the chamfer engine. Reference consumer: the fleet trace
+(`fleet-trace-client.ts` in `j-shelfwood/fleet`).
 
 ## Use — Laravel / Blade
 

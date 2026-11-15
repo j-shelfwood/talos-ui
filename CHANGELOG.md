@@ -6,6 +6,17 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-11-15
+
+### Added
+- **`talos-graph.css`** (Tier 1, in `all.css`, export `./talos-graph.css`): the chrome of a pannable, zoomable
+  node-graph canvas. `.talos-graph` (void + dot grid kept in world space by `--talos-graph-zoom/-x/-y`),
+  `__stage`, `__toolbar`, `__zoom` + `__readout`, `__minimap`, `__scrubber` + `__time`, `__panel`
+  (`[data-collapsed]`). The minimap, scrubber and panel ride the chamfer engine (registry and visual kit).
+- `package-surface.test.ts` checks the graph module's classes.
+
+Not published to npm (needs Joris's 2FA); the fleet trace reads it from a local checkout.
+
 ## [0.10.0] — 2026-11-15
 
 ### Added

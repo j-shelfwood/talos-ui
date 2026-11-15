@@ -27,6 +27,7 @@
 @import "./talos-nav.css";    /* T2 tabs, breadcrumbs, menu, sidebar, stepper   */
 @import "./talos-console.css"; /* T1 the instrument console: zoned non-doc shell */
 @import "./talos-timeline.css"; /* T1 swimlane timeline: lanes, bars, marks, edges, drawer */
+@import "./talos-graph.css";  /* T1 graph canvas chrome: stage, zoom, minimap, scrubber, panel */
 
 /* PROSE remains out of scope: a static long-form module contradicts the
    "live, not static" thesis. Consumers needing prose styling bring their own.

@@ -1,0 +1,150 @@
+@layer components.talos {
+/* ============================================================================
+   @j_shelfwood/talos-ui — TALOS-GRAPH.CSS  (Tier 1)
+   The chrome of a pannable, zoomable node-graph canvas: the void with its
+   ambient dot grid, a toolbar, a zoom cluster, a minimap, a time scrubber and
+   a collapsible side panel. The graph itself (frames, node cards, edges) is
+   drawn by the consumer on a <canvas> or <svg> inside .talos-graph__stage,
+   reading the talos tokens with getComputedStyle so it stays on palette.
+
+     <link rel="stylesheet" href=".../talos-ui/talos.css" />
+     <link rel="stylesheet" href=".../talos-ui/talos-forms.css" />   (.talos-range, .talos-input)
+     <link rel="stylesheet" href=".../talos-ui/talos-graph.css" />
+
+     .talos-graph                     fills its box; set a height
+       .talos-graph__stage            the drawing surface (canvas / svg), inset 0
+       .talos-graph__toolbar          top-left overlay row (search, flags)
+       .talos-graph__zoom             vertical button cluster (+, -, fit)
+       .talos-graph__minimap          chamfered corner overview (holds a canvas)
+       .talos-graph__scrubber         bottom time bar: play, .talos-range, time, speed
+       .talos-graph__panel            right-side panel; [data-collapsed] folds it
+
+   Set --talos-graph-zoom (the current scale) on .talos-graph to keep the dot
+   grid in world space; --talos-graph-x / --talos-graph-y shift it with the pan.
+   ========================================================================== */
+
+.talos-graph {
+  --talos-graph-zoom: 1;
+  --talos-graph-x: 0px;
+  --talos-graph-y: 0px;
+  --_cell: calc(var(--talos-grid-cell) * var(--talos-graph-zoom));
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: var(--talos-surface-0);
+  background-image: radial-gradient(circle at 1px 1px, var(--talos-grid-dot) 1px, transparent 1.5px);
+  background-size: var(--_cell) var(--_cell);
+  background-position: var(--talos-graph-x) var(--talos-graph-y);
+  font-family: var(--talos-font-display);
+  color: var(--talos-text-primary);
+  touch-action: none;
+  user-select: none;
+}
+.talos-graph__stage {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+.talos-graph.is-panning .talos-graph__stage { cursor: grabbing; }
+.talos-graph.is-pointing .talos-graph__stage { cursor: pointer; }
+
+/* --- Overlays ---------------------------------------------------------------- */
+.talos-graph__toolbar {
+  position: absolute;
+  top: var(--talos-space-3);
+  left: var(--talos-space-3);
+  right: var(--talos-space-3);
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.talos-graph__toolbar > * { pointer-events: auto; }
+.talos-graph__zoom {
+  position: absolute;
+  left: var(--talos-space-3);
+  bottom: calc(var(--talos-space-3) + 4.25rem);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.talos-graph__zoom > .talos-button { width: 2rem; padding-inline: 0; }
+.talos-graph__readout {
+  font-size: var(--talos-text-2xs);
+  font-weight: 300;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--talos-text-tertiary);
+}
+
+.talos-graph__minimap {
+  --_fill: hsl(0 0% 3% / 0.92);
+  --_edge: var(--talos-hud-edge);
+  --_tr: var(--talos-chamfer-flag);
+  --_bl: var(--talos-chamfer-flag);
+  position: absolute;
+  right: var(--talos-space-3);
+  bottom: calc(var(--talos-space-3) + 4.25rem);
+  z-index: 3;
+  width: 13rem;
+  height: 8.5rem;
+  cursor: crosshair;
+}
+.talos-graph__minimap > canvas { display: block; width: 100%; height: 100%; }
+
+.talos-graph__scrubber {
+  --_fill: hsl(0 0% 3% / 0.94);
+  --_edge: var(--talos-hud-edge);
+  --_tr: var(--talos-chamfer-btn);
+  --_bl: var(--talos-chamfer-btn);
+  position: absolute;
+  left: var(--talos-space-3);
+  right: var(--talos-space-3);
+  bottom: var(--talos-space-3);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-3);
+  height: 3.25rem;
+  padding: 0 var(--talos-space-4);
+}
+.talos-graph__scrubber > .talos-range { flex: 1; }
+.talos-graph__time {
+  min-width: 9.5rem;
+  font-size: var(--talos-text-xs);
+  font-weight: 300;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--talos-text-secondary);
+}
+
+.talos-graph__panel {
+  --_fill: hsl(0 0% 3% / 0.95);
+  --_edge: var(--talos-hud-edge);
+  position: absolute;
+  top: 3.5rem;
+  right: var(--talos-space-3);
+  bottom: calc(var(--talos-space-3) + 13.5rem);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  width: min(22rem, 40vw);
+  overflow: hidden;
+}
+.talos-graph__panel > .talos-graph__panel-body { flex: 1; overflow-y: auto; }
+.talos-graph__panel[data-collapsed] { bottom: auto; width: auto; }
+.talos-graph__panel[data-collapsed] > .talos-graph__panel-body { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .talos-graph * { scroll-behavior: auto; }
+}
+
+} /* @layer components.talos */

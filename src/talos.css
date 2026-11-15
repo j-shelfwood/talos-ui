@@ -52,7 +52,7 @@
    CHAMFER ENGINE — the one way talos draws a cut corner.
 
    Every chamfered surface (panel, button, flag, input, select, alert, toast,
-   stat, readout, avatar, timeline lane, drawer) is a real `border` plus a `clip-path` that cuts the
+   stat, readout, avatar, timeline lane, drawer, graph chrome) is a real `border` plus a `clip-path` that cuts the
    corners, plus one 1px diagonal per cut drawn as a background gradient in the
    corner's own box. clip-path alone slices the border off the cut and leaves a
    bare "chopped corner"; the gradient draws the hairline the border cannot.
@@ -77,7 +77,8 @@
   .talos-toast, .talos-stat, .talos-readout, .talos-avatar,
   .talos-input, .talos-textarea, .talos-select, .talos-input-group,
   .talos-toc-content, .talos-tabs--segmented,
-  .talos-timeline__head, .talos-timeline__lane, .talos-drawer
+  .talos-timeline__head, .talos-timeline__lane, .talos-drawer,
+  .talos-graph__minimap, .talos-graph__scrubber, .talos-graph__panel
 ) {
   --_edge: var(--talos-edge-default);
   --_fill: transparent;
