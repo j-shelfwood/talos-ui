@@ -71,7 +71,13 @@ jobs:
       # workflow publish.yml). Until that exists, this step fails — set it up
       # after the first manual publish makes the package exist.
       - name: Publish to npm (trusted publishing / OIDC)
-        run: npm publish --access public
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          if [ -n "$(npm view "@j_shelfwood/talos-ui@$PKG" version 2>/dev/null)" ]; then
+            echo "::notice::@j_shelfwood/talos-ui@$PKG is already on npm; tagging and releasing only"
+          else
+            npm publish --access public
+          fi
 
       - name: Create GitHub release
         run: gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes "See CHANGELOG.md"
