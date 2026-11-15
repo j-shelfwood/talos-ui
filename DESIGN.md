@@ -56,7 +56,7 @@ size (an SVG path stretched with `preserveAspectRatio="none"` drifts off 45° as
 the width changes), the fill may be translucent, and no pseudo-element is spent.
 Use it on your own markup with `.talos-chamfer` (+ `--md` 10px both corners,
 `--sm` 8px both, `--btn`, `--flag`). Panel, button, flag, input, textarea,
-select, alert, toast, stat, readout, avatar and the navbar TOC already ride it.
+select, alert, toast, stat, readout, avatar, the navbar TOC, the timeline lane and the drawer already ride it.
 
 Web components render the same family of outlines as an **SVG path** via
 `PanelShapeBuilder`, which additionally supports **notches** (centered edge
