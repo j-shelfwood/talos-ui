@@ -70,7 +70,8 @@ Every cut corner is drawn by one engine: a real 1px `border`, a `clip-path` that
 |---|---|
 | `.glass-panel` (+ `.interactive-panel`) | HUD panel, top-right and bottom-left cuts |
 | `.talos-button` | bottom-right cut; `--xs` `--sm` `--lg`, `--secondary` `--ghost` `--solid`; `aria-pressed` / `aria-current` mark it selected |
-| `.talos-flag` | tag / status chip, top-right cut; `--active` `--muted` `--warning` `--danger` |
+| `.talos-flag` | tag / status chip, top-right cut; `--active` `--muted` `--warning` `--danger`; on a `<button>` with `aria-pressed` it is a toggle (a legend that filters) |
+| `.talos-timeline__head` `.talos-timeline__lane` `.talos-drawer` | timeline lane (head cut bottom-left, track cut top-right) and the side drawer, see *Use — timeline* |
 | `.talos-chamfer` | the engine on any element |
 | `.talos-input` `.talos-textarea` `.talos-select` `.talos-input-group` | form controls, bottom-right cut |
 | `.talos-alert` `.talos-toast` `.talos-stat` `.talos-readout` `.talos-avatar` | feedback and data surfaces |
@@ -286,6 +287,56 @@ Read-only instruments expose the role that matches their semantics plus a live
 `aria-label`: picture-like instruments use `role="img"`, scalar telemetry uses
 `role="meter"` or `role="status"`, and `<talos-ticker>` is a `role="log"` with
 `aria-live="polite"` so new events are announced.
+
+## Use — timeline
+
+`talos-timeline.css` (in `all.css`, or `@j_shelfwood/talos-ui/talos-timeline.css`) draws runs of work on a
+shared time axis: one chamfered lane per group, bars whose fill pattern says what started them, a mark at
+the end of each bar for its result, curved edges between runs, and a side drawer for one item's detail.
+No hue carries a category; only status marks use the status tokens. It needs `talos.css` (engine, tokens)
+and `talos-layout.css` (the `talos-pulse` keyframes of the live mark).
+
+| Class | Encodes |
+|---|---|
+| `.talos-timeline__bar--solid` | started by a person |
+| `.talos-timeline__bar--outline` | started by a supervisor or scheduler (outline, half-tone fill) |
+| `.talos-timeline__bar--hatched` | delegated work (diagonal hatch) |
+| `.talos-timeline__bar--dotted` | background or other work (dotted outline) |
+| `.talos-timeline__bar--muted` | a run that changed nothing (25% opacity, dashed) |
+| `.talos-timeline__mark--merged` / `--opened` | success-token filled / hollow square |
+| `.talos-timeline__mark--decision` / `--failed` | warning-token chevron / danger-token x |
+| `.talos-timeline__mark--posted` / `--live` | hollow dot / the accent pulse (still running) |
+| `.talos-timeline__event` (`--solid`, `--faint`) | a point in time: hollow, solid or faint diamond |
+
+The caller computes every position in px and passes it as a custom property (`--x`, `--w`, `--y` on bars and
+events, `--x` on ticks; `--talos-timeline-width`, `--talos-timeline-hour`, `--talos-timeline-hour0` on the
+root), so the same numbers place the SVG edge paths:
+
+```html
+<div class="talos-timeline" style="--talos-timeline-width:2928px;--talos-timeline-hour:120px;--talos-timeline-hour0:76px">
+  <div class="talos-timeline__heads">
+    <div class="talos-timeline__axis-head">Amsterdam</div>
+    <div class="talos-timeline__head" style="height:54px">
+      <span class="talos-timeline__title">fleet</span><span class="talos-timeline__meta">67 runs</span>
+    </div>
+  </div>
+  <div class="talos-timeline__viewport"><div class="talos-timeline__tracks">
+    <div class="talos-timeline__axis"><span class="talos-timeline__tick" style="--x:76px"><span>14:00</span></span></div>
+    <div class="talos-timeline__lane" style="height:54px">
+      <span class="talos-timeline__bar talos-timeline__bar--outline" style="--x:80px;--w:42px;--y:10px">
+        <i class="talos-timeline__mark talos-timeline__mark--merged"></i></span>
+    </div>
+    <svg class="talos-timeline__edges"><path d="M0,0 C40,0 40,50 80,50"/></svg>
+  </div></div>
+</div>
+<aside class="talos-drawer is-open">
+  <div class="talos-drawer__head">…</div><div class="talos-drawer__body"><h2 class="talos-drawer__title">…</h2></div>
+</aside>
+```
+
+Add `.is-tracing` to the root and `.is-lit` to the bars, events and paths of one chain to dim the rest. The
+variant classes set paint only, so they also dress a legend swatch (`.talos-timeline__swatch`). Reference
+consumer: `fleet-trace.ts` in `j-shelfwood/fleet`.
 
 ## Use — Laravel / Blade
 

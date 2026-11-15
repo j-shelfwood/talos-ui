@@ -1,0 +1,400 @@
+@layer components.talos {
+/* ============================================================================
+   @j_shelfwood/talos-ui — TALOS-TIMELINE.CSS  (Tier 1)
+   A swimlane timeline: runs of work as bars on a shared time axis, one
+   chamfered lane per group, edges between runs drawn as curves, plus the
+   side drawer that opens one run's detail. Form encodes function without hue:
+   the WHO of a bar (what started it) is its fill pattern, the RESULT is a
+   marker at its end, and only status markers carry a status token.
+
+     <link rel="stylesheet" href=".../talos-ui/talos.css" />
+     <link rel="stylesheet" href=".../talos-ui/talos-timeline.css" />
+
+   Structure (positions are px custom properties the caller computes, so the
+   same numbers drive the bars and the SVG edge layer):
+
+     .talos-timeline  (--talos-timeline-label, --talos-timeline-width,
+     │                 --talos-timeline-hour, --talos-timeline-hour0)
+     ├─ .talos-timeline__heads         fixed label column
+     │    .talos-timeline__axis-head, .talos-timeline__head (one per lane)
+     └─ .talos-timeline__viewport      scrolls horizontally
+          .talos-timeline__tracks      width = --talos-timeline-width
+            .talos-timeline__axis      .talos-timeline__tick (--x)
+            .talos-timeline__lane      height inline; hour rules drawn here
+              .talos-timeline__bar     --x --w --y; variant + mark child
+              .talos-timeline__event   --x --y; a point in time
+            svg.talos-timeline__edges  paths in the tracks' px space
+
+   Head and lane of one row share a height and read as one chamfered panel:
+   the head carries the bottom-left cut, the lane the top-right cut.
+
+   Tracing: put .is-tracing on .talos-timeline and .is-lit on the bars,
+   events and edge paths of one chain; everything else dims.
+   ========================================================================== */
+
+.talos-timeline {
+  --talos-timeline-label: 14rem;
+  --talos-timeline-width: 100%;
+  --talos-timeline-gap: 6px;
+  --talos-timeline-axis: 28px;
+  --talos-timeline-bar: 12px;
+  /* hour rules: px per hour, and the x of the first rule */
+  --talos-timeline-hour: 120px;
+  --talos-timeline-hour0: 0px;
+  --talos-timeline-rule: hsl(var(--talos-foreground-hsl) / 0.07);
+  --talos-timeline-edge: hsl(var(--talos-foreground-hsl) / 0.25);
+  --talos-timeline-edge-lit: hsl(var(--talos-foreground-hsl) / 0.9);
+  --talos-timeline-dim: 0.14;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--talos-timeline-label) minmax(0, 1fr);
+  font-family: var(--talos-font-display);
+  color: var(--talos-text-primary);
+  /* the ambient dot grid, static: it shows in the gaps between lanes */
+  background-image: radial-gradient(circle at 1px 1px, var(--talos-grid-dot) 1px, transparent 1.5px);
+  background-size: var(--talos-grid-cell) var(--talos-grid-cell);
+}
+
+.talos-timeline__heads {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--talos-timeline-gap);
+}
+.talos-timeline__viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-color: var(--talos-edge-default) transparent;
+  scrollbar-width: thin;
+}
+.talos-timeline__tracks {
+  position: relative;
+  width: var(--talos-timeline-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--talos-timeline-gap);
+}
+
+/* --- Axis -------------------------------------------------------------------- */
+.talos-timeline__axis,
+.talos-timeline__axis-head {
+  position: relative;
+  flex: none;
+  height: var(--talos-timeline-axis);
+  border-bottom: 1px solid var(--talos-edge-subtle);
+}
+.talos-timeline__axis-head {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 var(--talos-space-3) var(--talos-space-1);
+  font-size: var(--talos-text-2xs);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-tertiary);
+}
+.talos-timeline__tick {
+  position: absolute;
+  left: var(--x);
+  bottom: 0;
+  height: 7px;
+  border-left: 1px solid var(--talos-edge-strong);
+}
+.talos-timeline__tick > span {
+  position: absolute;
+  bottom: 9px;
+  left: 0;
+  transform: translateX(-50%);
+  font-size: var(--talos-text-2xs);
+  font-weight: 300;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--talos-text-secondary);
+  white-space: nowrap;
+}
+
+/* --- Lane: head + track ------------------------------------------------------ */
+.talos-timeline__head {
+  --_fill: hsl(0 0% 4% / 0.92);
+  --_edge: var(--talos-hud-edge);
+  --_tr: 0px;
+  --_bl: var(--talos-chamfer);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 0 var(--talos-space-3);
+}
+.talos-timeline__lane {
+  --_fill: hsl(0 0% 3% / 0.6);
+  --_edge: var(--talos-hud-edge);
+  --_tr: var(--talos-chamfer);
+  --_bl: 0px;
+  flex: none;
+  position: relative;
+  border-left-width: 0;
+  /* hour rules, offset to the first whole hour */
+  background-image:
+    var(--_cut-lines),
+    repeating-linear-gradient(to right, var(--talos-timeline-rule, transparent) 0 1px, transparent 1px var(--talos-timeline-hour, 120px));
+  background-size: var(--_cut-sizes), auto;
+  background-position: var(--_cut-pos), var(--talos-timeline-hour0, 0px) 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat-x;
+}
+.talos-timeline__head--events { --_fill: hsl(0 0% 7% / 0.92); }
+.talos-timeline__lane--events { --_fill: hsl(0 0% 6% / 0.7); }
+
+.talos-timeline__title {
+  overflow: hidden;
+  font-size: var(--talos-text-xs);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--talos-text-primary);
+}
+.talos-timeline__meta {
+  overflow: hidden;
+  font-size: var(--talos-text-2xs);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--talos-text-tertiary);
+}
+
+/* --- Bars: who started the run is the fill pattern --------------------------- */
+.talos-timeline__bar {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: max(var(--w), 3px);
+  height: var(--talos-timeline-bar);
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity var(--talos-dur-fast) var(--talos-ease-out);
+}
+.talos-timeline__bar:hover,
+.talos-timeline__bar:focus-visible {
+  outline: 1px solid var(--talos-focus-ring);
+  outline-offset: 1px;
+}
+/* The variants also dress a legend swatch: they set paint only, never position. */
+.talos-timeline__bar--solid {
+  background: hsl(var(--talos-foreground-hsl) / 0.92);
+  border-color: hsl(var(--talos-foreground-hsl) / 0.92);
+}
+.talos-timeline__bar--outline {
+  background: hsl(var(--talos-foreground-hsl) / 0.3);
+  border-color: hsl(var(--talos-foreground-hsl) / 0.85);
+}
+.talos-timeline__bar--hatched {
+  background: repeating-linear-gradient(-45deg,
+    hsl(var(--talos-foreground-hsl) / 0.75) 0 1.5px, transparent 1.5px 4.5px);
+  border-color: hsl(var(--talos-foreground-hsl) / 0.6);
+}
+.talos-timeline__bar--dotted {
+  background: transparent;
+  border: 1px dotted hsl(var(--talos-foreground-hsl) / 0.7);
+}
+/* A run that changed nothing: faint, dashed. */
+.talos-timeline__bar--muted {
+  opacity: 0.25;
+  border-style: dashed;
+  border-color: hsl(var(--talos-foreground-hsl) / 0.9);
+}
+
+/* --- Marks: the result of a run, at its end ----------------------------------- */
+.talos-timeline__mark {
+  display: block;
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
+  pointer-events: none;
+}
+.talos-timeline__bar > .talos-timeline__mark {
+  position: absolute;
+  left: calc(100% + 3px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+.talos-timeline__mark--merged { background: var(--talos-success); }
+.talos-timeline__mark--opened { border: 1px solid var(--talos-success); }
+.talos-timeline__mark--decision {
+  width: 6px;
+  height: 9px;
+  background: var(--talos-warning);
+  clip-path: polygon(0 0, 45% 0, 100% 50%, 45% 100%, 0 100%, 55% 50%);
+}
+.talos-timeline__mark--failed {
+  width: 8px;
+  height: 8px;
+  background:
+    linear-gradient(45deg, transparent calc(50% - 1px), var(--talos-danger) calc(50% - 1px), var(--talos-danger) calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(-45deg, transparent calc(50% - 1px), var(--talos-danger) calc(50% - 1px), var(--talos-danger) calc(50% + 1px), transparent calc(50% + 1px));
+}
+.talos-timeline__mark--posted {
+  width: 5px;
+  height: 5px;
+  border: 1px solid hsl(var(--talos-foreground-hsl) / 0.8);
+  border-radius: 50%;
+}
+/* Still running: the one accent, pulsing at the bar's live end. */
+.talos-timeline__mark--live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--talos-accent);
+  box-shadow: 0 0 6px var(--talos-accent);
+  animation: talos-pulse 2.4s ease-in-out infinite;
+}
+
+/* --- Events: points in time on a lane ----------------------------------------- */
+.talos-timeline__event {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 1px solid hsl(var(--talos-foreground-hsl) / 0.85);
+  background-color: var(--talos-surface-0);
+  cursor: pointer;
+}
+.talos-timeline__event--solid { background: hsl(var(--talos-foreground-hsl) / 0.92); }
+.talos-timeline__event--faint {
+  width: 5px;
+  height: 5px;
+  border-color: hsl(var(--talos-foreground-hsl) / 0.35);
+}
+/* A status mark placed as an event keeps its own shape (no diamond). */
+.talos-timeline__event.talos-timeline__mark {
+  transform: translate(-50%, -50%);
+  border: 0;
+  background-color: transparent;
+}
+.talos-timeline__event.talos-timeline__mark--decision { background: var(--talos-warning); }
+.talos-timeline__event.talos-timeline__mark--posted { border: 1px solid hsl(var(--talos-foreground-hsl) / 0.8); }
+.talos-timeline__event:hover { outline: 1px solid var(--talos-focus-ring); outline-offset: 2px; }
+
+/* --- Edges: the SVG layer over the tracks ------------------------------------- */
+.talos-timeline__edges {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+.talos-timeline__edges path {
+  fill: none;
+  stroke: var(--talos-timeline-edge);
+  stroke-width: 1;
+  transition: opacity var(--talos-dur-fast) var(--talos-ease-out);
+}
+.talos-timeline__edges path.is-lit { stroke: var(--talos-timeline-edge-lit); }
+
+/* Tracing one chain: everything not lit falls back. */
+.talos-timeline.is-tracing .talos-timeline__bar:not(.is-lit),
+.talos-timeline.is-tracing .talos-timeline__event:not(.is-lit),
+.talos-timeline.is-tracing .talos-timeline__edges path:not(.is-lit) {
+  opacity: var(--talos-timeline-dim);
+}
+.talos-timeline.is-tracing .talos-timeline__bar.is-lit { outline: 1px solid var(--talos-focus-ring); outline-offset: 1px; }
+
+/* --- Hover tip: talos tooltip chrome, multi-line ------------------------------ */
+.talos-timeline__tip {
+  position: fixed;
+  z-index: var(--talos-z-tooltip);
+  max-width: 26rem;
+  white-space: normal;
+  pointer-events: none;
+}
+.talos-timeline__tip[hidden] { display: none; }
+.talos-timeline__tip > p {
+  margin: var(--talos-space-1) 0 0;
+  font-family: var(--talos-font-body);
+  font-size: var(--talos-text-xs);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--talos-text-secondary);
+}
+
+/* --- Legend swatch (inside a .talos-flag) ------------------------------------- */
+.talos-timeline__swatch {
+  display: inline-block;
+  flex: none;
+  width: 18px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+}
+
+/* ============================================================================
+   DRAWER — a chamfered side panel fixed to the right edge, for the detail of
+   one selected item. Closed by default; .is-open (or [data-open]) slides it in.
+   ========================================================================== */
+.talos-drawer {
+  --_fill: var(--talos-surface-1);
+  --_edge: var(--talos-hud-edge-hot);
+  position: fixed;
+  top: var(--talos-space-4);
+  right: var(--talos-space-4);
+  bottom: var(--talos-space-4);
+  z-index: var(--talos-z-overlay);
+  display: flex;
+  flex-direction: column;
+  width: min(28rem, calc(100vw - 2 * var(--talos-space-4)));
+  color: var(--talos-text-primary);
+  box-shadow: var(--talos-shadow-float);
+  transform: translateX(calc(100% + 2 * var(--talos-space-4)));
+  visibility: hidden;
+  transition: transform var(--talos-dur-mid) var(--talos-ease-out), visibility 0s linear var(--talos-dur-mid);
+}
+.talos-drawer.is-open,
+.talos-drawer[data-open] {
+  transform: none;
+  visibility: visible;
+  transition: transform var(--talos-dur-mid) var(--talos-ease-out);
+}
+.talos-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--talos-space-3);
+  padding: var(--talos-space-3) var(--talos-space-5);
+  border-bottom: 1px solid var(--talos-edge-subtle);
+}
+.talos-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--talos-space-4) var(--talos-space-5) var(--talos-space-6);
+}
+.talos-drawer__title {
+  margin: 0 0 var(--talos-space-4);
+  font-family: var(--talos-font-display);
+  font-size: var(--talos-text-md);
+  font-weight: 300;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talos-timeline__bar,
+  .talos-timeline__edges path,
+  .talos-drawer,
+  .talos-drawer.is-open,
+  .talos-drawer[data-open] { transition: none; }
+  .talos-timeline__mark--live { animation: none; }
+}
+
+} /* @layer components.talos */

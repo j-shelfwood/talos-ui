@@ -6,6 +6,24 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-11-15
+
+### Added
+- **`talos-timeline.css`** (Tier 1, in `all.css`, export `./talos-timeline.css`): a swimlane timeline.
+  Lanes are chamfered head + track pairs (`.talos-timeline__head`, `.talos-timeline__lane`) with hour
+  rules drawn in the lane background; bars encode what started a run by fill pattern (`--solid`,
+  `--outline`, `--hatched`, `--dotted`, `--muted` for a no-op) and its result by an end mark
+  (`--merged`, `--opened`, `--decision`, `--failed`, `--posted`, `--live`); events are diamonds;
+  `.talos-timeline__edges` is the SVG edge layer; `.is-tracing` / `.is-lit` dim all but one chain;
+  `.talos-timeline__tip` is the multi-line tooltip on `.talos-tooltip` chrome.
+- **`.talos-drawer`**: a chamfered side panel fixed to the right edge, opened with `.is-open` or `[data-open]`.
+- **Toggle flags**: `<button class="talos-flag" aria-pressed>` reads as on / off (a legend that filters).
+- `src/package-surface.test.ts`: every CSS module is in `files` and `exports`, and `all.css` imports every
+  core module.
+- The chamfer engine registry and `test/visual/kit.html` cover the timeline head, lane and drawer.
+
+Not published to npm yet: the fleet trace reads it from a local checkout.
+
 ## [0.9.0] — 2026-09-30
 
 ### Removed

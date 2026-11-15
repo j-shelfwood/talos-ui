@@ -52,7 +52,7 @@
    CHAMFER ENGINE — the one way talos draws a cut corner.
 
    Every chamfered surface (panel, button, flag, input, select, alert, toast,
-   stat, readout, avatar) is a real `border` plus a `clip-path` that cuts the
+   stat, readout, avatar, timeline lane, drawer) is a real `border` plus a `clip-path` that cuts the
    corners, plus one 1px diagonal per cut drawn as a background gradient in the
    corner's own box. clip-path alone slices the border off the cut and leaves a
    bare "chopped corner"; the gradient draws the hairline the border cannot.
@@ -76,7 +76,8 @@
   .talos-chamfer, .glass-panel, .talos-button, .talos-flag, .talos-alert,
   .talos-toast, .talos-stat, .talos-readout, .talos-avatar,
   .talos-input, .talos-textarea, .talos-select, .talos-input-group,
-  .talos-toc-content, .talos-tabs--segmented
+  .talos-toc-content, .talos-tabs--segmented,
+  .talos-timeline__head, .talos-timeline__lane, .talos-drawer
 ) {
   --_edge: var(--talos-edge-default);
   --_fill: transparent;
@@ -414,6 +415,12 @@
 .talos-flag--muted   { color: var(--talos-text-tertiary); }
 .talos-flag--warning { --_edge: hsl(var(--talos-warning-hsl) / 0.3); --_fill: hsl(var(--talos-warning-hsl) / 0.12); color: var(--talos-warning); }
 .talos-flag--danger  { --_edge: hsl(var(--talos-danger-hsl) / 0.3);  --_fill: hsl(var(--talos-danger-hsl) / 0.12);  color: var(--talos-danger); }
+/* A flag that toggles (a legend that filters): <button class="talos-flag" aria-pressed>. */
+button.talos-flag { cursor: pointer; }
+.talos-flag[aria-pressed="true"]  { --_edge: var(--talos-edge-strong); --_fill: hsl(var(--talos-foreground-hsl) / 0.08); color: var(--talos-foreground); }
+.talos-flag[aria-pressed="false"] { --_edge: var(--talos-edge-subtle); --_fill: transparent; color: var(--talos-text-disabled); text-decoration: line-through; }
+.talos-flag[aria-pressed]:hover   { --_edge: var(--talos-hud-edge-hot); }
+.talos-flag[aria-pressed]:focus-visible { outline: none; --_edge: var(--talos-focus-ring); }
 
 /* ----------------------------------------------------------------------------
    AMBIENT GRID + CURSOR CROSSHAIR — fixed full-viewport overlay. JS writes
