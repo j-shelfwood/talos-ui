@@ -30,8 +30,6 @@ Never published on its own; shipped to npm as 0.12.1.
   (`[data-collapsed]`). The minimap, scrubber and panel ride the chamfer engine (registry and visual kit).
 - `package-surface.test.ts` checks the graph module's classes.
 
-Not published to npm (needs Joris's 2FA); the fleet trace reads it from a local checkout.
-
 ## [0.10.0] — 2026-11-15
 
 ### Added
@@ -47,8 +45,6 @@ Not published to npm (needs Joris's 2FA); the fleet trace reads it from a local 
 - `src/package-surface.test.ts`: every CSS module is in `files` and `exports`, and `all.css` imports every
   core module.
 - The chamfer engine registry and `test/visual/kit.html` cover the timeline head, lane and drawer.
-
-Not published to npm yet: the fleet trace reads it from a local checkout.
 
 ## [0.9.0] — 2026-09-30
 
