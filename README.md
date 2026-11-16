@@ -354,12 +354,17 @@ in `.talos-graph__stage`, reading the talos tokens with `getComputedStyle` so it
   <div class="talos-graph__zoom"><button class="talos-button talos-button--xs">+</button><span class="talos-graph__readout">100%</span></div>
   <div class="talos-graph__minimap"><canvas></canvas></div>
   <div class="talos-graph__scrubber"><button class="talos-button talos-button--xs">Play</button><input class="talos-range" type="range"><span class="talos-graph__time">15-11 14:00</span></div>
-  <aside class="talos-graph__panel"><div class="talos-graph__panel-body">…</div></aside>
+  <aside class="talos-graph__panel">
+    <button class="talos-graph__panel-head" aria-expanded="true"><span class="talos-hud">Runs</span><span class="talos-flag">12</span></button>
+    <div class="talos-graph__panel-body">…</div>
+  </aside>
+  <aside class="talos-graph__panel talos-graph__panel--start">…</aside>
 </main>
 ```
 
 Set `--talos-graph-zoom`, `--talos-graph-x` and `--talos-graph-y` on `.talos-graph` as the camera moves and the
-dot grid stays in world space. `[data-collapsed]` folds the panel to its header; `.is-panning` / `.is-pointing`
+dot grid stays in world space. `.talos-graph__panel-head` is the panel's fold button row (HUD title, count flag);
+`[data-collapsed]` folds the panel to that row; `.talos-graph__panel--start` docks a second panel on the left edge; `.is-panning` / `.is-pointing`
 set the cursor. The minimap, scrubber and panel ride the chamfer engine. Reference consumer: the fleet trace
 (`fleet-trace-client.ts` in `j-shelfwood/fleet`).
 
