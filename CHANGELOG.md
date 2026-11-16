@@ -6,13 +6,20 @@ pre-1.0, so minor versions may include breaking changes until `1.0.0`.
 
 ## [Unreleased]
 
+## [0.12.1] — 2026-11-16
+
+### Fixed
+- `Navbar.astro`: the TOC comment inside `{hasToc && (...)}` is now a JSX comment above the conditional; Astro 7's compiler rejected the HTML comment there (`Unexpected token`). Rendered markup is unchanged.
+
+First npm release carrying the 0.12.0 changes.
+
 ## [0.12.0] — 2026-11-16
 
 ### Added
 - `.talos-graph__panel--start`: the graph panel docked on the left edge (a second panel beside the right one).
 - `.talos-graph__panel-head`: the panel's fold button row (slug, HUD title, count flag), previously styled by each consumer.
 
-Not published to npm (needs Joris's 2FA); the fleet trace reads it from a local checkout.
+Never published on its own; shipped to npm as 0.12.1.
 
 ## [0.11.0] — 2026-11-15
 
