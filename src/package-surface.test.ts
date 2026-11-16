@@ -38,6 +38,6 @@ describe("package surface", () => {
   test("the graph module styles the canvas chrome", () => {
     const css = readFileSync(join(ROOT, "src/talos-graph.css"), "utf8");
     expect(css.trimStart().startsWith("@layer components.talos {")).toBe(true);
-    for (const cls of ["", "__stage", "__toolbar", "__zoom", "__minimap", "__scrubber", "__time", "__panel"]) expect(css).toContain(`.talos-graph${cls} `);
+    for (const cls of ["", "__stage", "__toolbar", "__zoom", "__minimap", "__scrubber", "__time", "__panel", "__panel--start", "__panel-head"]) expect(css).toContain(`.talos-graph${cls} `);
   });
 });
