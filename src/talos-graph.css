@@ -18,6 +18,8 @@
        .talos-graph__minimap          chamfered corner overview (holds a canvas)
        .talos-graph__scrubber         bottom time bar: play, .talos-range, time, speed
        .talos-graph__panel            right-side panel; [data-collapsed] folds it
+         --start                      docked on the left edge instead
+         .talos-graph__panel-head     its fold button row (slug, HUD title, count flag)
 
    Set --talos-graph-zoom (the current scale) on .talos-graph to keep the dot
    grid in world space; --talos-graph-x / --talos-graph-y shift it with the pan.
@@ -142,6 +144,30 @@
 .talos-graph__panel > .talos-graph__panel-body { flex: 1; overflow-y: auto; }
 .talos-graph__panel[data-collapsed] { bottom: auto; width: auto; }
 .talos-graph__panel[data-collapsed] > .talos-graph__panel-body { display: none; }
+/* The same panel docked on the left edge, below the toolbar and clear of the zoom cluster. */
+.talos-graph__panel--start {
+  right: auto;
+  left: var(--talos-space-3);
+  bottom: calc(var(--talos-space-3) + 12rem);
+}
+/* The panel's head row: a button that folds the panel, a //nn slug, a HUD title and a count flag. */
+.talos-graph__panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  width: 100%;
+  padding: var(--talos-space-3) var(--talos-space-4);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--talos-edge-subtle);
+  color: var(--talos-foreground);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.talos-graph__panel-head > .talos-hud { flex: 1; font-size: var(--talos-text-xs); }
+.talos-graph__panel-head:focus-visible { outline: 1px solid var(--talos-foreground); outline-offset: -3px; }
+.talos-graph__panel[data-collapsed] > .talos-graph__panel-head { border-bottom: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .talos-graph * { scroll-behavior: auto; }
