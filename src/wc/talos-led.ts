@@ -1,5 +1,34 @@
-import { bandOf } from "./bands";
+import { BAND_TOKENS_CSS, bandColorVar, bandOf, type Band } from "./bands";
 import { setStatusA11y } from "./a11y";
+
+type LedState = Band | "idle";
+
+/** Qualitative `state` values: the short forms and the band names. */
+const STATES: Record<string, LedState> = {
+  ok: "nominal",
+  nominal: "nominal",
+  warn: "warning",
+  warning: "warning",
+  crit: "critical",
+  critical: "critical",
+  idle: "idle",
+};
+
+const warned = new Set<string>();
+
+/** Resolve a `state` attribute; unknown values read idle (never a false green). */
+export function ledState(raw: string | null): LedState {
+  const key = (raw ?? "ok").trim().toLowerCase();
+  const state = STATES[key];
+  if (state) return state;
+  if (!warned.has(key)) {
+    warned.add(key);
+    console.warn(
+      `<talos-led> unknown state "${raw}"; showing idle. Use ok|warn|crit|idle or nominal|warning|critical.`,
+    );
+  }
+  return "idle";
+}
 
 /**
  * <talos-led> — a single status light. The smallest instrument: one dot whose
@@ -7,7 +36,9 @@ import { setStatusA11y } from "./a11y";
  * hand-coloured `<span>` status dot — here the colour is bound, not decorative.
  *
  *   - COLOUR   the state. Two ways to drive it:
- *              • `state="ok|warn|crit|idle"` — a direct qualitative state, or
+ *              • `state="ok|warn|crit|idle"` (or the band names
+ *                `nominal|warning|critical`) — a direct qualitative state; an
+ *                unknown state reads idle and logs one console warning, or
  *              • `value` + `warn`/`crit` — banded via the shared bandOf() helper
  *                (same threshold + `invert` semantics as gauge/meter). If both
  *                are present, `value`/thresholds win (the live reading leads).
@@ -21,7 +52,7 @@ import { setStatusA11y } from "./a11y";
  *              decoration wearing a function's coat.
  *
  * Attributes (all reactive):
- *   state        ok | warn | crit | idle                  (default ok)
+ *   state        ok | warn | crit | idle, or nominal | warning | critical (default ok)
  *   value        numeric reading; banded by warn/crit      (optional)
  *   warn / crit  band thresholds on `value`                (optional)
  *   invert       low = bad (band trips as value FALLS)     (flag)
@@ -43,9 +74,7 @@ export class TalosLed extends HTMLElement {
       <style>
         :host {
           /* band tokens, identical fallbacks to the other instruments */
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_idle: var(--talos-muted-foreground, hsl(0 0% 60%));
           --_c: var(--_nominal);
           --_d: 10px;
@@ -67,7 +96,6 @@ export class TalosLed extends HTMLElement {
           box-shadow: 0 0 calc(var(--_d) * 0.6) hsl(var(--_c-hsl, 0 0% 100%) / 0);
           transition: background var(--talos-dur-fast, 180ms) var(--talos-ease-out, ease);
         }
-        :host([state="idle"]:not([value])) .dot { background: var(--_idle); }
         /* live = actively reporting: a slow steady pulse. */
         :host([live]) .dot { animation: talos-led-pulse 2.4s ease-in-out infinite; }
         @keyframes talos-led-pulse {
@@ -91,29 +119,20 @@ export class TalosLed extends HTMLElement {
 
     // Resolve the state. A live numeric reading leads; else the qualitative
     // `state`; else default ok.
-    let varName = "--_nominal";
-    let label: string;
     const valueAttr = this.getAttribute("value");
+    const state: LedState =
+      valueAttr !== null && Number.isFinite(parseFloat(valueAttr))
+        ? bandOf(this, parseFloat(valueAttr))
+        : ledState(this.getAttribute("state"));
 
-    if (valueAttr !== null && Number.isFinite(parseFloat(valueAttr))) {
-      const band = bandOf(this, parseFloat(valueAttr));
-      varName = band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
-      label = band; // nominal | warning | critical
-    } else {
-      const state = (this.getAttribute("state") ?? "ok").toLowerCase();
-      varName =
-        state === "crit" ? "--_critical"
-        : state === "warn" ? "--_warning"
-        : state === "idle" ? "--_idle"
-        : "--_nominal";
-      label = state;
-    }
+    this.style.setProperty("--_c", `var(${state === "idle" ? "--_idle" : bandColorVar(state)})`);
 
-    this.style.setProperty("--_c", `var(${varName})`);
-
-    // Accessibility: the state must survive without colour or motion.
+    // Accessibility: the state must survive without colour or motion. A label
+    // that already names the state is not repeated ("ok", not "ok: nominal").
     const lbl = this.getAttribute("label");
     const live = this.hasAttribute("live") ? ", live" : "";
-    setStatusA11y(this, { label: lbl, summary: `${label}${live}` });
+    const rawState = (this.getAttribute("state") ?? "").trim().toLowerCase();
+    const named = lbl !== null && [state, rawState].includes(lbl.trim().toLowerCase());
+    setStatusA11y(this, named ? { summary: `${lbl}${live}` } : { label: lbl, summary: `${state}${live}` });
   }
 }
