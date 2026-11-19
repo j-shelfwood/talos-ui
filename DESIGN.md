@@ -72,8 +72,9 @@ third:
    **cut**: `--talos-chamfer` / `-btn` / `-flag`, via `clip-path` (or the SVG
    path in the WC layer). This is the default; reach for it first.
 2. **Small radius (dense content containers only).** Tight, text-dense,
-   *content* surfaces — inline/block code, `kbd`, log feeds, menu/menu-items,
-   tooltips — use `--talos-radius-sm` (2px) / `-md` (4px). The chamfer's diagonal
+   *content* surfaces — inline code, `kbd`, log feeds, menu/menu-items —
+   use `--talos-radius-sm` (2px) / `-md` (4px). Code blocks and tooltips are
+   square. The chamfer's diagonal
    would fight the dense rectangular content, so these get a hairline softening
    instead. This is a deliberate, bounded exception — not a license to round
    chrome.
