@@ -1,4 +1,3 @@
-
 @layer components.talos {
 /* ============================================================================
    @j_shelfwood/talos-ui — TALOS-NAV.CSS  (opt-in module)
@@ -15,18 +14,72 @@
    heavy fill. Sliding indicators use --talos-ease-glass; all gated in RM.
    ========================================================================== */
 
+
+/* Edge-fade lengths for horizontally scrolling strips (tabs). Registered so the
+   scroll timeline can interpolate them; 0px (no fade) where it is inactive. */
+@property --_nav-fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --_nav-fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
 /* --- Tabs ------------------------------------------------------------------- */
+/* The strip scrolls sideways when the tabs outgrow it (a phone, a narrow
+   panel): no visible scrollbar, the overflowing side fades out instead. The
+   shared bottom rule is an inset shadow, not a border, because a scroll
+   container clips its children to the padding box and the active tick must
+   sit ON the rule. */
 .talos-tabs {
   display: flex;
   gap: var(--talos-space-5);
-  border-bottom: 1px solid var(--talos-edge-subtle);
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  box-shadow: inset 0 -1px 0 var(--talos-edge-subtle);
+}
+.talos-tabs::-webkit-scrollbar { display: none; }
+@supports (animation-timeline: scroll()) {
+  .talos-tabs {
+    --_nav-fade: 1.5rem;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--_nav-fade-start),
+      #000 calc(100% - var(--_nav-fade-end)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--_nav-fade-start),
+      #000 calc(100% - var(--_nav-fade-end)),
+      transparent 100%
+    );
+    animation: talos-nav-edge-fade linear both;
+    animation-timeline: scroll(self inline);
+  }
+}
+@keyframes talos-nav-edge-fade {
+  0%   { --_nav-fade-start: 0px;             --_nav-fade-end: var(--_nav-fade); }
+  10%  { --_nav-fade-start: var(--_nav-fade); }
+  90%  { --_nav-fade-end: var(--_nav-fade); }
+  100% { --_nav-fade-start: var(--_nav-fade); --_nav-fade-end: 0px; }
 }
 .talos-tab {
   position: relative;
+  flex: none;
   appearance: none;
   background: none;
   border: 0;
-  padding: var(--talos-space-3) 0;
+  padding: var(--talos-space-3) var(--talos-space-1);
+  white-space: nowrap;
   font-family: var(--talos-font-display);
   font-size: var(--talos-text-xs);
   font-weight: 300;
@@ -44,7 +97,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -1px;
+  bottom: 0;
   height: 1px;
   background: var(--talos-accent);
   transform: scaleX(0);
@@ -65,9 +118,10 @@
   font-variant-numeric: tabular-nums;
   color: var(--talos-text-tertiary);
 }
+/* Inset ring: the strip is a scroll container, so an outset ring is clipped. */
 .talos-tab:focus-visible {
   outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
-  outline-offset: var(--talos-focus-ring-offset);
+  outline-offset: calc(var(--talos-focus-ring-width) * -1);
 }
 .talos-tabpanel { padding-top: var(--talos-space-5); }
 
@@ -81,7 +135,8 @@
   gap: 0;
   max-width: 100%;
   overflow-x: auto;
-  border-bottom: 1px solid var(--_edge); /* .talos-tabs sets its own bottom rule */
+  box-shadow: none; /* the engine border carries the edge here */
+  border-bottom: 1px solid var(--_edge);
 }
 .talos-tabs--segmented .talos-tab {
   padding: var(--talos-space-2) var(--talos-space-4);
@@ -113,9 +168,17 @@
   transition: color var(--talos-dur-fast) ease;
 }
 .talos-breadcrumb:hover { color: var(--talos-text-primary); }
-.talos-breadcrumb:not(:last-child)::after {
+.talos-breadcrumb:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
+}
+/* Separator leads the NEXT crumb and carries an empty alt text, so it is never
+   part of any link's accessible name ("Docs", not "Docs ›"). */
+.talos-breadcrumb + .talos-breadcrumb::before {
   content: "›";
-  margin-left: var(--talos-space-2);
+  content: "›" / "";
+  display: inline-block;
+  margin-right: var(--talos-space-2);
   color: var(--talos-text-tertiary);
 }
 .talos-breadcrumb[aria-current="page"] {
@@ -126,6 +189,8 @@
 /* --- Pagination ------------------------------------------------------------- */
 .talos-pagination {
   display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   align-items: center;
   gap: var(--talos-space-1);
   font-family: var(--talos-font-display);
@@ -175,6 +240,27 @@
   border-radius: var(--talos-radius-md);
   box-shadow: var(--talos-shadow);
   z-index: var(--talos-z-overlay);
+  transform-origin: top left;
+  transition:
+    opacity var(--talos-dur-fast) ease,
+    transform var(--talos-dur-fast) var(--talos-ease-out),
+    visibility 0s linear 0s;
+}
+/* Open state: data-open on the menu ("true"/present = open, "false" = closed).
+   A menu without the attribute is always shown, as before. Closing fades and
+   scales out, then drops visibility so a closed menu takes no focus. */
+.talos-menu[data-open="false"] {
+  opacity: 0;
+  transform: translateY(-2px) scale(0.97);
+  visibility: hidden;
+  pointer-events: none;
+  transition-delay: 0s, 0s, var(--talos-dur-fast);
+}
+@starting-style {
+  .talos-menu[data-open]:not([data-open="false"]) {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.97);
+  }
 }
 .talos-menu__label {
   padding: var(--talos-space-2) var(--talos-space-3) var(--talos-space-1);
@@ -202,7 +288,8 @@
   cursor: pointer;
   transition: background var(--talos-dur-fast) ease;
 }
-.talos-menu__item:hover { background: var(--talos-surface-4); }
+.talos-menu__item:hover,
+.talos-menu__item:focus-visible { background: var(--talos-surface-4); }
 .talos-menu__item:focus-visible {
   outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
   outline-offset: calc(var(--talos-focus-ring-offset) * -1);
@@ -228,8 +315,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--talos-space-5);
+  box-sizing: border-box; /* the documented widths are the rail's full width */
   width: 15rem;
   padding: var(--talos-space-5) var(--talos-space-3);
+  overflow-x: clip;
   background: var(--talos-surface-0);
   border-right: 1px solid var(--talos-edge-subtle);
   transition: width var(--talos-dur-mid) var(--talos-ease-glass);
@@ -237,7 +326,14 @@
 .talos-sidebar--collapsed { width: 3.5rem; }
 .talos-nav-group { display: flex; flex-direction: column; gap: var(--talos-space-1); }
 .talos-nav-group__label {
+  max-height: 2rem;
+  overflow: hidden;
+  white-space: nowrap;
   padding: 0 var(--talos-space-3) var(--talos-space-1);
+  transition:
+    opacity var(--talos-dur-fast) ease,
+    max-height var(--talos-dur-mid) var(--talos-ease-out),
+    padding var(--talos-dur-mid) var(--talos-ease-out);
   font-family: var(--talos-font-display);
   font-size: var(--talos-text-2xs);
   text-transform: uppercase;
@@ -255,11 +351,24 @@
   font-weight: 300;
   color: var(--talos-text-secondary);
   text-decoration: none;
-  border-radius: var(--talos-radius-sm);
+  border-radius: 0; /* nav chrome is square (DESIGN.md corner policy) */
   white-space: nowrap;
-  transition: background var(--talos-dur-fast) ease, color var(--talos-dur-fast) ease;
+  transition:
+    background var(--talos-dur-fast) ease,
+    color var(--talos-dur-fast) ease,
+    gap var(--talos-dur-mid) var(--talos-ease-out),
+    padding var(--talos-dur-mid) var(--talos-ease-out);
 }
-.talos-nav-item__icon { flex: none; display: inline-flex; width: 1.1rem; }
+.talos-nav-item__icon { flex: none; display: inline-flex; justify-content: center; width: 1.1rem; }
+.talos-nav-item__label {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    opacity var(--talos-dur-fast) ease,
+    max-width var(--talos-dur-mid) var(--talos-ease-out);
+}
 .talos-nav-item:hover { background: var(--talos-surface-2); color: var(--talos-text-primary); }
 .talos-nav-item--active {
   background: var(--talos-surface-2);
@@ -279,15 +388,30 @@
   outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
   outline-offset: calc(var(--talos-focus-ring-offset) * -1);
 }
-/* Collapsed: labels fold away, icons remain. */
-.talos-sidebar--collapsed .talos-nav-item__label,
-.talos-sidebar--collapsed .talos-nav-group__label { display: none; }
+/* Collapsed: labels fade and fold to zero width, icons centre in the rail. The
+   labels stay in the accessibility tree (no display:none / visibility), so
+   every icon-only item keeps its accessible name. */
+.talos-sidebar--collapsed .talos-nav-item {
+  justify-content: center;
+  gap: 0;
+  padding-inline: 0;
+}
+.talos-sidebar--collapsed .talos-nav-item__label {
+  max-width: 0;
+  opacity: 0;
+}
+.talos-sidebar--collapsed .talos-nav-group__label {
+  max-height: 0;
+  padding-block: 0;
+  opacity: 0;
+}
 
 /* --- Stepper / wizard ------------------------------------------------------- */
 .talos-steps {
   display: flex;
   align-items: flex-start;
   gap: 0;
+  width: 100%;
 }
 .talos-step {
   position: relative;
@@ -342,19 +466,66 @@
   background: var(--talos-foreground);
   border-color: var(--talos-foreground);
 }
-.talos-step--done::after { background: var(--talos-edge-strong); }
-.talos-step--current .talos-step__index {
+/* A completed leg reads as a lit trace, clearly above the pending hairline. */
+/* :not(:last-child) matches the base connector's specificity, which otherwise wins. */
+.talos-step--done:not(:last-child)::after { background: hsl(var(--talos-foreground-hsl) / 0.85); }
+.talos-step--done .talos-step__label { color: var(--talos-text-secondary); }
+/* Current: the class, or aria-current="step" on the step itself. */
+.talos-step--current .talos-step__index,
+.talos-step[aria-current]:not([aria-current="false"]) .talos-step__index {
   color: var(--talos-text-primary);
   border-color: var(--talos-accent);
   box-shadow: 0 0 0 1px var(--talos-accent);
 }
-.talos-step--current .talos-step__label { color: var(--talos-text-primary); }
+.talos-step--current .talos-step__label,
+.talos-step[aria-current]:not([aria-current="false"]) .talos-step__label { color: var(--talos-text-primary); }
+/* Error / blocked: the step failed or cannot proceed. Danger tokens, and the
+   leg out of it stays dark (nothing flows past a blocked step). */
+.talos-step--error .talos-step__index,
+.talos-step--blocked .talos-step__index {
+  color: var(--talos-danger);
+  background: hsl(var(--talos-danger-hsl) / 0.12);
+  border-color: var(--talos-danger);
+}
+.talos-step--error .talos-step__label,
+.talos-step--blocked .talos-step__label { color: var(--talos-danger); }
+.talos-step--blocked .talos-step__index { border-style: dashed; }
+
+/* Vertical stepper: nodes in a column, labels to the right, the connector runs
+   down from each node to the next. Labels wrap instead of ellipsizing. */
+.talos-steps--vertical {
+  flex-direction: column;
+  align-items: stretch;
+}
+.talos-steps--vertical .talos-step {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--talos-space-3);
+  text-align: left;
+}
+.talos-steps--vertical .talos-step:not(:last-child) { padding-bottom: var(--talos-space-4); }
+.talos-steps--vertical .talos-step__label {
+  max-width: none;
+  padding-top: 0.45rem;
+  white-space: normal;
+}
+.talos-steps--vertical .talos-step:not(:last-child)::after {
+  top: 1.75rem;
+  bottom: 0;
+  left: 0.875rem;
+  width: 1px;
+  height: auto;
+}
 
 /* --- Toolbar ---------------------------------------------------------------- */
+/* Wraps onto further rows rather than pushing the page wider than the screen. */
 .talos-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--talos-space-2);
+  max-width: 100%;
+  box-sizing: border-box;
   padding: var(--talos-space-2) var(--talos-space-3);
   background: var(--talos-surface-1);
   border: 1px solid var(--talos-edge-subtle);
@@ -371,7 +542,16 @@
 /* --- Reduced motion --------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .talos-tab::after,
-  .talos-sidebar { transition: none; }
+  .talos-sidebar,
+  .talos-nav-item,
+  .talos-nav-item__label,
+  .talos-nav-group__label { transition: none; }
+  /* Menu: opacity only, no scale. */
+  .talos-menu { transition: opacity var(--talos-dur-fast) ease, visibility 0s linear 0s; }
+  .talos-menu[data-open="false"] { transform: none; }
+  @starting-style {
+    .talos-menu[data-open]:not([data-open="false"]) { transform: none; }
+  }
 }
 
 } /* @layer components.talos */
