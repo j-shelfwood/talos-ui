@@ -21,7 +21,36 @@
   initial-value: 0;
 }
 
+/* Edge-fade widths for long code lines, driven by a scroll timeline (below).
+   Registered so the keyframes interpolate them as lengths. */
+@property --_code-fade-l {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --_code-fade-r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
 @layer components.talos {
+
+/* --- Scrolling areas -------------------------------------------------------- */
+/* Thin themed scrollbars on every scroll container in this module (table
+   wrapper, code body, log feed). Colours come from the shared scrollbar
+   tokens, with local fallbacks until tokens.css ships them. */
+.talos-table-wrap,
+.talos-code__body,
+.talos-log--feed {
+  scrollbar-width: thin;
+  scrollbar-color: var(--talos-scrollbar-thumb, hsl(0 0% 100% / 0.18)) var(--talos-scrollbar-track, transparent);
+}
+.talos-table-wrap:hover,
+.talos-code__body:hover,
+.talos-log--feed:hover {
+  scrollbar-color: var(--talos-scrollbar-thumb-hover, hsl(0 0% 100% / 0.32)) var(--talos-scrollbar-track, transparent);
+}
 
 /* --- Table ------------------------------------------------------------------ */
 .talos-table-wrap {
@@ -53,9 +82,6 @@
 .talos-table tbody tr {
   transition: background var(--talos-dur-fast) ease;
 }
-.talos-table tbody tr:hover {
-  background: hsl(0 0% 100% / 0.03);
-}
 /* Numeric cells right-align and lock to tabular figures so columns line up. */
 .talos-table__num {
   text-align: right;
@@ -64,31 +90,118 @@
 .talos-table--zebra tbody tr:nth-child(even) {
   background: var(--talos-surface-1);
 }
+/* Hover comes AFTER zebra: both selectors are (0,2,2), so order decides, and
+   the hover tint is lighter than the zebra stripe so it reads on both. */
+.talos-table tbody tr:hover {
+  background: hsl(var(--talos-foreground-hsl) / 0.07);
+}
 .talos-table--dense thead th,
 .talos-table--dense tbody td {
   padding: var(--talos-space-2) var(--talos-space-3);
 }
 
-/* Sortable header — a chevron that rotates with [aria-sort]. */
+/* Sticky header — the header row stays put while the body scrolls. Give the
+   wrapper a height: `.talos-table-wrap--scroll` caps it at
+   --talos-table-max-h (default 24rem). The header needs an opaque fill
+   (--talos-table-head-bg) or rows show through it; the rule under it is an
+   inset shadow because a collapsed border scrolls away with the body. */
+.talos-table-wrap--scroll {
+  max-height: var(--talos-table-max-h, 24rem);
+  overflow: auto;
+}
+.talos-table--sticky thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--talos-table-head-bg, var(--talos-background));
+  border-bottom: 0;
+  box-shadow: inset 0 -1px 0 var(--talos-edge-default);
+}
+
+/* Empty and loading rows — one full-width cell (<td colspan="N">) inside
+   tbody. Neither takes the hover or zebra tint: there is no record to point at.
+     <tr class="talos-table__empty"><td colspan="4">No deployments</td></tr>
+     <tr class="talos-table__loading"><td colspan="4">Loading</td></tr> */
+.talos-table tbody tr:is(.talos-table__empty, .talos-table__loading),
+.talos-table tbody tr:is(.talos-table__empty, .talos-table__loading):hover {
+  background: none;
+}
+.talos-table__empty > td,
+.talos-table__loading > td {
+  padding: var(--talos-space-6) var(--talos-space-4);
+  text-align: center;
+  font-size: var(--talos-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-secondary);
+}
+/* Loading: a 1px scan line sweeps the bottom edge while the fetch is in
+   flight (the sweep is the request in progress). Reduced motion parks a
+   static segment so the state still reads. */
+.talos-table__loading > td {
+  position: relative;
+  overflow: hidden;
+}
+.talos-table__loading > td::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 30%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--talos-foreground), transparent);
+  animation: talos-table-scan 1.4s var(--talos-ease-out) infinite;
+}
+@keyframes talos-table-scan {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(340%); }
+}
+
+/* Sortable header — a real <button> inside the <th>, so it is focusable and
+   keyboard operable; [aria-sort] on the <th> drives the indicator. Script
+   toggles aria-sort between "ascending" / "descending" (and "none").
+     <th aria-sort="ascending"><button class="talos-table__sort">Name</button></th>
+   Unsorted columns show a faint double chevron; the sorted one shows a single
+   bright chevron pointing in the sort direction. */
 .talos-table__sort {
+  appearance: none;
   display: inline-flex;
   align-items: center;
   gap: var(--talos-space-2);
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
   cursor: pointer;
   user-select: none;
+  transition: color var(--talos-dur-fast) ease;
+}
+.talos-table__sort:hover { color: var(--talos-text-primary); }
+.talos-table__sort:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: var(--talos-focus-ring-offset);
 }
 .talos-table__sort::after {
   content: "";
-  width: 0;
-  height: 0;
-  border-left: 3px solid transparent;
-  border-right: 3px solid transparent;
-  border-top: 4px solid currentColor;
-  opacity: 0.3;
-  transition: transform var(--talos-dur-fast) ease, opacity var(--talos-dur-fast) ease;
+  flex: none;
+  width: 6px;
+  height: 10px;
+  background-color: currentColor;
+  -webkit-mask: var(--_sort-glyph) center / contain no-repeat;
+  mask: var(--_sort-glyph) center / contain no-repeat;
+  opacity: 0.35;
+  transition: opacity var(--talos-dur-fast) ease;
 }
-.talos-table th[aria-sort="ascending"] .talos-table__sort::after { opacity: 1; transform: rotate(180deg); }
-.talos-table th[aria-sort="descending"] .talos-table__sort::after { opacity: 1; transform: rotate(0deg); }
+.talos-table__sort { --_sort-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 10'%3E%3Cpath d='M3 0 6 4H0zM0 6h6L3 10z'/%3E%3C/svg%3E"); }
+.talos-table th[aria-sort="ascending"],
+.talos-table th[aria-sort="descending"] { color: var(--talos-text-primary); }
+.talos-table th[aria-sort="ascending"] .talos-table__sort { --_sort-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 10'%3E%3Cpath d='M3 0 6 4H0z'/%3E%3C/svg%3E"); }
+.talos-table th[aria-sort="descending"] .talos-table__sort { --_sort-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 10'%3E%3Cpath d='M0 6h6L3 10z'/%3E%3C/svg%3E"); }
+.talos-table th:is([aria-sort="ascending"], [aria-sort="descending"]) .talos-table__sort::after { opacity: 1; }
 
 /* --- Stat / KPI card -------------------------------------------------------- */
 /* Chamfered container on the chamfer engine (talos.css). */
@@ -136,6 +249,10 @@
 }
 
 /* --- Definition list / spec sheet ------------------------------------------- */
+/* Terms and values are styled as direct children (grid variant) AND as
+   children of a <div> pair wrapper (the inline variant, and any dl that
+   groups its pairs, which HTML allows). Only the grid variant draws the rule
+   and padding per cell; the inline variant draws them per pair. */
 .talos-dl {
   margin: 0;
   display: grid;
@@ -147,15 +264,17 @@
   padding: var(--talos-space-2) 0;
   border-bottom: 1px solid var(--talos-edge-subtle);
 }
-.talos-dl > dt {
+.talos-dl > dt,
+.talos-dl > div > dt {
   font-family: var(--talos-font-display);
   font-size: var(--talos-text-xs);
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud);
-  color: var(--talos-text-tertiary);
-  padding-right: var(--talos-space-5);
+  color: var(--talos-text-secondary);
 }
-.talos-dl > dd {
+.talos-dl > dt { padding-right: var(--talos-space-5); }
+.talos-dl > dd,
+.talos-dl > div > dd {
   margin: 0;
   font-size: var(--talos-text-sm);
   color: var(--talos-text-primary);
@@ -170,17 +289,61 @@
 .talos-dl--inline > div {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: var(--talos-space-4);
   padding: var(--talos-space-2) 0;
   border-bottom: 1px solid var(--talos-edge-subtle);
 }
 
 /* --- Code block + kbd + inline code ----------------------------------------- */
+/* Syntax palette. The package does not highlight; it ships the colours as
+   variables so any highlighter can paint with them. Shiki: a theme object
+   whose colours are `var(--talos-code-*)`, e.g.
+     const v = (n) => `var(--talos-code-${n})`;
+     export default { name: "talos", type: "dark",
+       colors: { "editor.background": v("bg"), "editor.foreground": v("fg") },
+       tokenColors: [
+         { settings: { foreground: v("fg") } },
+         { scope: ["comment"], settings: { foreground: v("comment") } },
+         { scope: ["keyword", "storage"], settings: { foreground: v("keyword") } },
+         { scope: ["punctuation", "keyword.operator"], settings: { foreground: v("punctuation") } },
+         { scope: ["string"], settings: { foreground: v("string") } },
+         { scope: ["constant", "constant.numeric"], settings: { foreground: v("constant") } },
+         { scope: ["entity.name.function"], settings: { foreground: v("function") } },
+         { scope: ["entity.name.type", "support.type"], settings: { foreground: v("type") } },
+         { scope: ["entity.name.tag"], settings: { foreground: v("tag") } },
+         { scope: ["entity.other.attribute-name"], settings: { foreground: v("attribute") } },
+         { scope: ["variable.other.property", "support.type.property-name"], settings: { foreground: v("property") } },
+         { scope: ["markup.deleted"], settings: { foreground: v("deleted") } },
+       ] };
+   Shiki writes those var() strings into inline styles, so the palette below
+   (or a consumer override on any ancestor) applies at render time and a
+   palette change needs no re-highlight. Shiki's built-in `css-variables`
+   theme paints tags and strings with one variable, so a theme object like
+   the one above is the pairing to use. Hues come from the status tokens. */
+:root {
+  --talos-code-bg: var(--talos-surface-1);
+  --talos-code-fg: hsl(var(--talos-foreground-hsl) / 0.86);
+  --talos-code-comment: hsl(var(--talos-foreground-hsl) / 0.38);
+  --talos-code-punctuation: hsl(var(--talos-foreground-hsl) / 0.45);
+  --talos-code-keyword: hsl(var(--talos-info-hsl) / 0.95);
+  --talos-code-tag: var(--talos-accent);
+  --talos-code-attribute: hsl(var(--talos-accent-hsl) / 0.6);
+  --talos-code-string: hsl(var(--talos-warning-hsl) / 0.9);
+  --talos-code-constant: hsl(var(--talos-danger-hsl) / 0.85);
+  --talos-code-function: var(--talos-text-primary);
+  --talos-code-type: hsl(var(--talos-info-hsl) / 0.75);
+  --talos-code-property: hsl(var(--talos-foreground-hsl) / 0.72);
+  --talos-code-deleted: var(--talos-danger);
+}
+
+/* Square corners: the code block is chrome-adjacent, so it follows the
+   system's square/chamfer geometry rather than a radius. */
 .talos-code {
   border: 1px solid var(--talos-edge-default);
-  border-radius: var(--talos-radius-sm);
+  border-radius: 0;
   overflow: hidden;
-  background: var(--talos-surface-1);
+  background: var(--talos-code-bg);
 }
 .talos-code__bar {
   display: flex;
@@ -200,7 +363,7 @@
   appearance: none;
   background: none;
   border: 1px solid var(--talos-edge-subtle);
-  border-radius: var(--talos-radius-sm);
+  border-radius: 0;
   color: var(--talos-text-secondary);
   font-family: inherit;
   font-size: var(--talos-text-2xs);
@@ -215,14 +378,42 @@
   outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
   outline-offset: var(--talos-focus-ring-offset);
 }
+/* Copied: script sets [data-copied] on the button after a successful
+   clipboard write and removes it after ~1.5s; swap the label in script too
+   ("Copy" -> "Copied") so the confirmation is not colour-only. */
+.talos-code__copy[data-copied] {
+  color: var(--talos-success);
+  border-color: hsl(var(--talos-success-hsl) / 0.6);
+}
 .talos-code__body {
+  --_code-fade-l: 0px;
+  --_code-fade-r: 2rem;
   margin: 0;
   padding: var(--talos-space-4);
   overflow-x: auto;
-  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  font-family: var(--talos-font-mono, ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace);
   font-size: var(--talos-text-sm);
   line-height: 1.55;
-  color: var(--talos-text-primary);
+  color: var(--talos-code-fg);
+  /* Long lines fade out at the right edge, the cue that the line continues
+     past the box. Where scroll timelines exist the fade follows the scroll:
+     none on the left at the start, none on the right at the end. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--_code-fade-l), #000 calc(100% - var(--_code-fade-r)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--_code-fade-l), #000 calc(100% - var(--_code-fade-r)), transparent);
+}
+@supports (animation-timeline: scroll()) {
+  .talos-code__body {
+    /* No overflow = inactive timeline = no mask fade at all. */
+    --_code-fade-r: 0px;
+    animation: talos-code-fade linear both;
+    animation-timeline: scroll(self inline);
+  }
+  @keyframes talos-code-fade {
+    0%   { --_code-fade-l: 0px;  --_code-fade-r: 2rem; }
+    8%   { --_code-fade-l: 2rem; --_code-fade-r: 2rem; }
+    92%  { --_code-fade-l: 2rem; --_code-fade-r: 2rem; }
+    100% { --_code-fade-l: 2rem; --_code-fade-r: 0px; }
+  }
 }
 
 .talos-kbd {
@@ -241,7 +432,7 @@
   border-radius: var(--talos-radius-sm);
 }
 .talos-inline-code {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--talos-font-mono, ui-monospace, "SF Mono", Menlo, monospace);
   font-size: 0.9em;
   padding: 0.1em 0.4em;
   background: var(--talos-surface-2);
@@ -251,7 +442,7 @@
 
 /* --- Log feed / timeline ---------------------------------------------------- */
 .talos-log {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--talos-font-mono, ui-monospace, "SF Mono", Menlo, monospace);
   font-size: var(--talos-text-xs);
   line-height: 1.6;
   color: var(--talos-text-secondary);
@@ -290,6 +481,66 @@
 .talos-log__row--warn::before    { background: var(--talos-warning); }
 .talos-log__row--error::before   { background: var(--talos-danger); }
 .talos-log__row--success::before { background: var(--talos-success); }
+
+/* Level for screen readers. The tick colour carries the level visually; a
+   visually-hidden label carries it to assistive tech:
+     <div class="talos-log__row talos-log__row--error">
+       <span class="talos-log__level">Error:</span>
+       <span class="talos-log__ts">12:04:11</span><span class="talos-log__msg">...</span>
+     </div>
+   Add --visible to print it as a short tag instead. */
+.talos-log__level {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.talos-log__level--visible {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  flex: none;
+  min-width: 3.5em;
+  text-transform: uppercase;
+  color: var(--talos-text-secondary);
+}
+
+/* Live tail. `.talos-log--tail` on a feed keeps the newest row in view: the
+   feed is a reversed flex column, so its scroll origin is the bottom and a
+   row appended to the inner stream stays visible without script. Scrolling
+   up holds the reader's place. Rows go in DOM order inside the stream:
+     <div class="talos-log talos-log--feed talos-log--tail" role="log">
+       <div class="talos-log__stream"> ...rows, oldest first... </div>
+     </div>
+   Each row that enters runs one short arrival flash: the flash is the
+   event landing (telemetry), and reduced motion drops it. */
+.talos-log--tail {
+  display: flex;
+  flex-direction: column-reverse;
+}
+.talos-log--tail .talos-log__row {
+  animation: talos-log-in var(--talos-dur-mid) var(--talos-ease-out) both;
+}
+@keyframes talos-log-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+    background-color: hsl(var(--talos-foreground-hsl) / 0.08);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    background-color: transparent;
+  }
+}
 
 /* --- Avatar ----------------------------------------------------------------- */
 /* Flag geometry (top-right cut) on the chamfer engine; the image sits inside
@@ -404,7 +655,7 @@
   animation: talos-pulse 2.4s ease-in-out infinite;
 }
 .talos-readout__rows {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--talos-font-mono, ui-monospace, "SF Mono", Menlo, monospace);
   font-size: var(--talos-text-xs);
   color: var(--talos-text-primary);
 }
@@ -422,6 +673,10 @@
   .talos-meter__fill { transition: none; }
   .talos-readout__live { animation: none; }
   .talos-table tbody tr { transition: none; }
+  .talos-table__sort,
+  .talos-table__sort::after { transition: none; }
+  .talos-table__loading > td::after { animation: none; left: 35%; }
+  .talos-log--tail .talos-log__row { animation: none; }
 }
 
 } /* @layer components.talos */

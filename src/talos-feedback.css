@@ -81,6 +81,36 @@
   border-color: hsl(var(--_status-hsl));
 }
 
+/* Alert and toast share one grid: [icon] auto, [main] 1fr, [close] auto.
+   Parts are placed by named column lines, and a column whose part is absent
+   is dropped from the template (:has), so a missing icon or close button
+   leaves no empty track and no stray column gap. Without a title the body
+   takes the first row alone; icon and close span both rows only when a
+   title is present. */
+.talos-alert,
+.talos-toast {
+  display: grid;
+  grid-template-columns: [icon] auto [main] 1fr [close] auto;
+  align-items: start;
+}
+:is(.talos-alert, .talos-toast):not(:has(> :is(.talos-alert__icon, .talos-toast__icon))) {
+  grid-template-columns: [main] 1fr [close] auto;
+}
+:is(.talos-alert, .talos-toast):not(:has(> :is(.talos-alert__close, .talos-toast__close))) {
+  grid-template-columns: [icon] auto [main] 1fr;
+}
+:is(.talos-alert, .talos-toast):not(:has(> :is(.talos-alert__icon, .talos-toast__icon, .talos-alert__close, .talos-toast__close))) {
+  grid-template-columns: [main] 1fr;
+}
+:is(.talos-alert__icon, .talos-toast__icon) { grid-column: icon; grid-row: 1; }
+:is(.talos-alert__title, .talos-toast__title) { grid-column: main; grid-row: 1; }
+:is(.talos-alert__body, .talos-toast__body) { grid-column: main; }
+:is(.talos-alert__close, .talos-toast__close) { grid-column: close; grid-row: 1; }
+:is(.talos-alert, .talos-toast):has(> :is(.talos-alert__title, .talos-toast__title))
+  > :is(.talos-alert__icon, .talos-toast__icon, .talos-alert__close, .talos-toast__close) {
+  grid-row: 1 / span 2;
+}
+
 /* --- Alert / Callout -------------------------------------------------------- */
 .talos-alert {
   --_status-hsl: var(--talos-foreground-hsl);
@@ -89,11 +119,6 @@
 
   position: relative;
   isolation: isolate;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas:
-    "icon title close"
-    "icon body  close";
   gap: var(--talos-space-1) var(--talos-space-3);
   padding: var(--talos-space-4) var(--talos-space-5);
 }
@@ -107,7 +132,6 @@
 }
 
 .talos-alert__icon {
-  grid-area: icon;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -117,7 +141,6 @@
   font-size: var(--talos-text-lg);
 }
 .talos-alert__title {
-  grid-area: title;
   font-family: var(--talos-font-display);
   font-size: var(--talos-text-sm);
   font-weight: 300;
@@ -126,7 +149,6 @@
   color: hsl(var(--_status-hsl));
 }
 .talos-alert__body {
-  grid-area: body;
   font-family: var(--talos-font-body);
   font-size: var(--talos-text-sm);
   font-weight: 300;
@@ -134,8 +156,6 @@
   color: var(--talos-text-secondary);
 }
 .talos-alert__close {
-  grid-area: close;
-  align-self: start;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -171,16 +191,64 @@
 }
 .talos-alert--bare::after { display: none; }
 
+/* Optional motion, opt-in per alert (Tier 2 chrome; motion marks the alert
+   arriving and leaving, it never loops).
+   --animated: a short fade/settle when the alert is inserted.
+   [data-leaving]: script sets it on dismiss and removes the node on
+   `animationend`; the alert fades, then its height collapses so content
+   below closes the gap instead of jumping. Height animates where
+   interpolate-size is supported; elsewhere it fades and then drops out.
+   Reduced motion keeps a plain fade so `animationend` still fires. */
+.talos-alert--animated {
+  animation: talos-alert-in var(--talos-dur-mid) var(--talos-ease-out) both;
+}
+.talos-alert[data-leaving] {
+  interpolate-size: allow-keywords;
+  overflow: hidden;
+  pointer-events: none;
+  animation: talos-alert-collapse var(--talos-dur-mid) var(--talos-ease-out) forwards;
+}
+@keyframes talos-alert-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes talos-alert-collapse {
+  0%   { opacity: 1; block-size: auto; }
+  45%  { opacity: 0; block-size: auto; padding-block: var(--talos-space-4); margin-block: 0; }
+  100% { opacity: 0; block-size: 0; min-block-size: 0; padding-block: 0; margin-block: 0; border-width: 0; }
+}
+@keyframes talos-fade-out {
+  to { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .talos-alert--animated { animation: none; }
+  .talos-alert[data-leaving] { animation: talos-fade-out var(--talos-dur-fast) linear forwards; }
+}
+
 /* --- Toast ------------------------------------------------------------------ */
+/* The region carries the elevation: each toast is clipped by the chamfer
+   engine (clip-path), which also clips its own box-shadow, so the shadow is a
+   drop-shadow filter on the region that follows the cut outlines.
+   Width: --talos-toast-width (360px) capped to the containing block minus
+   the gutter on both sides (the viewport when fixed, the parent when a demo
+   sets position:static), and never wider than the viewport. */
 .talos-toast-region {
+  --_gutter: var(--talos-space-5);
   position: fixed;
-  right: var(--talos-space-5);
-  bottom: var(--talos-space-5);
+  right: var(--_gutter);
+  bottom: var(--_gutter);
   z-index: var(--talos-z-toast);
   display: flex;
   flex-direction: column;
   gap: var(--talos-space-3);
-  width: min(360px, calc(100vw - var(--talos-space-8)));
+  box-sizing: border-box;
+  width: min(var(--talos-toast-width, 360px), calc(100% - 2 * var(--_gutter)));
+  max-width: calc(100vw - 2 * var(--_gutter));
+  /* toasts slide in from beyond the right edge; clip that so the entering
+     toast never widens the page (a static demo region grew a 390px page) */
+  overflow-x: clip;
+  overflow-clip-margin: 2rem;
+  filter: drop-shadow(0 10px 24px hsl(0 0% 0% / 0.45));
   pointer-events: none; /* region is inert; toasts re-enable below */
 }
 
@@ -191,16 +259,19 @@
 
   position: relative;
   isolation: isolate;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas:
-    "icon title close"
-    "icon body  close";
+  min-width: 0;
   gap: var(--talos-space-1) var(--talos-space-3);
   padding: var(--talos-space-3) var(--talos-space-4);
+  overflow-wrap: anywhere;
   pointer-events: auto;
-  box-shadow: var(--talos-shadow-float);
   animation: talos-toast-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
+}
+/* Exit: script sets [data-leaving] on dismiss/timeout and removes the node on
+   `animationend`. Reduced motion swaps in a plain fade so the event still
+   fires. */
+.talos-toast[data-leaving] {
+  pointer-events: none;
+  animation: talos-toast-out var(--talos-dur-mid) var(--talos-ease-out) forwards;
 }
 .talos-toast::after {
   content: "";
@@ -210,17 +281,22 @@
   background: hsl(var(--_status-hsl));
 }
 
+/* Fixed icon box: 1rem square whatever the glyph (✓, ▲, an <svg>), so
+   titles line up across a stack of toasts. */
 .talos-toast__icon {
-  grid-area: icon;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.1em;
-  height: 1.1em;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  overflow: hidden;
+  font-size: var(--talos-text-sm);
+  line-height: 1;
   color: hsl(var(--_status-hsl));
 }
+.talos-toast__icon > svg { width: 100%; height: 100%; }
 .talos-toast__title {
-  grid-area: title;
   font-family: var(--talos-font-display);
   font-size: var(--talos-text-xs);
   font-weight: 300;
@@ -229,7 +305,6 @@
   color: hsl(var(--_status-hsl));
 }
 .talos-toast__body {
-  grid-area: body;
   font-family: var(--talos-font-body);
   font-size: var(--talos-text-xs);
   font-weight: 300;
@@ -237,8 +312,6 @@
   color: var(--talos-text-secondary);
 }
 .talos-toast__close {
-  grid-area: close;
-  align-self: start;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -267,13 +340,29 @@
   from { opacity: 0; transform: translateX(calc(100% + var(--talos-space-5))); }
   to   { opacity: 1; transform: translateX(0); }
 }
+@keyframes talos-toast-out {
+  to { opacity: 0; transform: translateX(calc(100% + var(--talos-space-5))); }
+}
 @media (prefers-reduced-motion: reduce) {
   .talos-toast { animation: none; }
+  .talos-toast[data-leaving] { animation: talos-fade-out var(--talos-dur-fast) linear forwards; }
 }
 
 /* --- Tooltip ---------------------------------------------------------------- */
 /* Pure-CSS pattern: a wrapper with `data-tooltip="..."` reveals its ::after
-   (content drawn from the attribute) on hover/focus. `position: above`. */
+   (content drawn from the attribute) on hover, keyboard focus, or focus of
+   anything inside it, with an arrow (::before) pointing at the trigger.
+     <span class="talos-has-tooltip" data-tooltip="Cluster region: eu-west-3">
+       <button class="talos-button">EU-W3</button>
+     </span>
+   Placement: above by default; `--bottom` puts it below. `--start` / `--end`
+   align it to the trigger's left / right edge instead of centring it (use on
+   triggers near a viewport edge where anchor positioning is missing).
+   The bubble wraps at --talos-tooltip-max-width (16rem), never wider than the
+   viewport minus 1rem a side. Hover reveals after --talos-tooltip-delay
+   (400ms) so a passing pointer does not flash it; focus reveals at once.
+   Where CSS anchor positioning exists the bubble is placed against the
+   trigger and shifts inward at a viewport edge (position-try fallbacks). */
 .talos-has-tooltip {
   position: relative;
   display: inline-flex;
@@ -282,18 +371,23 @@
 /* Shared chip styling — both the standalone element and the generated ::after. */
 .talos-tooltip,
 .talos-has-tooltip[data-tooltip]::after {
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(var(--talos-tooltip-max-width, 16rem), calc(100vw - 2rem));
   font-family: var(--talos-font-display);
   font-size: var(--talos-text-2xs);
   font-weight: 300;
-  line-height: 1.3;
+  line-height: 1.4;
+  text-align: left;
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud);
   color: var(--talos-text-primary);
   background: var(--talos-surface-4);
   border: 1px solid var(--talos-edge-default);
-  border-radius: var(--talos-radius-sm);
+  border-radius: 0;
   padding: var(--talos-space-1) var(--talos-space-2);
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .talos-tooltip {
@@ -301,12 +395,9 @@
   z-index: var(--talos-z-tooltip);
 }
 
-.talos-has-tooltip[data-tooltip]::after {
-  content: attr(data-tooltip);
+.talos-has-tooltip[data-tooltip]::after,
+.talos-has-tooltip[data-tooltip]::before {
   position: absolute;
-  bottom: calc(100% + var(--talos-space-2));
-  left: 50%;
-  transform: translateX(-50%) translateY(2px);
   z-index: var(--talos-z-tooltip);
   opacity: 0;
   pointer-events: none;
@@ -314,35 +405,129 @@
     opacity var(--talos-dur-fast) var(--talos-ease-out),
     transform var(--talos-dur-fast) var(--talos-ease-out);
 }
-.talos-has-tooltip[data-tooltip]:hover::after,
-.talos-has-tooltip[data-tooltip]:focus-visible::after,
-.talos-has-tooltip[data-tooltip]:focus-within::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+.talos-has-tooltip[data-tooltip]::after {
+  --_shift: translateY(2px);
+  content: attr(data-tooltip);
+  bottom: calc(100% + var(--talos-space-2));
+  left: 50%;
+  transform: translateX(-50%) var(--_shift);
 }
+/* Arrow: a 7px square turned 45°, bordered on the two sides facing the
+   trigger, drawn over the bubble's border so the outline runs unbroken. */
+.talos-has-tooltip[data-tooltip]::before {
+  --_shift: translateY(2px);
+  content: "";
+  bottom: calc(100% + var(--talos-space-2) - 4px);
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  box-sizing: border-box;
+  background: var(--talos-surface-4);
+  border: solid var(--talos-edge-default);
+  border-width: 0 1px 1px 0;
+  transform: translateX(-50%) var(--_shift) rotate(45deg);
+  z-index: calc(var(--talos-z-tooltip) + 1);
+}
+
+/* Below. */
+.talos-has-tooltip--bottom[data-tooltip]::after {
+  --_shift: translateY(-2px);
+  bottom: auto;
+  top: calc(100% + var(--talos-space-2));
+}
+.talos-has-tooltip--bottom[data-tooltip]::before {
+  --_shift: translateY(-2px);
+  bottom: auto;
+  top: calc(100% + var(--talos-space-2) - 3px);
+  border-width: 1px 0 0 1px;
+}
+/* Edge alignment (fallback path and explicit choice). */
+.talos-has-tooltip--start[data-tooltip]::after { left: 0; transform: var(--_shift); }
+.talos-has-tooltip--end[data-tooltip]::after { left: auto; right: 0; transform: var(--_shift); }
+
+/* Reveal. Hover waits --talos-tooltip-delay; focus shows immediately. Hiding
+   is never delayed. */
+.talos-has-tooltip[data-tooltip]:hover::after,
+.talos-has-tooltip[data-tooltip]:hover::before {
+  opacity: 1;
+  --_shift: translateY(0);
+  transition-delay: var(--talos-tooltip-delay, 400ms);
+}
+.talos-has-tooltip[data-tooltip]:is(:focus-visible, :focus-within)::after,
+.talos-has-tooltip[data-tooltip]:is(:focus-visible, :focus-within)::before {
+  opacity: 1;
+  --_shift: translateY(0);
+  transition-delay: 0s;
+}
+
+/* Anchor positioning: the bubble becomes fixed, anchored to its trigger, and
+   tries the centred spot first, then the trigger-aligned spots, so it stays
+   inside the viewport at either edge. anchor-scope keeps each trigger's
+   anchor name private to its own subtree. */
+@supports (anchor-scope: --a) and (position-try-fallbacks: flip-block) {
+  .talos-has-tooltip[data-tooltip] {
+    anchor-name: --talos-tooltip;
+    anchor-scope: --talos-tooltip;
+  }
+  .talos-has-tooltip[data-tooltip]::after {
+    position: fixed;
+    position-anchor: --talos-tooltip;
+    inset: auto;
+    position-area: top center;
+    justify-self: unsafe anchor-center;
+    margin: 0 0 var(--talos-space-2);
+    position-try-fallbacks: --talos-tooltip-top-start, --talos-tooltip-top-end;
+    transform: var(--_shift);
+  }
+  .talos-has-tooltip--bottom[data-tooltip]::after {
+    position-area: bottom center;
+    margin: var(--talos-space-2) 0 0;
+    position-try-fallbacks: --talos-tooltip-bottom-start, --talos-tooltip-bottom-end;
+  }
+  .talos-has-tooltip--start[data-tooltip]::after { position-area: top span-right; justify-self: start; }
+  .talos-has-tooltip--end[data-tooltip]::after { position-area: top span-left; justify-self: end; }
+  .talos-has-tooltip--bottom.talos-has-tooltip--start[data-tooltip]::after { position-area: bottom span-right; }
+  .talos-has-tooltip--bottom.talos-has-tooltip--end[data-tooltip]::after { position-area: bottom span-left; }
+
+  /* Fallbacks set their own alignment: an option that only changed the area
+     would keep anchor-center and overflow the same edge again. */
+  @position-try --talos-tooltip-top-start { position-area: top span-right; justify-self: start; }
+  @position-try --talos-tooltip-top-end { position-area: top span-left; justify-self: end; }
+  @position-try --talos-tooltip-bottom-start { position-area: bottom span-right; justify-self: start; }
+  @position-try --talos-tooltip-bottom-end { position-area: bottom span-left; justify-self: end; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .talos-has-tooltip[data-tooltip]::after { transition: none; }
+  .talos-has-tooltip[data-tooltip]::after,
+  .talos-has-tooltip[data-tooltip]::before { transition: none; }
 }
 
 /* --- Progress --------------------------------------------------------------- */
+/* Track matches .talos-meter (talos-data.css): surface-1 fill and the
+   --talos-edge-subtle hairline. Status variants mirror the meter's
+   --ok / --warn / --crit; the default stays the accent. */
 .talos-progress {
   --talos-value: 0;
+  --_status-hsl: var(--talos-accent-hsl);
   position: relative;
   overflow: hidden;
   width: 100%;
   height: 8px;
   background: var(--talos-surface-1);
-  border: 1px solid var(--talos-border);
+  border: 1px solid var(--talos-edge-subtle);
   border-radius: 0;
 }
+.talos-progress--ok   { --_status-hsl: var(--talos-success-hsl); }
+.talos-progress--warn { --_status-hsl: var(--talos-warning-hsl); }
+.talos-progress--crit { --_status-hsl: var(--talos-danger-hsl); }
 .talos-progress--sm { height: 4px; }
 .talos-progress--lg { height: 14px; }
 
 .talos-progress__bar {
   height: 100%;
   width: calc(var(--talos-value) * 1%);
-  background: var(--talos-accent);
-  box-shadow: 0 0 8px hsl(var(--talos-accent-hsl) / 0.5);
+  background: hsl(var(--_status-hsl));
+  box-shadow: 0 0 8px hsl(var(--_status-hsl) / 0.5);
   transition: width var(--talos-dur-mid) var(--talos-ease-out);
 }
 
@@ -360,9 +545,9 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    hsl(var(--talos-accent-hsl) / 0.15) 40%,
-    var(--talos-accent) 50%,
-    hsl(var(--talos-accent-hsl) / 0.15) 60%,
+    hsl(var(--_status-hsl) / 0.15) 40%,
+    hsl(var(--_status-hsl)) 50%,
+    hsl(var(--_status-hsl) / 0.15) 60%,
     transparent 100%
   );
   width: 40%;
@@ -403,8 +588,13 @@
 @keyframes talos-spin {
   to { transform: rotate(360deg); }
 }
+/* Reduced motion: no rotation, but a frozen arc would read as "stalled".
+   A slow opacity pulse keeps "working" legible without movement. */
+@keyframes talos-spinner-breathe {
+  50% { opacity: 0.4; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .talos-spinner { animation: none; }
+  .talos-spinner { animation: talos-spinner-breathe 2.4s ease-in-out infinite; }
 }
 
 /* --- Skeleton --------------------------------------------------------------- */
@@ -434,9 +624,7 @@
 
 .talos-skeleton--text {
   height: 0.8em;
-  /* stack several of these for a paragraph; --talos-skeleton-lines is a hint
-     for consumers generating the markup, last line typically narrower. */
-  --talos-skeleton-lines: 3;
+  /* stack several for a paragraph; make the last line narrower */
   margin-bottom: var(--talos-space-2);
 }
 .talos-skeleton--circle {
@@ -485,8 +673,25 @@
   font-size: var(--talos-text-sm);
   font-weight: 300;
   line-height: 1.5;
-  color: var(--talos-text-tertiary);
+  color: var(--talos-text-secondary);
 }
+/* Actions slot: the next step out of the empty state (buttons or links). */
+.talos-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--talos-space-2);
+  margin-top: var(--talos-space-2);
+}
+/* Compact: for an empty table body, a panel zone or a sidebar list. */
+.talos-empty--compact {
+  gap: var(--talos-space-2);
+  padding: var(--talos-space-5) var(--talos-space-4);
+}
+.talos-empty--compact .talos-empty__icon { font-size: var(--talos-text-lg); }
+.talos-empty--compact .talos-empty__title { font-size: var(--talos-text-sm); }
+.talos-empty--compact .talos-empty__body { font-size: var(--talos-text-xs); }
+.talos-empty--compact .talos-empty__actions { margin-top: 0; }
 
 /* --- Status legend ---------------------------------------------------------- */
 .talos-status {
