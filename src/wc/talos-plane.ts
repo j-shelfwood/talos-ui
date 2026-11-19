@@ -1,4 +1,4 @@
-import { num } from "./bands";
+import { BAND_TOKENS_CSS, num } from "./bands";
 
 /**
  * <talos-plane> — one orbital PLANE as the train it actually is: the N satellites
@@ -58,9 +58,7 @@ export class TalosPlane extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_track: var(--talos-edge-default, hsl(0 0% 100% / 0.18));
           --_link: var(--talos-edge-default, hsl(0 0% 100% / 0.28));
           --_shadow: hsl(0 0% 0% / 0.5);

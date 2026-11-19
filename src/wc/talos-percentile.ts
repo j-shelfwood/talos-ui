@@ -42,7 +42,7 @@
  *   unit              appended to the percentile labels          (optional)
  *   width             px (default 240)
  */
-import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import { BAND_TOKENS_CSS, bandColorVar, bandOf, num, prefersReducedMotion, type Band } from "./bands";
 import { setImageA11y } from "./a11y";
 
 /**
@@ -80,9 +80,7 @@ export class TalosPercentile extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_track: var(--talos-edge-subtle, hsl(0 0% 100% / 0.1));
           --_box: var(--talos-foreground, hsl(0 0% 100% / 0.9));
 
@@ -250,7 +248,7 @@ export class TalosPercentile extends HTMLElement {
     const p99 = present.get("p99");
     const p99Band: Band = p99 !== undefined ? this.band(p99) : "nominal";
     const p99Var =
-      p99Band === "critical" ? "--_critical" : p99Band === "warning" ? "--_warning" : "--_nominal";
+      bandColorVar(p99Band);
 
     this.gMarks.innerHTML = "";
     const marks: { key: PctKey; cls: string; text: string; colour?: string }[] = [];

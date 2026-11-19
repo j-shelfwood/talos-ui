@@ -1,5 +1,5 @@
 import { setStatusA11y } from "./a11y";
-import type { Band } from "./bands";
+import { BAND_TOKENS_CSS, bandColorVar, type Band } from "./bands";
 
 /**
  * <talos-status> — the system-mood rollup. The aggregate of many channels shown
@@ -63,9 +63,7 @@ export class TalosStatus extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_c: var(--_nominal);
           display: block;
         }
@@ -174,7 +172,7 @@ export class TalosStatus extends HTMLElement {
 
     // Colour + scan severity bound to the band.
     const varName =
-      band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
+      bandColorVar(band);
     const hsl =
       band === "critical" ? "0 80% 62%" : band === "warning" ? "38 92% 60%" : "140 90% 60%";
     this.style.setProperty("--_c", `var(${varName})`);

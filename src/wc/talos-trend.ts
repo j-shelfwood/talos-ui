@@ -36,7 +36,7 @@
  * Banding on the current value uses the shared bandOf() helper (bands.ts) —
  * same threshold + invert semantics as gauge/meter.
  */
-import { bandOf, num, type Band } from "./bands";
+import { BAND_TOKENS_CSS, bandColorVar, bandOf, num, type Band } from "./bands";
 import { parseNumberList } from "./parse";
 import { replaceTextWithUnit } from "./render";
 
@@ -63,9 +63,7 @@ export class TalosTrend extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_grid: var(--talos-edge-subtle, hsl(0 0% 100% / 0.08));
           --_c: var(--_nominal);
 
@@ -268,7 +266,7 @@ export class TalosTrend extends HTMLElement {
 
     const band = this.band(current);
     const bandVar =
-      band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
+      bandColorVar(band);
     this.style.setProperty("--_c", `var(${bandVar})`);
 
     // Map buffer to points across the width; newest at the right edge.

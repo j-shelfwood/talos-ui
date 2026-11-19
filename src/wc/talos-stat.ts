@@ -1,4 +1,5 @@
-import { bandOf, num } from "./bands";
+import { BAND_TOKENS_CSS, bandOf, num, prefersReducedMotion } from "./bands";
+import { setImageA11y } from "./a11y";
 
 /**
  * <talos-stat> — a labelled statistic cell: an eyebrow label, a big number, an
@@ -10,7 +11,9 @@ import { bandOf, num } from "./bands";
  *               motion for a changing magnitude — the animation depicts the
  *               transition, not decoration). Snaps under prefers-reduced-motion.
  *   - COLOUR    the number takes the band of `value` when warn/crit are set —
- *               colour is the state. Honours `invert` (low = bad).
+ *               colour is the state. Honours `invert` (low = bad). A nominal
+ *               number stays foreground (DESIGN.md: monochrome, accent rare);
+ *               only warning/critical tint it.
  *
  * Attributes:
  *   value        the figure                              (default 0)
@@ -44,10 +47,8 @@ export class TalosStat extends HTMLElement {
           display: flex;
           flex-direction: column;
           gap: 0.35rem;
-          --_nominal: var(--talos-foreground, hsl(0 0% 100%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
-          --_num: var(--_nominal);
+          ${BAND_TOKENS_CSS}
+          --_num: var(--talos-foreground, hsl(0 0% 100%));
         }
         .label {
           font-family: var(--talos-font-display, system-ui);
@@ -94,8 +95,8 @@ export class TalosStat extends HTMLElement {
   disconnectedCallback(): void { cancelAnimationFrame(this.frame); }
 
   attributeChangedCallback(name: string): void {
-    if (name === "label" || name === "unit") this.paintStatic();
-    else this.render(false);
+    if (!this.isConnected) return; // connectedCallback renders once
+    this.render(name !== "value");
   }
 
   /** Imperative setter. */
@@ -106,23 +107,29 @@ export class TalosStat extends HTMLElement {
     this.unitEl.textContent = this.getAttribute("unit") ?? "";
   }
 
-  private setBand(value: number): void {
+  private setBand(value: number): string {
     const band = bandOf(this, value);
     if (band === "nominal") this.removeAttribute("data-band");
     else this.setAttribute("data-band", band);
+    return band;
   }
 
   private render(immediate: boolean): void {
     this.paintStatic();
     const target = num(this, "value", 0);
     const prec = Math.max(0, Math.round(num(this, "precision", 0)));
-    this.setBand(target);
+    const band = this.setBand(target);
 
-    const reduce =
-      typeof matchMedia !== "undefined" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // a11y: the true figure, never a counting frame; the band only when banded.
+    const unit = this.getAttribute("unit");
+    const banded = this.hasAttribute("warn") || this.hasAttribute("crit");
+    setImageA11y(this, {
+      label: this.getAttribute("label"),
+      summary: `${target.toFixed(prec)}${unit ? ` ${unit}` : ""}${banded ? `, ${band}` : ""}`,
+    });
 
-    if (immediate || reduce) {
+    if (immediate || prefersReducedMotion()) {
+      cancelAnimationFrame(this.frame);
       this.shown = target;
       this.numEl.textContent = target.toFixed(prec);
       return;
