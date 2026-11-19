@@ -10,6 +10,10 @@
      <link rel="stylesheet" href=".../talos-ui/talos-forms.css" />
 
    Class-based, token-driven. Assumes talos.css (tokens + fonts) is loaded.
+
+   Rule order matters in this file: every control rule has the same
+   specificity as the validation states, so the states come last (after the
+   select) or they lose to the control's own declarations.
    ========================================================================== */
 
 /* ----------------------------------------------------------------------------
@@ -34,18 +38,58 @@
 }
 
 /* ----------------------------------------------------------------------------
-   INPUT / TEXTAREA — subtle fill, hairline border, bottom-right chamfer on the
-   chamfer engine (talos.css). The cut is an exact --talos-chamfer-btn at any
-   width; an outline would be clipped, so focus brightens the edge instead.
+   CONTROL STATES — one edge/fill ladder shared by input, textarea, select and
+   input-group, so hover and focus read the same on every text control.
+   Each control rests at --_edge-rest/--_fill-rest; hover and focus switch the
+   engine's --_edge/--_fill to the next rung. Validation states (bottom of the
+   file) rebind the rungs, so an errored field stays red on hover and focus.
+   The engine draws the edge as a real border, so `border-color` transitions
+   it; the 1px cut diagonal is a gradient and switches without easing.
    -------------------------------------------------------------------------- */
 .talos-input,
-.talos-textarea {
-  --_edge: var(--talos-edge-default);
-  --_fill: hsl(0 0% 100% / 0.04);
+.talos-textarea,
+.talos-select,
+.talos-input-group {
+  --_edge-rest: var(--talos-edge-default);
+  --_edge-hover: var(--talos-edge-strong);
+  --_edge-focus: hsl(var(--talos-foreground-hsl) / 0.6);
+  --_fill-rest: hsl(var(--talos-foreground-hsl) / 0.04);
+  --_fill-focus: hsl(var(--talos-foreground-hsl) / 0.07);
+  --_edge: var(--_edge-rest);
+  --_fill: var(--_fill-rest);
   --_tr: 0px;
   --_bl: 0px;
   --_br: var(--talos-chamfer-btn);
 
+  /* Native pickers, spinners, the select popup and the caret render dark. */
+  color-scheme: dark;
+  transition:
+    background-color var(--talos-dur-fast) var(--talos-ease-out),
+    border-color var(--talos-dur-fast) var(--talos-ease-out);
+}
+.talos-input:hover,
+.talos-textarea:hover,
+.talos-select:hover,
+.talos-input-group:hover { --_edge: var(--_edge-hover); }
+
+/* The engine clips the box, so an outline would be cut off: focus is the
+   brightened 1px edge plus the lifted fill (the same on all four controls). */
+.talos-input:focus,
+.talos-textarea:focus,
+.talos-select:focus,
+.talos-input-group:focus-within {
+  outline: none;
+  --_edge: var(--_edge-focus);
+  --_fill: var(--_fill-focus);
+}
+
+/* ----------------------------------------------------------------------------
+   INPUT / TEXTAREA — subtle fill, hairline border, bottom-right chamfer on the
+   chamfer engine (talos.css). The cut is an exact --talos-chamfer-btn at any
+   width.
+   -------------------------------------------------------------------------- */
+.talos-input,
+.talos-textarea {
   width: 100%;
   font-family: var(--talos-font-body);
   font-size: 0.9rem;
@@ -56,9 +100,9 @@
   letter-spacing: normal;
   text-transform: none;
   color: hsl(var(--talos-foreground-hsl));
+  caret-color: hsl(var(--talos-foreground-hsl));
   /* 1px less than the visual padding: the engine's border takes it back */
   padding: calc(0.75rem - 1px) calc(1rem - 1px);
-  transition: background-color var(--talos-dur-fast) ease;
 }
 
 .talos-textarea {
@@ -71,21 +115,41 @@
   color: hsl(var(--talos-muted-foreground-hsl) / 0.6);
 }
 
-.talos-input:hover,
-.talos-textarea:hover { --_edge: hsl(0 0% 100% / 0.32); }
-
-.talos-input:focus,
-.talos-textarea:focus {
-  outline: none;
-  --_edge: hsl(0 0% 100% / 0.55);
-  --_fill: hsl(0 0% 100% / 0.07);
-}
-
 .talos-input:disabled,
 .talos-textarea:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Browser autofill. Chrome forces its own background-color and drops
+   background-image with !important UA rules no author rule can beat, so the
+   fill is painted back with an inset shadow and the text colour is pinned.
+   The cut diagonal is a background image and is absent while autofilled. */
+.talos-input:is(:autofill, :-webkit-autofill) {
+  -webkit-text-fill-color: hsl(var(--talos-foreground-hsl));
+  -webkit-box-shadow: inset 0 0 0 100vmax var(--talos-surface-2);
+  box-shadow: inset 0 0 0 100vmax var(--talos-surface-2);
+  caret-color: hsl(var(--talos-foreground-hsl));
+}
+
+/* --- Control sizes ---------------------------------------------------------- */
+/* Heights match the button scale (talos.css): --sm 36px = .talos-button--sm,
+   --md 40px = .talos-button, --lg 48px = .talos-button--lg, so a control and
+   a button sit on one baseline in a toolbar. Without a size modifier a text
+   control keeps its padding-driven height (45.6px).
+   Local fallbacks stand in until tokens.css ships --talos-control-h-*. */
+.talos-input--sm, .talos-select--sm, .talos-input-group--sm { --_control-h: var(--talos-control-h-sm, 2.25rem); }
+.talos-input--md, .talos-select--md, .talos-input-group--md { --_control-h: var(--talos-control-h-md, 2.5rem); }
+.talos-input--lg, .talos-select--lg, .talos-input-group--lg { --_control-h: var(--talos-control-h-lg, 3rem); }
+:is(.talos-input, .talos-select, .talos-input-group):is(.talos-input--sm, .talos-select--sm, .talos-input-group--sm, .talos-input--md, .talos-select--md, .talos-input-group--md, .talos-input--lg, .talos-select--lg, .talos-input-group--lg) {
+  height: var(--_control-h);
+  padding-block: 0;
+}
+:is(.talos-input-group--sm, .talos-input-group--md, .talos-input-group--lg) .talos-input {
+  height: 100%;
+  padding-block: 0;
+}
+:is(.talos-input--sm, .talos-select--sm, .talos-input-group--sm .talos-input) { font-size: var(--talos-text-sm); }
 
 /* ----------------------------------------------------------------------------
    FIELDSET — bordered divider section (mirrors the contact form's top rule
@@ -106,7 +170,7 @@
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud);
-  color: hsl(0 0% 100% / 0.4);
+  color: var(--talos-text-secondary);
   padding: 0;
 }
 
@@ -116,10 +180,12 @@
    ========================================================================== */
 
 /* --- Field metadata --------------------------------------------------------- */
+/* Help, counter and addon text is small; tertiary (0.4 alpha) falls under
+   4.5:1 at that size, so it uses the secondary text colour. */
 .talos-field__help {
   font-size: var(--talos-text-xs);
   font-family: var(--talos-font-body);
-  color: var(--talos-text-tertiary);
+  color: var(--talos-text-secondary);
   line-height: 1.4;
 }
 .talos-field__error {
@@ -133,46 +199,22 @@
   font-family: var(--talos-font-display);
   font-size: var(--talos-text-2xs);
   font-variant-numeric: tabular-nums;
-  color: var(--talos-text-tertiary);
+  color: var(--talos-text-secondary);
 }
 .talos-label--required::after {
   content: " *";
   color: var(--talos-danger);
 }
 
-/* --- Validation states ------------------------------------------------------ */
-/* Field-level: recolour the contained control + messages by rebinding the
-   engine's edge (and fill) — inputs, textareas and selects alike. */
-.talos-field--error .talos-input,
-.talos-field--error .talos-textarea,
-.talos-field--error .talos-select,
-.talos-input--error,
-.talos-textarea--error,
-.talos-select--error {
-  --_edge: hsl(var(--talos-danger-hsl) / 0.7);
-  --_fill: hsl(var(--talos-danger-hsl) / 0.06);
-}
-.talos-field--success .talos-input,
-.talos-field--success .talos-select,
-.talos-input--success,
-.talos-select--success {
-  --_edge: hsl(var(--talos-success-hsl) / 0.6);
-}
-
 /* --- Input group + addons --------------------------------------------------- */
 /* The group owns the chamfered border; the inner input goes borderless so a
-   $-prefix or .com-suffix reads as one continuous control. */
+   $-prefix or .com-suffix reads as one continuous control. Its edge/fill and
+   focus come from the shared CONTROL STATES block above. */
 .talos-input-group {
-  --_edge: var(--talos-edge-default);
-  --_fill: hsl(0 0% 100% / 0.04);
-  --_tr: 0px;
-  --_bl: 0px;
-  --_br: var(--talos-chamfer-btn);
   display: flex;
   width: 100%;
   align-items: stretch;
 }
-.talos-input-group:focus-within { --_edge: var(--talos-edge-strong); }
 .talos-input-group .talos-input {
   border: 0;
   background: none;
@@ -188,20 +230,35 @@
   font-size: var(--talos-text-xs);
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud-tight);
-  color: var(--talos-text-tertiary);
+  color: var(--talos-text-secondary);
   background: var(--talos-surface-2);
   white-space: nowrap;
 }
 .talos-input-addon--leading { border-right: 1px solid var(--talos-edge-subtle); }
 .talos-input-addon--trailing { border-left: 1px solid var(--talos-edge-subtle); }
+/* An addon in the cut corner would paint its fill over the group's cut
+   diagonal (a background of the group). Clip the addon back from the corner
+   by the cut size: the addon sits 1px inside the group's border, so cutting
+   it at --_br leaves the hairline band (≈br-0.6px from the corner) visible. */
+.talos-input-group > .talos-input-addon:last-child {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--_br, var(--talos-chamfer-btn))),
+    calc(100% - var(--_br, var(--talos-chamfer-btn))) 100%,
+    0 100%
+  );
+}
 
 /* --- Search ----------------------------------------------------------------- */
 .talos-search { position: relative; }
 .talos-search .talos-input {
   padding-left: 2.4rem;
-  padding-right: 2.2rem;
+  padding-right: 2.6rem;
 }
-/* Magnifier glyph, drawn with a background data-URI in the edge colour. */
+/* Magnifier glyph drawn by the stylesheet: an SVG mask filled with the
+   element's colour. Any text inside the element (an older "⌕" glyph) is
+   hidden, so markup needs only the empty span. */
 .talos-search__icon {
   position: absolute;
   left: 0.85rem;
@@ -209,34 +266,45 @@
   transform: translateY(-50%);
   width: 0.9rem;
   height: 0.9rem;
-  color: var(--talos-text-tertiary);
+  overflow: hidden;
+  font-size: 0;
+  color: var(--talos-text-secondary);
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='6.5' cy='6.5' r='5' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3Cpath d='M10.2 10.2 15 15' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='6.5' cy='6.5' r='5' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3Cpath d='M10.2 10.2 15 15' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E") center / contain no-repeat;
   pointer-events: none;
 }
+/* Clear button: a 32px square hit area around a 1rem glyph. */
 .talos-search__clear {
   position: absolute;
-  right: 0.6rem;
+  right: 0.25rem;
   top: 50%;
   transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
   appearance: none;
   background: none;
   border: 0;
-  color: var(--talos-text-tertiary);
+  color: var(--talos-text-secondary);
   font-size: var(--talos-text-md);
   line-height: 1;
   cursor: pointer;
+  transition: color var(--talos-dur-fast) var(--talos-ease-out);
 }
 .talos-search__clear:hover { color: var(--talos-text-primary); }
+.talos-search__clear:focus-visible {
+  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
+  outline-offset: calc(var(--talos-focus-ring-width) * -1 - 2px);
+}
 
 /* --- Select ----------------------------------------------------------------- */
 /* Native <select> on the same engine + geometry as .talos-input; the chevron
    is one more background layer stacked over the engine's corner lines. */
 .talos-select {
-  --_edge: var(--talos-edge-default);
-  --_fill: hsl(0 0% 100% / 0.04);
-  --_tr: 0px;
-  --_bl: 0px;
-  --_br: var(--talos-chamfer-btn);
-
   width: 100%;
   appearance: none;
   -webkit-appearance: none;
@@ -254,13 +322,38 @@
   background-position: right 1rem center, var(--_cut-pos);
   padding: calc(0.75rem - 1px) 2.5rem calc(0.75rem - 1px) calc(1rem - 1px);
   cursor: pointer;
-  transition: background-color var(--talos-dur-fast) ease;
 }
-.talos-select:hover { --_edge: var(--talos-edge-strong); }
-.talos-select:focus { outline: none; --_edge: hsl(0 0% 100% / 0.55); }
 .talos-select:disabled { opacity: 0.5; cursor: not-allowed; }
 .talos-select option { background: var(--talos-surface-3); color: var(--talos-text-primary); }
 
+/* --- Validation states ------------------------------------------------------ */
+/* Kept AFTER every control rule: same specificity, so order decides.
+   A state rebinds the rungs of the CONTROL STATES ladder, so hover and focus
+   brighten the state colour instead of replacing it with grey.
+   Error is set by the field wrapper, the --error modifier, aria-invalid, or
+   :user-invalid (constraint validation after the user has interacted). The
+   :is() lists are forgiving: an engine without :user-invalid drops only that
+   branch, not the whole rule. */
+.talos-field--error :is(.talos-input, .talos-textarea, .talos-select, .talos-input-group),
+.talos-input--error,
+.talos-textarea--error,
+.talos-select--error,
+:is(.talos-input, .talos-textarea, .talos-select):is([aria-invalid="true"], :user-invalid),
+.talos-input-group:has(.talos-input:is([aria-invalid="true"], :user-invalid)) {
+  --_edge-rest: hsl(var(--talos-danger-hsl) / 0.7);
+  --_edge-hover: hsl(var(--talos-danger-hsl) / 0.85);
+  --_edge-focus: hsl(var(--talos-danger-hsl));
+  --_fill-rest: hsl(var(--talos-danger-hsl) / 0.06);
+  --_fill-focus: hsl(var(--talos-danger-hsl) / 0.1);
+}
+.talos-field--success :is(.talos-input, .talos-textarea, .talos-select, .talos-input-group),
+.talos-input--success,
+.talos-textarea--success,
+.talos-select--success {
+  --_edge-rest: hsl(var(--talos-success-hsl) / 0.6);
+  --_edge-hover: hsl(var(--talos-success-hsl) / 0.8);
+  --_edge-focus: hsl(var(--talos-success-hsl));
+}
 /* --- Checkbox + Radio ------------------------------------------------------- */
 /* Style the native control directly via appearance:none so focus rings + form
    semantics survive. Square checkbox, circular radio. */
@@ -268,6 +361,7 @@
 .talos-radio {
   appearance: none;
   -webkit-appearance: none;
+  color-scheme: dark;
   flex: none;
   width: 1.05rem;
   height: 1.05rem;
@@ -283,6 +377,7 @@
 .talos-checkbox:hover,
 .talos-radio:hover { border-color: var(--talos-foreground); }
 .talos-checkbox:checked,
+.talos-checkbox:indeterminate,
 .talos-radio:checked { background: var(--talos-foreground); border-color: var(--talos-foreground); }
 /* Checkmark — a rotated open corner drawn on the filled box. */
 .talos-checkbox:checked::after {
@@ -295,6 +390,19 @@
   border: solid var(--talos-background);
   border-width: 0 2px 2px 0;
   transform: translate(-50%, -50%) rotate(45deg);
+}
+/* Indeterminate (set by script: el.indeterminate = true) — a horizontal dash.
+   Declared after :checked so the dash wins when both match. */
+.talos-checkbox:indeterminate::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.55rem;
+  height: 2px;
+  border: 0;
+  background: var(--talos-background);
+  transform: translate(-50%, -50%);
 }
 .talos-radio:checked::after {
   content: "";
@@ -313,6 +421,8 @@
 }
 .talos-checkbox:disabled,
 .talos-radio:disabled { opacity: 0.45; cursor: not-allowed; }
+.talos-checkbox:is([aria-invalid="true"], :user-invalid),
+.talos-radio:is([aria-invalid="true"], :user-invalid) { border-color: hsl(var(--talos-danger-hsl) / 0.8); }
 /* Inline label row for a checkbox/radio + text. */
 .talos-check-row {
   display: inline-flex;
@@ -330,6 +440,7 @@
 .talos-switch {
   appearance: none;
   -webkit-appearance: none;
+  color-scheme: dark;
   flex: none;
   width: 2.6rem;
   height: 1.3rem;
@@ -351,6 +462,8 @@
   background: var(--talos-edge-strong);
   transition: transform var(--talos-dur-fast) var(--talos-ease-glass), background var(--talos-dur-fast) ease;
 }
+.talos-switch:hover { border-color: var(--talos-foreground); }
+.talos-switch:hover::after { background: hsl(var(--talos-foreground-hsl) / 0.7); }
 .talos-switch:checked {
   background: hsl(var(--talos-accent-hsl) / 0.2);
   border-color: var(--talos-accent);
@@ -359,17 +472,31 @@
   transform: translateX(calc(2.6rem - 1.3rem));
   background: var(--talos-accent);
 }
+.talos-switch:checked:hover { background: hsl(var(--talos-accent-hsl) / 0.3); }
 .talos-switch:focus-visible {
   outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
   outline-offset: var(--talos-focus-ring-offset);
 }
 .talos-switch:disabled { opacity: 0.45; cursor: not-allowed; }
+.talos-switch:disabled:hover { border-color: var(--talos-edge-strong); }
 
 /* --- Range / Slider --------------------------------------------------------- */
-/* Square HUD thumb (not round) on a hairline track. Cross-browser pseudos. */
+/* Square HUD thumb (not round) on a hairline track. Cross-browser pseudos.
+   Filled track: set --_pct (0–100) to the value's position, e.g.
+     <input type="range" class="talos-range" min="0" max="100" value="40"
+            style="--_pct: 40" oninput="this.style.setProperty('--_pct',
+            (this.value - this.min) / (this.max - this.min) * 100)">
+   Firefox fills natively (::-moz-range-progress) and ignores --_pct; WebKit
+   and Blink paint the fill from --_pct. Unset, the track stays unfilled. */
 .talos-range {
+  --_pct: 0;
+  --_track: var(--talos-edge-default);
+  --_track-fill: hsl(var(--talos-foreground-hsl) / 0.7);
+  --_thumb: var(--talos-foreground);
   appearance: none;
   -webkit-appearance: none;
+  color-scheme: dark;
+  accent-color: var(--talos-foreground);
   width: 100%;
   box-sizing: border-box;
   margin: 0; /* zero the UA-default 2px so the track aligns to its grid cell */
@@ -379,32 +506,61 @@
 }
 .talos-range::-webkit-slider-runnable-track {
   height: 2px;
-  background: var(--talos-edge-default);
+  background: linear-gradient(
+    to right,
+    var(--_track-fill) 0 calc(var(--_pct) * 1%),
+    var(--_track) calc(var(--_pct) * 1%) 100%
+  );
 }
 .talos-range::-moz-range-track {
   height: 2px;
-  background: var(--talos-edge-default);
+  background: var(--_track);
+}
+.talos-range::-moz-range-progress {
+  height: 2px;
+  background: var(--_track-fill);
 }
 .talos-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 0.7rem;
   height: 0.9rem;
   margin-top: calc((2px - 0.9rem) / 2);
-  background: var(--talos-foreground);
+  background: var(--_thumb);
   border: 0;
   border-radius: 0;
+  transition: transform var(--talos-dur-fast) var(--talos-ease-glass), box-shadow var(--talos-dur-fast) ease;
 }
 .talos-range::-moz-range-thumb {
   width: 0.7rem;
   height: 0.9rem;
-  background: var(--talos-foreground);
+  background: var(--_thumb);
   border: 0;
   border-radius: 0;
+  transition: transform var(--talos-dur-fast) var(--talos-ease-glass), box-shadow var(--talos-dur-fast) ease;
 }
-.talos-range:focus-visible {
-  outline: var(--talos-focus-ring-width) solid var(--talos-focus-ring);
-  outline-offset: var(--talos-focus-ring-offset);
+.talos-range:hover { --_track-fill: hsl(var(--talos-foreground-hsl) / 0.85); }
+.talos-range:hover::-webkit-slider-thumb { transform: scaleY(1.15); }
+.talos-range:hover::-moz-range-thumb { transform: scaleY(1.15); }
+.talos-range:active::-webkit-slider-thumb { transform: scale(1.15, 1.3); }
+.talos-range:active::-moz-range-thumb { transform: scale(1.15, 1.3); }
+/* Focus ring around the thumb (the part the keys move), not the whole box. */
+.talos-range:focus-visible { outline: none; }
+.talos-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 var(--talos-focus-ring-offset) var(--talos-background),
+    0 0 0 calc(var(--talos-focus-ring-offset) + var(--talos-focus-ring-width)) var(--talos-focus-ring);
 }
+.talos-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 var(--talos-focus-ring-offset) var(--talos-background),
+    0 0 0 calc(var(--talos-focus-ring-offset) + var(--talos-focus-ring-width)) var(--talos-focus-ring);
+}
+.talos-range:disabled {
+  --_thumb: var(--talos-text-disabled);
+  --_track-fill: var(--talos-text-disabled);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.talos-range:disabled::-webkit-slider-thumb { transform: none; }
+.talos-range:disabled::-moz-range-thumb { transform: none; }
 
 /* --- Form layout helpers ---------------------------------------------------- */
 .talos-field-row {
@@ -421,7 +577,14 @@
 
 /* --- Reduced motion --------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
+  .talos-input,
+  .talos-textarea,
+  .talos-select,
+  .talos-input-group,
+  .talos-search__clear { transition: none; }
   .talos-switch::after { transition: none; }
+  .talos-range::-webkit-slider-thumb { transition: none; }
+  .talos-range::-moz-range-thumb { transition: none; }
 }
 
 } /* @layer components.talos */
