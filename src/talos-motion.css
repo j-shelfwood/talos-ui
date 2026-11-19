@@ -34,7 +34,8 @@
    -------------------------------------------------------------------------- */
 .bento-stagger > * {
   animation: cascade-in var(--talos-dur-slow) var(--talos-ease-liquid) both;
-  animation-delay: calc(var(--bento-i, 0) * 60ms);
+  /* stagger step = a tenth of the entrance (60ms at the default 600ms) */
+  animation-delay: calc(var(--bento-i, 0) * var(--talos-dur-slow) / 10);
 }
 .bento-stagger > *:nth-child(1)  { --bento-i: 0; }
 .bento-stagger > *:nth-child(2)  { --bento-i: 1; }
@@ -92,10 +93,10 @@
   pointer-events: none;
   opacity: 0;
   transform: scale(0.7);
-  transition: opacity 220ms ease, transform 220ms var(--talos-ease-glass);
+  transition: opacity var(--talos-dur-fast) ease, transform var(--talos-dur-fast) var(--talos-ease-glass);
   z-index: 3;
   /* Matches the chamfered hairline at peak. */
-  --_bracket: hsl(0 0% 100% / 0.85);
+  --_bracket: hsl(var(--talos-foreground-hsl) / 0.85);
 }
 .hud-bracket--tl {
   top: 6px;

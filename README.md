@@ -108,7 +108,13 @@ import Button from "@j_shelfwood/talos-ui/astro/Button.astro";
   <h2>Projects</h2>
 </GlassPanel>
 <Button href="/contact">Get in touch</Button>
+<Button type="submit" loading disabled>Saving</Button>
 ```
+
+`Button` renders `<a>` with `href`, else `<button type="button">` (pass
+`type="submit"` inside a form). `disabled` sets `disabled` on a button and drops
+the `href` (plus `aria-disabled="true"`) on a link; `loading` adds `aria-busy`
+and a spinner that keeps the button's width.
 
 Astro wrappers: `GlassPanel`, `Button`, `BrandMark`, `Tag`, `BackButton`,
 `BentoGrid`, `LinkCard`, and the opt-in marketing chrome (`Navbar`, `Footer`).
