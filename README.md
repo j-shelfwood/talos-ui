@@ -191,7 +191,7 @@ readable with the animation removed.
 | `<talos-meter>` | value → filled bar + tick band | `value` / `warn` / `crit` attrs |
 | `<talos-trend>` | series → sparkline (slope *is* the rate) | `value` attr, or `.push(n)` |
 | `<talos-flow>` | rate → dash travel speed along a path | `rate` attr |
-| `<talos-orbital>` | a system → radial mesh (ring/size/colour/orbit) | `.nodes = [...]` |
+| `<talos-orbital>` | a system → radial mesh (ring/size/colour/orbit/flow; core = worst band); selectable | `.nodes = [...]`, `selected` |
 | `<talos-readout>` | value → scramble-decode on change | `value` attr |
 | `<talos-sheen>` | pointer → tracked specular highlight | `selector` attr |
 
@@ -248,11 +248,12 @@ readable with the animation removed.
   setInterval(() => rx.push(20 + Math.round(40 * Math.random())), 1000);
 
   mesh.nodes = [
-    // ring = subsystem, value = health, load = size, rate = orbit speed
+    // ring = subsystem, value = health, load = size, rate = orbit speed + flow
     { id: "auth", ring: 1, value: 22, load: 0.6, rate: 80, label: "auth" },
     { id: "db",   ring: 2, value: 71, load: 0.9, rate: 45, label: "db" },
     { id: "cdn",  ring: 3, value: 8,  load: 0.3, rate: 95, label: "cdn" },
   ];
+  mesh.addEventListener("talos:select", (e) => console.log(e.detail.id));
 </script>
 ```
 
@@ -273,7 +274,7 @@ import "@j_shelfwood/talos-ui/wc/talos-ticker";  // only <talos-ticker>
 ```
 
 Registration is idempotent — mixing the barrel and per-component imports is
-safe. TypeScript input types are exported from the barrel: `OrbitalNode`,
+safe. TypeScript input types are exported from the barrel: `OrbitalNode`, `OrbitalEventDetail`,
 `PercentileStats`, `TickerEvent`, `GroundSat`, `Gateway`, `TrackSat`,
 `Parts` / `PartState`, `ToggleOption`, `Band`.
 
@@ -289,6 +290,7 @@ the selection, Enter/Space activate):
 | `<talos-matrix>` | `talos:cell` | `{ col, row, index }` |
 | `<talos-plane>` | `talos:sat` | `{ slot }` |
 | `<talos-spacecraft>` | `talos:part` | `{ part }` |
+| `<talos-orbital>` | `talos:select`, `talos:hover` | `{ id, node }` (both `null` on clear / leave) |
 
 Read-only instruments expose the role that matches their semantics plus a live
 `aria-label`: picture-like instruments use `role="img"`, scalar telemetry uses

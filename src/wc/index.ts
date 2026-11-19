@@ -34,7 +34,7 @@ import { TalosOdometer } from "./talos-odometer";
 
 export { TalosPanel, TalosCorner, TalosNotch, TalosGauge, TalosTrend, TalosMeter, TalosFlow, TalosOrbital, TalosSheen, TalosReadout, TalosSpark, TalosDots, TalosDelta, TalosStat, TalosLed, TalosToggle, TalosStatus, TalosMatrix, TalosGroundtrack, TalosHistogram, TalosPlane, TalosSpacecraft, TalosRange, TalosCompass, TalosPercentile, TalosTicker, TalosOdometer };
 export type { Band } from "./bands";
-export type { OrbitalNode } from "./talos-orbital";
+export type { OrbitalNode, OrbitalEventDetail } from "./talos-orbital";
 export type { PercentileStats } from "./talos-percentile";
 export type { TickerEvent } from "./talos-ticker";
 export type { GroundSat, Gateway } from "./talos-groundtrack";

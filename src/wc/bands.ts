@@ -17,8 +17,8 @@
  *   <talos-gauge value="20" warn="40" crit="20" invert>  → 20 ≤ crit → critical
  *
  * NOTE: <talos-orbital> deliberately uses *defaulted* thresholds (warn=70 /
- * crit=90) and returns a CSS-var colour rather than a state name, so it does
- * NOT use this helper — its band semantics are intentionally different.
+ * crit=90) and no `invert`, so it does NOT use this helper; it still maps to the
+ * same `Band` names and `--_nominal/--_warning/--_critical` tokens.
  */
 export type Band = "nominal" | "warning" | "critical";
 
