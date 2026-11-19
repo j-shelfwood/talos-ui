@@ -34,6 +34,9 @@
   /* Display face for HUD/sci-fi headings (anti.space lineage). */
   --talos-font-display: "Oxanium", "Eurostile", "Bank Gothic", system-ui, sans-serif;
   --talos-font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Code, logs, tabular readouts. One stack for every module (code, log, kbd). */
+  --talos-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code",
+    "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --talos-tracking-hud: 0.18em;
   --talos-tracking-hud-tight: 0.08em;
 
@@ -89,6 +92,9 @@
   --talos-dur-fast: 180ms;
   --talos-dur-mid: 360ms;
   --talos-dur-slow: 600ms;
+  /* Every transition/animation duration in the CSS layer derives from these
+     three, so overriding them retimes the system. Data-bound periods (the
+     activity-edge rate, status pulse cadence) are telemetry, not chrome motion. */
 
   /* --- Ambient grid ------------------------------------------------------ */
   --talos-grid-cell: 32px;
@@ -133,18 +139,26 @@
   /* --- Text roles ------------------------------------------------------- */
   --talos-text-primary: hsl(0 0% 100% / 0.92);
   --talos-text-secondary: hsl(0 0% 100% / 0.62);
-  --talos-text-tertiary: hsl(0 0% 100% / 0.4);
+  /* Tertiary is used for small help/meta text, so it must clear WCAG AA
+     (4.5:1): 0.5 alpha measures 6.3:1 on surface-1 and 5.0:1 on surface-4.
+     Disabled stays below AA on purpose (WCAG exempts inactive controls). */
+  --talos-text-tertiary: hsl(0 0% 100% / 0.5);
   --talos-text-disabled: hsl(0 0% 100% / 0.28);
   --talos-text-on-accent: hsl(0 0% 0%);
 
   /* --- Edge roles ------------------------------------------------------- */
+  /* edge-default is the resting edge of a control (input, select, button
+     variants): 0.36 alpha clears the WCAG 1.4.11 non-text 3:1 floor on every
+     surface step (3.1:1 on surface-0, 3.3:1 on surface-4). edge-strong is the
+     hover/active step above it. edge-subtle is decorative only (dividers,
+     flags), never the sole boundary of an interactive. */
   --talos-edge-subtle: hsl(0 0% 100% / 0.12);
-  --talos-edge-default: hsl(0 0% 100% / 0.2);
-  --talos-edge-strong: hsl(0 0% 100% / 0.4);
+  --talos-edge-default: hsl(0 0% 100% / 0.36);
+  --talos-edge-strong: hsl(0 0% 100% / 0.55);
 
   /* --- Focus ring (one system for every interactive) -------------------- */
-  --talos-focus-ring: hsl(0 0% 100% / 0.9);
-  --talos-focus-ring-width: 1px;
+  --talos-focus-ring: hsl(0 0% 100%);
+  --talos-focus-ring-width: 2px;
   --talos-focus-ring-offset: 2px;
 
   /* --- Radius scale (chamfer is the brand; radius for non-cut elements) -- */
@@ -184,6 +198,16 @@
   --talos-control-h-sm: calc(2.25rem * var(--talos-density-scale));
   --talos-control-h-md: calc(2.5rem * var(--talos-density-scale));
   --talos-control-h-lg: calc(3rem * var(--talos-density-scale));
+
+  /* --- Scrollbars -------------------------------------------------------- */
+  /* Thin, square, monochrome. talos.css applies them at the root; any scroll
+     container may rebind them (a log, a console zone). */
+  --talos-scrollbar-thumb: hsl(var(--talos-foreground-hsl) / 0.18);
+  --talos-scrollbar-thumb-hover: hsl(var(--talos-foreground-hsl) / 0.32);
+  --talos-scrollbar-track: transparent;
+  --talos-scrollbar-size: 8px;
+  /* Edge-fade depth for .talos-scroll--fade. */
+  --talos-scroll-fade: 1.5rem;
 }
 
 /* Density mode — set [data-talos-density="compact"] on a container/root. */

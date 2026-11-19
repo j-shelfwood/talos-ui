@@ -45,6 +45,59 @@
   inherits: false;
   initial-value: 0deg;
 }
+/* Edge-fade depths of .talos-scroll--fade, registered so the scroll-driven
+   animation interpolates them. */
+@property --_fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --_fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+/* ----------------------------------------------------------------------------
+   ROOT DEFAULTS — dark UA chrome + the scrollbar system. Base layer, zero
+   specificity: any consumer rule wins.
+
+   scrollbar-color inherits, so setting it on :root reaches every scroll
+   container. scrollbar-width does not inherit, so it is set on every element
+   (:where keeps that at specificity 0). Engines with the standard properties
+   (Firefox, Chromium 121+) ignore ::-webkit-scrollbar once they are set; the
+   pseudo-element rules are the Safari path. The thumb is square, matching the
+   chamfer/hairline language: no radius anywhere.
+
+   Box sizing is NOT reset globally: a universal border-box rule would change
+   geometry in consumer markup that never opted into talos. Every chamfer
+   engine host is border-box (see the engine below), and the few talos boxes
+   that size with width + padding set it themselves.
+   -------------------------------------------------------------------------- */
+@layer base.talos {
+  :root {
+    color-scheme: dark;
+    scrollbar-color: var(--talos-scrollbar-thumb) var(--talos-scrollbar-track);
+  }
+  :where(html, html *) {
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar {
+    width: var(--talos-scrollbar-size);
+    height: var(--talos-scrollbar-size);
+    background: var(--talos-scrollbar-track);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--talos-scrollbar-thumb);
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--talos-scrollbar-thumb-hover);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
 
 @layer components.talos {
 
@@ -142,14 +195,14 @@
 
   position: relative;
   isolation: isolate;
-  color: hsl(0 0% 92%);
+  color: var(--talos-text-primary);
 
   --talos-mx: 50%;
   --talos-my: 0%;
   --talos-sheen: 0;
   --talos-lift: 0px;
   transform: translateY(var(--talos-lift));
-  transition: --talos-sheen 240ms ease,
+  transition: --talos-sheen var(--talos-dur-fast) ease,
     --talos-lift var(--talos-dur-mid) var(--talos-ease-glass),
     filter var(--talos-dur-mid) var(--talos-ease-glass);
 }
@@ -162,19 +215,22 @@
   inset: 0;
   background: radial-gradient(
     240px circle at var(--talos-mx) var(--talos-my),
-    hsl(0 0% 100% / calc(0.07 * var(--talos-sheen))),
+    hsl(var(--talos-foreground-hsl) / calc(0.07 * var(--talos-sheen))),
     transparent 60%
   );
   pointer-events: none;
   z-index: 1;
-  transition: background 80ms linear;
+  transition: background calc(var(--talos-dur-fast) / 2) linear;
 }
 
 /* Content wrapper — sits above the sheen, fills the panel and stacks, so
-   padded cards lay out predictably. */
+   padded cards lay out predictably. border-box: the wrapper is width:100% and
+   usually carries .talos-pad, which under content-box pushed it past the panel
+   (342px of content in a 280px panel). */
 .glass-panel > .glass-panel-content {
   position: relative;
   z-index: 2;
+  box-sizing: border-box;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -197,12 +253,12 @@
 .interactive-panel:focus-visible,
 .glass-panel:focus-visible {
   outline: none;
-  --_edge: hsl(0 0% 100% / 0.85);
+  --_edge: var(--talos-focus-ring);
   animation: talos-focus-pulse var(--talos-dur-slow) var(--talos-ease-out) 1;
 }
 @keyframes talos-focus-pulse {
   0% { filter: brightness(1); }
-  40% { filter: brightness(1.35) drop-shadow(0 0 12px hsl(0 0% 100% / 0.45)); }
+  40% { filter: brightness(1.35) drop-shadow(0 0 12px hsl(var(--talos-foreground-hsl) / 0.45)); }
   100% { filter: brightness(1); }
 }
 
@@ -213,7 +269,7 @@
 }
 .glass-panel--reading {
   --_chamfer: 24px;
-  --_fill: hsl(0 0% 4%);
+  --_fill: var(--talos-surface-1);
   --_edge: hsl(0 0% 100% / 0.18);
   padding: 2.5rem 2rem;
 }
@@ -302,7 +358,7 @@
     linear infinite;
   opacity: calc(0.25 + min(var(--talos-rate), 1) * 0.75);
   pointer-events: none;
-  transition: opacity 220ms ease;
+  transition: opacity var(--talos-dur-fast) ease;
 }
 
 @keyframes talos-activity-spin {
@@ -325,8 +381,9 @@
    (<a class="talos-button">, <button class="talos-button">); no SVG child.
    -------------------------------------------------------------------------- */
 .talos-button {
-  --_fill: hsl(0 0% 9%);
-  --_edge: hsl(0 0% 100% / 0.55);
+  --_fill: var(--talos-surface-3);
+  --_edge: var(--talos-edge-strong);
+  --_ink: var(--talos-text-primary);
   --_tr: 0px;
   --_bl: 0px;
   --_br: var(--talos-chamfer-btn);
@@ -343,7 +400,7 @@
   letter-spacing: var(--talos-tracking-hud);
   text-decoration: none;
   white-space: nowrap;
-  color: hsl(0 0% 100% / 0.9);
+  color: var(--_ink);
 
   /* default size = md */
   height: 2.5rem;
@@ -351,7 +408,11 @@
   font-size: 0.75rem;
 
   cursor: pointer;
-  transition: color 200ms ease;
+  /* The engine paints --_fill as background-color and --_edge as border-color,
+     so both animate; the 1px diagonal (a gradient) follows without easing. */
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-duration: var(--talos-dur-fast);
+  transition-timing-function: var(--talos-ease-out);
 }
 .talos-button__label {
   display: inline-flex;
@@ -359,18 +420,30 @@
   gap: inherit;
 }
 
-.talos-button:hover { --_fill: hsl(0 0% 14%); --_edge: var(--talos-hud-edge-hot); color: hsl(0 0% 100%); }
-.talos-button:focus-visible { outline: none; --_edge: hsl(0 0% 100% / 0.9); }
+/* Interaction states apply only to an operable button. :where() keeps the
+   guard at zero specificity, so variant rules below still win by order. */
+.talos-button:where(:not(:disabled, [aria-disabled="true"], [aria-busy="true"])):hover {
+  --_fill: var(--talos-surface-4); --_edge: var(--talos-hud-edge-hot); --_ink: var(--talos-foreground);
+}
+/* Pressed: fill drops below rest, edge goes full, the face sinks 1px. */
+.talos-button:where(:not(:disabled, [aria-disabled="true"], [aria-busy="true"])):active {
+  --_fill: var(--talos-surface-2); --_edge: var(--talos-foreground); --_ink: var(--talos-foreground);
+  transform: translateY(1px);
+  transition-duration: 0ms;
+}
+/* Focus: clip-path cuts any outline, so the ring is drawn inside the box: the
+   edge takes the focus colour and an inset shadow doubles it to the ring width.
+   Rest edge 0.55 → ring 1.0 at 2px reads at a glance. */
+.talos-button:focus-visible {
+  outline: none;
+  --_edge: var(--talos-focus-ring);
+  box-shadow: inset 0 0 0 calc(var(--talos-focus-ring-width) - 1px) var(--talos-focus-ring);
+}
 /* Selected — toggles and current-location buttons (aria-pressed / aria-current). */
 .talos-button[aria-pressed="true"],
 .talos-button[aria-current]:not([aria-current="false"]) {
   --_edge: var(--talos-accent);
-  color: var(--talos-accent);
-}
-.talos-button[disabled],
-.talos-button:disabled {
-  opacity: 0.5;
-  pointer-events: none;
+  --_ink: var(--talos-accent);
 }
 
 /* Sizes. */
@@ -379,12 +452,73 @@
 .talos-button--lg { height: 3rem; padding-inline: 2rem; font-size: 0.875rem; }
 
 /* Variants — edge/fill set the emphasis (monochrome). */
-.talos-button--secondary { --_edge: hsl(0 0% 100% / 0.32); color: hsl(0 0% 100% / 0.8); }
-.talos-button--ghost { --_fill: hsl(0 0% 0% / 0); --_edge: hsl(0 0% 100% / 0.3); color: hsl(0 0% 100% / 0.7); }
-.talos-button--ghost:hover { --_fill: hsl(0 0% 10%); }
+.talos-button--secondary { --_edge: var(--talos-edge-default); --_ink: hsl(var(--talos-foreground-hsl) / 0.8); }
+.talos-button--ghost { --_fill: transparent; --_edge: var(--talos-edge-default); --_ink: hsl(var(--talos-foreground-hsl) / 0.7); }
+.talos-button--ghost:where(:not(:disabled, [aria-disabled="true"], [aria-busy="true"])):hover { --_fill: var(--talos-surface-3); }
 /* Solid — the loud call to action: light fill, dark label. */
-.talos-button--solid { --_fill: var(--talos-foreground); --_edge: var(--talos-foreground); color: var(--talos-background); }
-.talos-button--solid:hover { --_fill: hsl(0 0% 85%); --_edge: hsl(0 0% 85%); color: var(--talos-background); }
+.talos-button--solid { --_fill: var(--talos-foreground); --_edge: var(--talos-foreground); --_ink: var(--talos-background); }
+.talos-button--solid:where(:not(:disabled, [aria-disabled="true"], [aria-busy="true"])):hover {
+  --_fill: color-mix(in srgb, var(--talos-foreground) 85%, var(--talos-background));
+  --_edge: var(--_fill);
+  --_ink: var(--talos-background);
+}
+.talos-button--solid:where(:not(:disabled, [aria-disabled="true"], [aria-busy="true"])):active {
+  --_fill: color-mix(in srgb, var(--talos-foreground) 70%, var(--talos-background));
+  --_edge: var(--_fill);
+  --_ink: var(--talos-background);
+}
+.talos-button--solid:focus-visible {
+  /* the ring must contrast the light fill: a dark inner line inside the edge */
+  box-shadow: inset 0 0 0 1px var(--talos-background);
+}
+
+/* Disabled — native [disabled] or aria-disabled (links, focusable-disabled).
+   Still hit-testable so the not-allowed cursor shows; the :where guard above
+   keeps hover/active from firing. A disabled <a> must drop its href (the Astro
+   Button does) or the click still navigates. */
+.talos-button:disabled,
+.talos-button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading — .talos-button--loading or [aria-busy="true"]. The label keeps its
+   box (visibility, not display), so the width does not change; a square
+   spinner in the label colour sits over it. */
+.talos-button--loading,
+.talos-button[aria-busy="true"] {
+  cursor: progress;
+  color: transparent;
+}
+.talos-button--loading > *,
+.talos-button[aria-busy="true"] > * {
+  visibility: hidden;
+}
+.talos-button--loading::after,
+.talos-button[aria-busy="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 0.9em;
+  height: 0.9em;
+  margin: auto;
+  box-sizing: border-box;
+  border: 1.5px solid var(--_ink);
+  border-top-color: transparent;
+  animation: talos-button-spin calc(var(--talos-dur-slow) * 1.5) linear infinite;
+}
+@keyframes talos-button-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Busy is state, so the spinner stays; it turns slowly instead of spinning. */
+  .talos-button--loading::after,
+  .talos-button[aria-busy="true"]::after {
+    animation-duration: calc(var(--talos-dur-slow) * 6);
+  }
+  .talos-button { transition-duration: 0ms; }
+  .talos-button:active { transform: none; }
+}
 
 /* ----------------------------------------------------------------------------
    FLAG — HUD tag / status chip: top-right cut, display-face label. Non-
@@ -499,7 +633,7 @@ a.glass-panel .glass-panel-content { text-decoration: none; color: inherit; }
   font-family: var(--talos-font-display);
   font-size: 0.68rem;
   letter-spacing: var(--talos-tracking-hud-tight);
-  color: hsl(0 0% 100% / 0.35);
+  color: var(--talos-text-tertiary);
   font-variant-numeric: tabular-nums;
 }
 /* Gradient divider — bright at left, fades to transparent. */
@@ -508,11 +642,62 @@ a.glass-panel .glass-panel-content { text-decoration: none; color: inherit; }
   border: 0;
   background: linear-gradient(
     to right,
-    hsl(0 0% 100% / 0.2) 0%,
-    hsl(0 0% 100% / 0.06) 65%,
+    hsl(var(--talos-foreground-hsl) / 0.2) 0%,
+    hsl(var(--talos-foreground-hsl) / 0.06) 65%,
     transparent 100%
   );
 }
+/* ----------------------------------------------------------------------------
+   SCROLL UTILITIES — opt-in classes for a scroll container.
+     .talos-scroll--hidden  scrollable (wheel, touch, keyboard), no visible bar.
+                            Pair with a visible overflow cue (e.g. --fade).
+     .talos-scroll--fade    fades the block edges that have more content past
+                            them. Where scroll-driven animations exist the fade
+                            follows the scroll position (top fades in once you
+                            have scrolled, bottom fades out at the end) and is
+                            absent when nothing overflows; elsewhere the bottom
+                            edge fades as a static "more below" cue.
+   Depth: --talos-scroll-fade.
+   -------------------------------------------------------------------------- */
+.talos-scroll--hidden {
+  overflow: auto;
+  scrollbar-width: none;
+}
+.talos-scroll--hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.talos-scroll--fade {
+  --_fade-start: 0px;
+  --_fade-end: var(--talos-scroll-fade);
+  overflow: auto;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--_fade-start), #000 calc(100% - var(--_fade-end)), transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0, #000 var(--_fade-start), #000 calc(100% - var(--_fade-end)), transparent 100%);
+}
+@supports (animation-timeline: scroll()) {
+  .talos-scroll--fade {
+    --_fade-end: 0px;
+    animation: talos-scroll-fade linear both;
+    animation-timeline: scroll(self block);
+  }
+}
+@keyframes talos-scroll-fade {
+  0%   { --_fade-start: 0px;                    --_fade-end: var(--talos-scroll-fade); }
+  10%, 90% { --_fade-start: var(--talos-scroll-fade); --_fade-end: var(--talos-scroll-fade); }
+  100% { --_fade-start: var(--talos-scroll-fade); --_fade-end: 0px; }
+}
+
+/* ----------------------------------------------------------------------------
+   STATUS PULSE — shared keyframe for the status dot (talos-layout.css), status
+   badge dot (talos-feedback.css), live log/table rows (talos-data.css) and the
+   timeline now-mark. Defined here because talos.css is the one sheet every
+   module sits on; the cadence (2.4s) is a status signal, not chrome motion.
+   -------------------------------------------------------------------------- */
+@keyframes talos-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
 /* ----------------------------------------------------------------------------
    Reduced-motion + touch fallbacks.
    -------------------------------------------------------------------------- */
