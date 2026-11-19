@@ -37,7 +37,7 @@
   --talos-prose-captions: hsl(var(--talos-muted-foreground-hsl) / 0.7);
   --talos-prose-code: hsl(var(--talos-primary-hsl));
   --talos-prose-pre-code: hsl(var(--talos-foreground-hsl) / 0.85);
-  --talos-prose-pre-bg: hsl(0 0% 10%);
+  --talos-prose-pre-bg: var(--talos-surface-3);
   --talos-prose-th-borders: hsl(var(--talos-border-hsl));
   --talos-prose-td-borders: hsl(var(--talos-border-hsl) / 0.5);
 }
@@ -71,6 +71,11 @@
   font-weight: 300;
   text-transform: none;
   letter-spacing: normal;
+}
+
+/* Code in prose uses the talos mono stack, not the plugin's default. */
+.prose :is(code, kbd, samp, pre) {
+  font-family: var(--talos-font-mono);
 }
 
 } /* @layer components.talos */
