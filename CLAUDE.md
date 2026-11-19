@@ -48,7 +48,7 @@ dark-monochrome HUD design system. See `README.md` (consumer docs),
     observer loops on render()'s own aria/role write-backs and freezes the
     renderer. This is the one genuine footgun; never drop the filter.
   - Newer instruments (`talos-status`, `talos-matrix`, `talos-groundtrack`,
-    `talos-histogram`, `talos-plane`, `talos-spacecraft`) use plain
+    `talos-histogram`, `talos-plane`, `talos-spacecraft`, `talos-orbital`) use plain
     **`attributeChangedCallback`** — simpler, and immune to the write-back loop
     because it only fires for `observedAttributes`. Prefer this for new components
     unless you specifically need to observe non-attribute mutations.
@@ -79,7 +79,7 @@ per-component import `@j_shelfwood/talos-ui/wc/talos-<name>` works with no confi
 edit. Export any imperative-input type from `index.ts`.
 
 **Event + a11y contract.** Interactive instruments emit `composed`, bubbling
-`talos:*` CustomEvents (`talos:change`/`cell`/`sat`/`part`) and are keyboard
+`talos:*` CustomEvents (`talos:change`/`cell`/`sat`/`part`/`select`/`hover`) and are keyboard
 operable (tabindex + arrows + Enter/Space). Read-only instruments set
 `role="img"` + a live `aria-label` rebuilt each render — safe because role/aria
 are never in `observedAttributes`/the MutationObserver `attributeFilter`, so the
