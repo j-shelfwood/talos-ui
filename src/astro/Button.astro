@@ -2,27 +2,51 @@
 /**
  * Button — chamfered HUD CTA. Renders <a> when href is set, else <button>.
  * Requires "@j_shelfwood/talos-ui/talos.css".
+ *
+ *   type     button type; defaults to "button" so a Button inside a <form>
+ *            never submits by accident. Ignored for links.
+ *   disabled <button disabled>; a link renders without its href plus
+ *            aria-disabled="true", so it cannot navigate.
+ *   loading  aria-busy="true" + .talos-button--loading: the label keeps its
+ *            width under a spinner. Pair with `disabled` to block re-submits.
  */
 interface Props {
   variant?: "primary" | "secondary" | "ghost" | "solid";
   size?: "xs" | "sm" | "md" | "lg";
   href?: string;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
+  loading?: boolean;
   class?: string;
   [key: string]: any;
 }
 
-const { variant = "primary", size = "md", href, class: className, ...rest } =
-  Astro.props;
+const {
+  variant = "primary",
+  size = "md",
+  href,
+  type = "button",
+  disabled = false,
+  loading = false,
+  class: className,
+  ...rest
+} = Astro.props;
 const Element = href ? "a" : "button";
 const cls = [
   "talos-button",
   variant !== "primary" && `talos-button--${variant}`,
   size !== "md" && `talos-button--${size}`,
+  loading && "talos-button--loading",
   className,
 ]
   .filter(Boolean)
   .join(" ");
-const elementProps = href ? { href, ...rest } : rest;
+const busy = loading ? { "aria-busy": "true" } : {};
+const elementProps = href
+  ? disabled
+    ? { role: "link", "aria-disabled": "true", ...busy, ...rest }
+    : { href, ...busy, ...rest }
+  : { type, disabled, ...busy, ...rest };
 
 // The cut is drawn by the chamfer engine in talos.css (clip-path + a 1px
 // diagonal), so the element needs no SVG child and the cut stays exactly 10px
