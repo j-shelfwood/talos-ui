@@ -1,4 +1,3 @@
-
 @layer components.talos {
 /* ============================================================================
    @j_shelfwood/talos-ui — TALOS-CONSOLE.CSS  (opt-in module)
@@ -24,11 +23,32 @@
 
    Compose with the data-binding instruments (<talos-gauge> etc.) inside .console-scope
    and .console-aside. Drop the aside (.talos-console--no-aside) for a 3-row stack.
+
+   The console is a size container (`talos-console`): it folds to one column by
+   ITS OWN width (≤ 720px), so a console embedded in a narrow card folds even on
+   a wide screen. Knobs (set on .talos-console):
+     --talos-console-aside-max   aside height cap once folded (default 7rem)
+     --talos-console-fade        zone edge-fade length          (default 1.25rem)
    ========================================================================== */
+
+/* Edge-fade lengths animated by the zone scroll timeline (below). Registered so
+   they interpolate; their initial 0px means "no fade" wherever the timeline is
+   inactive (zone does not overflow, or no scroll-driven animation support). */
+@property --_console-fade-top {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --_console-fade-bottom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
 
 .talos-console {
   /* Fills its container; on a bare page set height:100dvh on a parent or use
      .talos-console--viewport which pins to the viewport. */
+  container: talos-console / inline-size;
   display: grid;
   grid-template-areas:
     "rail   rail"
@@ -58,15 +78,74 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* --- Zone scrolling ---------------------------------------------------------
+   Zones scroll internally, so their scrollbars are part of the frame: thin,
+   hairline-toned, no track, brighter while the pointer is over the zone. */
+.console-scope,
+.console-aside {
+  --_console-thumb: var(--talos-scrollbar-thumb, hsl(0 0% 100% / 0.18));
+  scrollbar-width: thin;
+  scrollbar-color: var(--_console-thumb) var(--talos-scrollbar-track, transparent);
+  overscroll-behavior: contain;
+}
+.console-scope:hover,
+.console-aside:hover {
+  --_console-thumb: var(--talos-scrollbar-thumb-hover, hsl(0 0% 100% / 0.32));
+}
+/* Engines without scrollbar-color (Safari < 26) read the legacy pseudos;
+   engines that support the standard properties ignore these. */
+.console-scope::-webkit-scrollbar,
+.console-aside::-webkit-scrollbar { width: 6px; height: 6px; }
+.console-scope::-webkit-scrollbar-track,
+.console-aside::-webkit-scrollbar-track { background: var(--talos-scrollbar-track, transparent); }
+.console-scope::-webkit-scrollbar-thumb,
+.console-aside::-webkit-scrollbar-thumb { background: var(--_console-thumb); }
+
+/* Edge fade: content dissolves into the zone edge it is scrolling past, and
+   only on the side that has more to show. Driven by the zone's own scroll
+   timeline, so a zone that does not overflow has no timeline and no mask. */
+@supports (animation-timeline: scroll()) {
+  .console-scope,
+  .console-aside {
+    --_console-fade: var(--talos-console-fade, 1.25rem);
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--_console-fade-top),
+      #000 calc(100% - var(--_console-fade-bottom)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--_console-fade-top),
+      #000 calc(100% - var(--_console-fade-bottom)),
+      transparent 100%
+    );
+    animation: talos-console-edge-fade linear both;
+    animation-timeline: scroll(self block);
+  }
+}
+@keyframes talos-console-edge-fade {
+  0%   { --_console-fade-top: 0px;                 --_console-fade-bottom: var(--_console-fade); }
+  12%  { --_console-fade-top: var(--_console-fade); }
+  88%  { --_console-fade-bottom: var(--_console-fade); }
+  100% { --_console-fade-top: var(--_console-fade); --_console-fade-bottom: 0px; }
+}
+
 /* --- Header rail ------------------------------------------------------------ */
 .console-rail {
   grid-area: rail;
   display: flex;
   align-items: center;
   gap: var(--talos-space-5);
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 2.75rem;
   padding: var(--talos-space-3) var(--talos-space-5);
   border-bottom: 1px solid var(--talos-edge-subtle);
   background: var(--talos-surface-1);
+  line-height: 1;
 }
 .console-rail__brand {
   display: flex;
@@ -76,12 +155,16 @@
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud);
   color: var(--talos-text-primary, var(--talos-foreground));
+  white-space: nowrap;
 }
 .console-rail__spacer { flex: 1; }
 .console-rail__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--talos-space-4);
+  justify-content: flex-end;
+  gap: var(--talos-space-2) var(--talos-space-4);
+  min-width: 0;
   font-size: var(--talos-text-2xs, 0.62rem);
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud-tight);
@@ -100,7 +183,7 @@
      so children lay out spatially instead of stacking. Opt out with
      .console-scope--free and position children yourself. */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
   grid-auto-rows: min-content;
   gap: var(--talos-space-5);
   align-content: start;
@@ -113,7 +196,11 @@
 .console-aside {
   grid-area: aside;
   min-height: 0;
+  min-width: 0;
   overflow: auto;
+  /* Live telemetry changes height as values update; a reserved gutter keeps
+     the column from reflowing when its scrollbar appears or goes away. */
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: var(--talos-space-4);
@@ -132,12 +219,17 @@
 .console-status {
   grid-area: status;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--talos-space-5);
+  gap: var(--talos-space-1) var(--talos-space-5);
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 2rem;
   padding: var(--talos-space-2) var(--talos-space-5);
   border-top: 1px solid var(--talos-edge-subtle);
   background: var(--talos-surface-1);
   font-size: var(--talos-text-2xs, 0.62rem);
+  line-height: 1;
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud-tight);
   color: var(--talos-muted-foreground);
@@ -150,59 +242,139 @@
   display: inline-flex;
   align-items: center;
   gap: var(--talos-space-2);
+  white-space: nowrap;
   color: hsl(var(--_status, var(--talos-foreground-hsl)));
 }
 .console-status__stat::before {
   content: "";
+  flex: none;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: currentColor;
 }
+/* Live state: the dot pulses (the shared talos-pulse keyframe) while the
+   segment reports a running process. Opt in per segment. */
+.console-status__stat--live::before,
+.console-status__stat[data-live]:not([data-live="false"])::before {
+  box-shadow: 0 0 6px currentColor;
+  animation: talos-pulse 2.4s ease-in-out infinite;
+}
 
 /* A panel inside a zone — a titled box for grouping instruments. Hairline,
-   square-cornered; lighter than glass-panel since it lives inside the frame. */
+   square by default; lighter than glass-panel since it lives inside the frame.
+   Add .talos-chamfer for the panel cut (top-right + bottom-left, the engine
+   in talos.css draws it); the cell keeps its own fill and edge. */
 .console-cell {
+  --_edge: var(--talos-edge-subtle);
+  --_fill: var(--talos-surface-1);
   display: flex;
   flex-direction: column;
   gap: var(--talos-space-3);
+  min-width: 0;
   padding: var(--talos-space-4);
-  background: var(--talos-surface-1);
-  border: 1px solid var(--talos-edge-subtle);
+  background-color: var(--_fill);
+  border: 1px solid var(--_edge);
+  transition: border-color var(--talos-dur-fast, 180ms) ease;
 }
+.console-cell.talos-chamfer { --_tr: var(--talos-chamfer-btn); --_bl: var(--talos-chamfer-btn); }
+/* Title: a HUD label led by a short tick, so the cell reads as a labelled
+   instrument group rather than a card heading. */
 .console-cell__title {
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-2);
+  margin: 0;
   font-size: var(--talos-text-2xs, 0.62rem);
+  font-weight: 400;
+  line-height: 1.2;
   text-transform: uppercase;
   letter-spacing: var(--talos-tracking-hud);
+  color: var(--talos-text-secondary, var(--talos-muted-foreground));
+}
+.console-cell__title::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 1px;
+  background: var(--talos-edge-strong, hsl(0 0% 100% / 0.4));
+}
+/* Optional head row: title on the left, meta (a reading, a flag, a time) on the
+   right, one hairline under both. */
+.console-cell__head {
+  display: flex;
+  align-items: center;
+  gap: var(--talos-space-3);
+  margin: calc(var(--talos-space-4) * -1) calc(var(--talos-space-4) * -1) 0;
+  padding: var(--talos-space-2) var(--talos-space-4);
+  border-bottom: 1px solid var(--talos-edge-subtle);
+  min-width: 0;
+}
+.console-cell__head > .console-cell__title { flex: 1; min-width: 0; }
+.console-cell__meta {
+  font-size: var(--talos-text-2xs, 0.62rem);
+  letter-spacing: var(--talos-tracking-hud-tight);
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
   color: var(--talos-text-tertiary, var(--talos-muted-foreground));
+  white-space: nowrap;
+}
+/* Live cell: a brighter edge and the accent status dot after its title. */
+.console-cell--live { --_edge: var(--talos-edge-default); }
+.console-cell--live .console-cell__title::after {
+  content: "";
+  flex: none;
+  width: 5px;
+  height: 5px;
+  margin-left: var(--talos-space-1);
+  border-radius: 50%;
+  background: var(--talos-accent);
+  box-shadow: 0 0 6px var(--talos-accent);
+  animation: talos-pulse 2.4s ease-in-out infinite;
 }
 /* Span helpers for the scope grid. */
 .console-cell--wide { grid-column: span 2; }
 .console-cell--full { grid-column: 1 / -1; }
 
-/* --- Responsive: below a threshold the aside folds under, and the whole thing
-   is allowed to scroll as one column. We reject the document column by DEFAULT,
-   not dogmatically — on a phone, a single column is the honest layout. -------- */
+/* --- Responsive: below a threshold the aside folds under the scope. We reject
+   the document column by DEFAULT, not dogmatically — on a narrow box, a single
+   column is the honest layout. The fold reads the console's OWN width (container
+   query), so items place themselves; the grid's rows stay the console's. ----- */
+@container talos-console (max-width: 720px) {
+  .console-rail   { grid-area: 1 / 1 / 2 / -1; padding-inline: var(--talos-space-4); gap: var(--talos-space-3); }
+  .console-scope  { grid-area: 2 / 1 / 3 / -1; padding: var(--talos-space-4); gap: var(--talos-space-4); }
+  .console-aside  {
+    grid-area: 3 / 1 / 4 / -1;
+    box-sizing: border-box;
+    max-height: var(--talos-console-aside-max, 7rem);
+    padding: var(--talos-space-4);
+    border-left: 0;
+    border-top: 1px solid var(--talos-edge-subtle);
+  }
+  .console-status { grid-area: 4 / 1 / 5 / -1; padding-inline: var(--talos-space-4); }
+  .console-cell--wide,
+  .console-cell--full { grid-column: auto; }
+}
+
+/* A viewport console on a phone becomes one scrolling column: the page is the
+   honest scroller there. Viewport width is the console's width, so a media
+   query is exact for this variant (and only this one — an embedded console
+   keeps the height its container gives it). */
 @media (max-width: 720px) {
-  .talos-console,
   .talos-console--viewport {
-    grid-template-areas:
-      "rail"
-      "scope"
-      "aside"
-      "status";
-    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto auto;
     height: auto;
     min-height: 100dvh;
   }
-  .console-scope { overflow: visible; }
-  .console-aside {
-    border-left: 0;
-    border-top: 1px solid var(--talos-edge-subtle);
-  }
-  .console-cell--wide,
-  .console-cell--full { grid-column: auto; }
+  .talos-console--viewport .console-scope { overflow: visible; }
+  .talos-console--viewport .console-aside { max-height: none; overflow: visible; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-status__stat--live::before,
+  .console-status__stat[data-live]:not([data-live="false"])::before,
+  .console-cell--live .console-cell__title::after { animation: none; }
+  .console-cell { transition: none; }
 }
 
 } /* @layer components.talos */

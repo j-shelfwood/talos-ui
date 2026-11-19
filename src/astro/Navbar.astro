@@ -8,6 +8,11 @@
  * (or all.css) in addition to talos.css. The compact-on-scroll + TOC behaviour
  * ships as the inline script below (idempotent, Astro view-transition aware).
  *
+ * Narrow screens (≤ 640px): the brand-left nav swaps its link strip for a
+ * "Menu" disclosure button that opens the links as a card under the pill (the
+ * same script; without it the strip scrolls sideways instead, so every link
+ * stays reachable). The centered variant has no link strip and is unaffected.
+ *
  * Fully data-driven; every visual knob is a CSS custom property on the layer
  * (see talos-marketing.css), so theming is done in CSS, not props.
  *
@@ -45,6 +50,8 @@ interface Props {
   toc?: TocHeading[];
   /** Label for the TOC toggle (default "On this page"). */
   tocLabel?: string;
+  /** Label for the narrow-screen links disclosure (default "Menu"). */
+  menuLabel?: string;
   /** Home link the brand points at. */
   homeHref?: string;
   /** Centre the brand mark with the left/TOC affordances flanking it
@@ -63,6 +70,7 @@ const {
   active,
   toc,
   tocLabel = "On this page",
+  menuLabel = "Menu",
   homeHref = "/",
   centered = false,
   class: className,
@@ -81,6 +89,9 @@ const hasBrandSlot = Astro.slots.has("brand");
 const hasLeftSlot = Astro.slots.has("left");
 const hasRightSlot = Astro.slots.has("right");
 const hasTocIcon = Astro.slots.has("toc-icon");
+// The narrow-screen disclosure only exists for the brand-left nav with links.
+const hasMenu = links.length > 0 && !centered;
+const menuId = `talos-navbar-menu-${Math.random().toString(36).slice(2, 8)}`;
 ---
 
 <header class:list={["talos-navbar", { "talos-navbar--centered": centered }, className]} data-compact="false" {...rest}>
@@ -110,6 +121,18 @@ const hasTocIcon = Astro.slots.has("toc-icon");
           ))}
         </nav>
 
+        {hasMenu && (
+          <button
+            class="talos-navbar-menu-button"
+            type="button"
+            aria-expanded="false"
+            aria-controls={menuId}
+          >
+            <span class="talos-nav-text">{menuLabel}</span>
+            <span class="talos-navbar-menu-glyph" aria-hidden="true"></span>
+          </button>
+        )}
+
         {hasRightSlot && <slot name="right" />}
 
         {hasToc && (
@@ -138,6 +161,27 @@ const hasTocIcon = Astro.slots.has("toc-icon");
   {/* The TOC dropdown lives OUTSIDE the pill: the pill's notch clip-path
        would otherwise clip this panel to the pill bounds. It's positioned
        under the navbar via talos-marketing.css. */}
+  {/* Narrow-screen links card: outside the pill for the same clip-path reason
+       as the TOC. Hidden (display:none) above 640px, and until the script has
+       bound, so it is never a second visible nav. */}
+  {hasMenu && (
+    <nav class="talos-chamfer talos-navbar-menu" id={menuId} aria-label={menuLabel}>
+      <ul class="talos-navbar-menu-list">
+        {links.map((l) => (
+          <li>
+            <a
+              class="talos-navbar-menu-link"
+              href={l.href}
+              aria-current={isActive(l) ? "page" : undefined}
+            >
+              {l.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )}
+
   {hasToc && (
     <div class="talos-toc-content" id="talos-toc-content">
       <ul class="talos-toc-list">
@@ -166,6 +210,8 @@ const hasTocIcon = Astro.slots.has("toc-icon");
         const pill = nav.querySelector<HTMLElement>(".talos-navbar-pill");
         const tocBtn = nav.querySelector<HTMLElement>(".talos-toc-button");
         const tocContent = nav.querySelector<HTMLElement>(".talos-toc-content");
+        const menuBtn = nav.querySelector<HTMLElement>(".talos-navbar-menu-button");
+        const menu = nav.querySelector<HTMLElement>(".talos-navbar-menu");
 
         // --- compact-on-scroll
         const onScroll = () => {
@@ -174,6 +220,32 @@ const hasTocIcon = Astro.slots.has("toc-icon");
         };
         addEventListener("scroll", onScroll, { passive: true });
         onScroll();
+
+        // --- narrow-screen links disclosure (CSS shows it only ≤ 640px)
+        if (menuBtn && menu) {
+          const isOpen = () => nav.classList.contains("talos-navbar--menu-open");
+          const closeMenu = (refocus = false) => {
+            if (!isOpen()) return;
+            nav.classList.remove("talos-navbar--menu-open");
+            menuBtn.setAttribute("aria-expanded", "false");
+            if (refocus) menuBtn.focus();
+          };
+          menuBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (isOpen()) return closeMenu();
+            nav.classList.add("talos-navbar--menu-open");
+            menuBtn.setAttribute("aria-expanded", "true");
+          });
+          addEventListener("scroll", () => closeMenu(), { passive: true });
+          document.addEventListener("click", (e) => {
+            if (!menu.contains(e.target as Node)) closeMenu();
+          });
+          nav.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && isOpen()) closeMenu(true);
+          });
+          // Crossing back over the breakpoint must not leave a stale open state.
+          matchMedia("(min-width: 641px)").addEventListener("change", () => closeMenu());
+        }
 
         if (!tocBtn || !tocContent || !pill) return;
 

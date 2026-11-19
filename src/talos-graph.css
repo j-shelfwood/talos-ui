@@ -23,6 +23,14 @@
 
    Set --talos-graph-zoom (the current scale) on .talos-graph to keep the dot
    grid in world space; --talos-graph-x / --talos-graph-y shift it with the pan.
+   --talos-graph-panel-top is where the side panels start (default 4rem, one
+   toolbar row plus a gap).
+
+   The graph is a size container (`talos-graph`): at ≤ 640px of its own width
+   the chrome re-docks for a phone — the toolbar scrolls sideways on one row,
+   the start panel hangs full-width under it, the end panel sits full-width
+   above the scrubber, the zoom cluster moves to the right edge and the minimap
+   is dropped (the canvas itself is the overview at that size).
    ========================================================================== */
 
 .talos-graph {
@@ -30,6 +38,7 @@
   --talos-graph-x: 0px;
   --talos-graph-y: 0px;
   --_cell: calc(var(--talos-grid-cell) * var(--talos-graph-zoom));
+  container: talos-graph / inline-size;
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -132,16 +141,22 @@
   --_fill: hsl(0 0% 3% / 0.95);
   --_edge: var(--talos-hud-edge);
   position: absolute;
-  top: 3.5rem;
+  top: var(--talos-graph-panel-top, 4rem);
   right: var(--talos-space-3);
   bottom: calc(var(--talos-space-3) + 13.5rem);
   z-index: 4;
   display: flex;
   flex-direction: column;
-  width: min(22rem, 40vw);
+  width: min(22rem, 40cqi);
   overflow: hidden;
 }
-.talos-graph__panel > .talos-graph__panel-body { flex: 1; overflow-y: auto; }
+.talos-graph__panel > .talos-graph__panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--talos-scrollbar-thumb, hsl(0 0% 100% / 0.18)) var(--talos-scrollbar-track, transparent);
+}
 .talos-graph__panel[data-collapsed] { bottom: auto; width: auto; }
 .talos-graph__panel[data-collapsed] > .talos-graph__panel-body { display: none; }
 /* The same panel docked on the left edge, below the toolbar and clear of the zoom cluster. */
@@ -168,6 +183,55 @@
 .talos-graph__panel-head > .talos-hud { flex: 1; font-size: var(--talos-text-xs); }
 .talos-graph__panel-head:focus-visible { outline: 1px solid var(--talos-foreground); outline-offset: -3px; }
 .talos-graph__panel[data-collapsed] > .talos-graph__panel-head { border-bottom: 0; }
+
+/* --- Narrow: re-dock the chrome by the graph's own width ---------------------- */
+@container talos-graph (max-width: 640px) {
+  .talos-graph__toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    pointer-events: auto;
+    padding-bottom: 2px; /* keeps chamfer hairlines inside the scroll clip */
+  }
+  .talos-graph__toolbar::-webkit-scrollbar { display: none; }
+  .talos-graph__toolbar > * { flex: none; }
+  .talos-graph__panel,
+  .talos-graph__panel--start {
+    left: var(--talos-space-3);
+    right: var(--talos-space-3);
+    width: auto;
+  }
+  /* start panel: hangs under the toolbar, at most 40% of the stage */
+  .talos-graph__panel--start {
+    top: var(--talos-graph-panel-top, 4rem);
+    bottom: auto;
+    max-height: 40%;
+  }
+  /* end panel: sits on the scrubber, at most 45% of the stage */
+  .talos-graph__panel:not(.talos-graph__panel--start) {
+    top: auto;
+    bottom: calc(var(--talos-space-3) * 2 + 3.25rem);
+    max-height: 45%;
+  }
+  .talos-graph__panel[data-collapsed] { width: auto; }
+  .talos-graph__zoom {
+    left: auto;
+    right: var(--talos-space-3);
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+  }
+  .talos-graph__minimap { display: none; }
+  .talos-graph__scrubber {
+    gap: var(--talos-space-2);
+    padding: 0 var(--talos-space-3);
+  }
+  .talos-graph__scrubber > .talos-range { min-width: 4rem; }
+  .talos-graph__time {
+    min-width: 0;
+    font-size: var(--talos-text-2xs);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .talos-graph * { scroll-behavior: auto; }

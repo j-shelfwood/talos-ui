@@ -133,9 +133,14 @@
   display: inline-flex;
   align-items: center;
   gap: var(--_gap);
+  min-width: 0;
   /* Collapses to a zero-width track in compact (rule below) — max-width
-     animates so the pill reclaims the space, not just hides the labels. */
+     animates so the pill reclaims the space, not just hides the labels.
+     The padding/negative-margin pair widens the clip box by the focus ring's
+     reach without moving anything, so a link's ring is not cut off. */
   overflow: hidden;
+  padding: 5px;
+  margin: -5px;
   transition: max-width 0.4s var(--talos-ease-out, cubic-bezier(0, 0, 0.2, 1));
 }
 
@@ -179,6 +184,8 @@
 }
 .talos-navbar:not(.talos-navbar--centered)[data-compact="true"]:not(.talos-navbar--toc-open) .talos-navbar-links {
   max-width: 0;
+  padding-inline: 0;
+  margin-inline: 0;
 }
 
 /* ============================================================================
@@ -368,6 +375,142 @@
 .talos-toc-list a[data-depth="3"] { padding-left: 1.25rem; }
 
 /* ----------------------------------------------------------------------------
+   NARROW SCREENS (≤ 640px) — the brand-left link strip does not fit a phone.
+   With the Navbar script bound, the strip is replaced by a "Menu" disclosure
+   that opens the links as a chamfered card under the pill (outside the pill,
+   like the TOC, so the notch clip-path does not cut it). Without the script
+   the strip scrolls sideways (hidden scrollbar), so every link stays reachable.
+   -------------------------------------------------------------------------- */
+.talos-navbar-menu-button,
+.talos-navbar-menu { display: none; }
+
+.talos-navbar-menu-button {
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  font-family: var(--talos-font-display);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-muted-foreground);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+.talos-navbar-menu-button:hover,
+.talos-navbar--menu-open .talos-navbar-menu-button { color: var(--talos-foreground); }
+.talos-navbar-menu-button:focus-visible {
+  outline: 1px solid var(--talos-edge-strong, hsl(0 0% 100% / 0.4));
+  outline-offset: 3px;
+}
+/* Three hairlines that fold to two crossed ones when open. */
+.talos-navbar-menu-glyph {
+  position: relative;
+  width: 0.9rem;
+  height: 0.6rem;
+  border-block: 1px solid currentColor;
+  transition: border-color 200ms ease;
+}
+.talos-navbar-menu-glyph::before,
+.talos-navbar-menu-glyph::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  margin-top: -0.5px;
+  background: currentColor;
+  transition: transform 200ms var(--talos-ease-out, cubic-bezier(0, 0, 0.2, 1));
+}
+.talos-navbar--menu-open .talos-navbar-menu-glyph { border-color: transparent; }
+.talos-navbar--menu-open .talos-navbar-menu-glyph::before { transform: rotate(45deg); }
+.talos-navbar--menu-open .talos-navbar-menu-glyph::after { transform: rotate(-45deg); }
+
+.talos-chamfer.talos-navbar-menu {
+  --_fill: var(--talos-hud-fill, hsl(0 0% 5%));
+  --_tr: var(--talos-chamfer-btn);
+  --_bl: var(--talos-chamfer-btn);
+}
+.talos-navbar-menu {
+  position: absolute;
+  top: 4.25rem;
+  left: 50%;
+  width: min(20rem, calc(100vw - 2rem));
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  visibility: hidden; /* closed links take no focus */
+  transform: translateX(-50%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition:
+    max-height 300ms ease,
+    opacity 200ms ease,
+    visibility 0s linear 300ms;
+}
+.talos-navbar--menu-open .talos-navbar-menu {
+  max-height: min(24rem, calc(100dvh - 6rem));
+  opacity: 1;
+  visibility: visible;
+  overflow-y: auto;
+  transition: max-height 300ms ease, opacity 200ms ease;
+}
+.talos-navbar-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+}
+.talos-navbar-menu-link {
+  position: relative;
+  display: block;
+  padding: 0.75rem 0.75rem;
+  font-family: var(--talos-font-display);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: var(--talos-tracking-hud-tight);
+  color: var(--talos-muted-foreground);
+  text-decoration: none;
+  transition: color 200ms ease, background 200ms ease;
+}
+.talos-navbar-menu-link:hover,
+.talos-navbar-menu-link:focus-visible {
+  color: var(--talos-foreground);
+  background: var(--talos-surface-2, hsl(0 0% 7%));
+}
+.talos-navbar-menu-link:focus-visible {
+  outline: 1px solid var(--talos-edge-strong, hsl(0 0% 100% / 0.4));
+  outline-offset: -1px;
+}
+.talos-navbar-menu-link[aria-current="page"] { color: var(--talos-foreground); }
+.talos-navbar-menu-link[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6rem;
+  bottom: 0.6rem;
+  width: 2px;
+  background: var(--talos-foreground);
+}
+
+@media (max-width: 640px) {
+  /* no-script fallback: a sideways-scrolling strip */
+  .talos-navbar-links {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .talos-navbar-links::-webkit-scrollbar { display: none; }
+  .talos-navbar-inner { min-width: 0; }
+  .talos-navbar-pill { padding-inline: 1.25rem; }
+
+  /* script bound: the disclosure replaces the strip */
+  .talos-navbar[data-talos-navbar-bound]:not(.talos-navbar--centered) .talos-navbar-links { display: none; }
+  .talos-navbar[data-talos-navbar-bound]:not(.talos-navbar--centered) .talos-navbar-menu-button { display: inline-flex; }
+  .talos-navbar[data-talos-navbar-bound]:not(.talos-navbar--centered) .talos-navbar-menu { display: block; }
+}
+
+/* ----------------------------------------------------------------------------
    FOOTER — three-column marketing footer (links · brand · contact) over a
    GlassPanel, with a hairline copyright rule. Collapses to one column < 720px.
    -------------------------------------------------------------------------- */
@@ -451,7 +594,12 @@
   .talos-nav-text,
   .talos-brand,
   .talos-brand-word,
-  .talos-toc-content { transition: none; }
+  .talos-toc-content,
+  .talos-navbar-menu,
+  .talos-navbar-menu-button,
+  .talos-navbar-menu-glyph,
+  .talos-navbar-menu-glyph::before,
+  .talos-navbar-menu-glyph::after { transition: none; }
 }
 
 } /* @layer components.talos */
