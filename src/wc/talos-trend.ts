@@ -20,7 +20,9 @@
  * Attributes:
  *   data           initial series, comma/space separated    (declarative seed)
  *   value          push this as the newest sample when it changes (reactive)
- *   points         max samples kept in the window           (default 48)
+ *   cap            max samples kept in the window           (default 48)
+ *   points         deprecated alias of `cap` (warns once); in <talos-spark>
+ *                  `points` is the data series, so `cap` is the shared name
  *   min / max      vertical domain; "auto" tracks the buffer (default auto)
  *   warn / crit    band thresholds on the CURRENT value     (optional)
  *   invert         low = bad (band trips as value FALLS)    (flag)
@@ -38,9 +40,11 @@ import { bandOf, num, type Band } from "./bands";
 import { parseNumberList } from "./parse";
 import { replaceTextWithUnit } from "./render";
 
+let pointsWarned = false;
+
 export class TalosTrend extends HTMLElement {
   static get observedAttributes() {
-    return ["data", "value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"];
+    return ["data", "value", "cap", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"];
   }
 
   private root: ShadowRoot;
@@ -137,8 +141,20 @@ export class TalosTrend extends HTMLElement {
   private observer?: MutationObserver;
   private lastValueAttr: string | null = null;
 
+  /** The window size: `cap`, else the deprecated `points` alias. */
+  private cap(): number {
+    if (!this.hasAttribute("cap") && this.hasAttribute("points")) {
+      if (!pointsWarned) {
+        pointsWarned = true;
+        console.warn('<talos-trend> `points` is deprecated; use `cap` (the window size).');
+      }
+      return Math.max(2, num(this, "points", 48));
+    }
+    return Math.max(2, num(this, "cap", 48));
+  }
+
   private capBuffer(): void {
-    const cap = Math.max(2, num(this, "points", 48));
+    const cap = this.cap();
     if (this.buf.length > cap) this.buf = this.buf.slice(-cap);
   }
 
@@ -176,7 +192,7 @@ export class TalosTrend extends HTMLElement {
     this.observer = new MutationObserver((records) => {
       const changed = new Set(records.map((r) => r.attributeName));
       if (changed.has("data")) this.resetBufferFromData();
-      if (changed.has("points")) this.capBuffer();
+      if (changed.has("cap") || changed.has("points")) this.capBuffer();
       const valueChanged = changed.has("value");
       if (valueChanged) {
         const v = this.getAttribute("value");
@@ -191,7 +207,7 @@ export class TalosTrend extends HTMLElement {
     // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
     // unfiltered observer would loop on its own write-backs.
     this.observer.observe(this, {
-      attributeFilter: ["data", "value", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"],
+      attributeFilter: ["data", "value", "cap", "points", "min", "max", "warn", "crit", "invert", "width", "height", "fill", "label", "unit"],
     });
   }
 
@@ -202,7 +218,7 @@ export class TalosTrend extends HTMLElement {
 
   /** Append a sample and scroll the window. Preferred entry for streams. */
   push(value: number): void {
-    const cap = Math.max(2, num(this, "points", 48));
+    const cap = this.cap();
     this.buf.push(value);
     while (this.buf.length > cap) this.buf.shift();
     // Render synchronously. A one-shot requestAnimationFrame coalesce
