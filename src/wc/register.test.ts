@@ -12,8 +12,11 @@ function installRegistry() {
   const registry = new Map<string, CustomElementConstructor>();
   const calls: string[] = [];
 
+  // Keep the real HTMLElement when the DOM preload provides one: the component
+  // modules imported here are cached and shared with the DOM tests, so they must
+  // extend the real class, not a stub.
   (globalThis as typeof globalThis & { HTMLElement: typeof HTMLElement }).HTMLElement =
-    class {} as typeof HTMLElement;
+    originalHTMLElement ?? (class {} as typeof HTMLElement);
   (globalThis as typeof globalThis & { customElements: CustomElementsStub }).customElements = {
     get(name: string) {
       return registry.get(name);

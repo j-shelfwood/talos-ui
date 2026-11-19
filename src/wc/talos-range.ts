@@ -40,8 +40,9 @@
  *   unit           appended to the readout              (optional)
  *   width          px                                   (default 200)
  */
-import { num, prefersReducedMotion, type Band } from "./bands";
+import { BAND_TOKENS_CSS, bandColorVar, num, prefersReducedMotion, type Band } from "./bands";
 import { setMeterA11y } from "./a11y";
+import { approach, FrameLoop } from "./loop";
 import { replaceTextWithUnit } from "./render";
 
 export class TalosRange extends HTMLElement {
@@ -59,7 +60,12 @@ export class TalosRange extends HTMLElement {
   private readout!: HTMLElement;
   private caption!: HTMLElement;
 
-  private frame = 0;
+  /** Eases the marker toward the live value; stops once it arrives. */
+  private ease = new FrameLoop(() => {
+    this.shown = approach(this.shown, num(this, "value", this.shown));
+    this.drawMarker();
+    return this.shown !== num(this, "value", this.shown);
+  });
   private shown = 0;
 
   constructor() {
@@ -68,9 +74,7 @@ export class TalosRange extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_track: var(--talos-edge-subtle, hsl(0 0% 100% / 0.1));
           --_c: var(--_nominal);
           --_h: 0.5rem;
@@ -179,38 +183,19 @@ export class TalosRange extends HTMLElement {
         "warn", "crit", "label", "unit", "width",
       ],
     });
-    // Single persistent rAF eases the marker toward the live target (see
-    // talos-gauge: per-mutation tweens deadlocked under rapid updates).
-    this.startEase();
   }
 
   disconnectedCallback(): void {
-    cancelAnimationFrame(this.frame);
+    this.ease.stop();
     this.observer?.disconnect();
   }
 
-  /** Render immediately from the true value (colour + readout exact at once). */
+  /** Render immediately from the true value (colour + readout exact at once),
+   *  then ease the marker toward it (see talos-gauge). */
   private update(): void {
     if (prefersReducedMotion()) this.shown = num(this, "value", this.shown);
     this.render();
-  }
-
-  /** Persistent rAF easing `shown` toward the live target each frame. */
-  private startEase(): void {
-    cancelAnimationFrame(this.frame);
-    const loop = () => {
-      const target = num(this, "value", this.shown);
-      const diff = target - this.shown;
-      if (Math.abs(diff) > 0.5) {
-        this.shown += diff * 0.18;
-        this.render();
-      } else if (this.shown !== target) {
-        this.shown = target;
-        this.render();
-      }
-      this.frame = requestAnimationFrame(loop);
-    };
-    this.frame = requestAnimationFrame(loop);
+    if (this.shown !== num(this, "value", this.shown)) this.ease.start();
   }
 
   /**
@@ -262,9 +247,7 @@ export class TalosRange extends HTMLElement {
     // the band never lags the data (see talos-gauge for the rationale).
     const target = num(this, "value", this.shown);
     const band = this.band(target, min, max);
-    const bandVar =
-      band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
-    this.style.setProperty("--_c", `var(${bandVar})`);
+    this.style.setProperty("--_c", `var(${bandColorVar(band)})`);
 
     // The tolerance band — drawn only when both bounds are present.
     const low = this.getAttribute("low");
@@ -281,8 +264,7 @@ export class TalosRange extends HTMLElement {
       this.bandEl.classList.remove("on");
     }
 
-    // The marker — tweened position from `shown`.
-    this.marker.style.left = `${(this.frac(this.shown, min, max) * 100).toFixed(2)}%`;
+    this.drawMarker();
 
     // Optional setpoint tick.
     const sp = this.getAttribute("setpoint");
@@ -309,5 +291,12 @@ export class TalosRange extends HTMLElement {
       min,
       max,
     });
+  }
+
+  /** Per-frame draw: only the eased marker position. */
+  private drawMarker(): void {
+    const min = num(this, "min", 0);
+    const max = num(this, "max", 100);
+    this.marker.style.left = `${(this.frac(this.shown, min, max) * 100).toFixed(2)}%`;
   }
 }

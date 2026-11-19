@@ -17,17 +17,25 @@
  *   warn / crit    band thresholds; also drawn as ticks (optional)
  *   label          caption above the bar                (optional)
  *   unit           appended to the readout              (optional)
- *   width          px; height tracks via --_h           (default 200)
+ *   width          px; height tracks via --_h           (default 200; ignored
+ *                  with `compact`, which fills its container or --talos-meter-w)
  *   ticks          if present, draw warn/crit tick marks (default on when
  *                  warn/crit set; pass ticks="off" to suppress)
+ *   compact        bare micro-bar, no caption/readout chrome (flag)
+ *
+ * A value outside [min, max] fills to the end stop, but the readout and aria
+ * still state the true value and the host carries `data-range="over|under"`.
  */
-import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import {
+  BAND_TOKENS_CSS, bandColorVar, bandOf, markRange, num, prefersReducedMotion, rangeState, type Band,
+} from "./bands";
 import { setMeterA11y } from "./a11y";
+import { approach, FrameLoop } from "./loop";
 import { replaceTextWithUnit } from "./render";
 
 export class TalosMeter extends HTMLElement {
   static get observedAttributes() {
-    return ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "width", "ticks"];
+    return ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "width", "ticks", "compact"];
   }
 
   private root: ShadowRoot;
@@ -36,8 +44,15 @@ export class TalosMeter extends HTMLElement {
   private readout!: HTMLElement;
   private caption!: HTMLElement;
 
-  private frame = 0;
   private shown = 0;
+  private min = 0;
+  private max = 100;
+  /** Eases the fill toward the live value; stops once it arrives. */
+  private ease = new FrameLoop(() => {
+    this.shown = approach(this.shown, num(this, "value", this.shown));
+    this.drawFill();
+    return this.shown !== num(this, "value", this.shown);
+  });
 
   constructor() {
     super();
@@ -45,9 +60,7 @@ export class TalosMeter extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_track: var(--talos-edge-subtle, hsl(0 0% 100% / 0.1));
           --_c: var(--_nominal);
           --_h: 0.5rem;
@@ -149,94 +162,80 @@ export class TalosMeter extends HTMLElement {
     // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
     // unfiltered observer would loop on its own write-backs.
     this.observer.observe(this, {
-      attributeFilter: ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "width", "ticks"],
+      attributeFilter: ["value", "min", "max", "warn", "crit", "invert", "label", "unit", "width", "ticks", "compact"],
     });
-    // Single persistent rAF eases the fill toward the live target (see
-    // talos-gauge: per-mutation tweens deadlocked under rapid updates).
-    this.startEase();
   }
 
   disconnectedCallback(): void {
-    cancelAnimationFrame(this.frame);
+    this.ease.stop();
     this.observer?.disconnect();
   }
 
-  /** Render immediately from the true value (colour + readout exact at once). */
+  /** Render immediately from the true value (colour + readout exact at once),
+   *  then ease the fill toward it (see talos-gauge). */
   private update(): void {
     if (prefersReducedMotion()) this.shown = num(this, "value", this.shown);
     this.render();
-  }
-
-  /** Persistent rAF easing `shown` toward the live target each frame. */
-  private startEase(): void {
-    cancelAnimationFrame(this.frame);
-    const loop = () => {
-      const target = num(this, "value", this.shown);
-      const diff = target - this.shown;
-      if (Math.abs(diff) > 0.5) {
-        this.shown += diff * 0.18;
-        this.render();
-      } else if (this.shown !== target) {
-        this.shown = target;
-        this.render();
-      }
-      this.frame = requestAnimationFrame(loop);
-    };
-    this.frame = requestAnimationFrame(loop);
+    if (this.shown !== num(this, "value", this.shown)) this.ease.start();
   }
 
   private band(value: number): Band {
     return bandOf(this, value);
   }
 
+  /** Full render on connect and attribute change, never per animation frame. */
   private render(): void {
-    const width = num(this, "width", 200);
-    const min = num(this, "min", 0);
-    const max = num(this, "max", 100);
-    this.style.width = `${width}px`;
+    const min = (this.min = num(this, "min", 0));
+    const max = (this.max = num(this, "max", 100));
+    // `compact` fills its container (or --talos-meter-w); an inline width would
+    // override that stylesheet rule, so it is only written for the full meter.
+    if (this.hasAttribute("compact")) this.style.removeProperty("width");
+    else this.style.width = `${num(this, "width", 200)}px`;
 
-    // LENGTH uses the tweening `shown`; COLOUR + readout use the true value so
-    // the band never lags the data (see talos-gauge for the rationale).
-    const clamped = Math.max(min, Math.min(max, this.shown));
-    const frac = max > min ? (clamped - min) / (max - min) : 0;
-    const target = Math.max(min, Math.min(max, num(this, "value", this.shown)));
-
-    const band = this.band(target);
-    const bandVar =
-      band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
-    this.style.setProperty("--_c", `var(${bandVar})`);
-
-    this.fill.style.transform = `scaleX(${frac})`;
+    // COLOUR + readout use the true value so the band never lags the data; the
+    // fill LENGTH eases from `shown` (see talos-gauge for the rationale).
+    const value = num(this, "value", this.shown);
+    const band = this.band(value);
+    const range = rangeState(value, min, max);
+    this.style.setProperty("--_c", `var(${bandColorVar(band)})`);
+    markRange(this, range);
+    this.drawFill();
 
     // Threshold ticks on the scale itself.
-    const showTicks = this.getAttribute("ticks") !== "off";
-    this.ticksEl.innerHTML = "";
-    if (showTicks) {
+    const ticks: HTMLElement[] = [];
+    if (this.getAttribute("ticks") !== "off") {
       for (const attr of ["warn", "crit"]) {
-        const raw = this.getAttribute(attr);
-        if (raw === null) continue;
-        const v = parseFloat(raw);
+        const v = num(this, attr, NaN);
         if (!Number.isFinite(v)) continue;
         const t = max > min ? (v - min) / (max - min) : 0;
         const tick = document.createElement("div");
         tick.className = "tick";
         tick.style.left = `${(t * 100).toFixed(2)}%`;
-        this.ticksEl.appendChild(tick);
+        ticks.push(tick);
       }
     }
+    this.ticksEl.replaceChildren(...ticks);
 
     const unit = this.getAttribute("unit") ?? "";
-    const display = Math.round(target).toString();
+    const display = Math.round(value).toString();
     replaceTextWithUnit(this.readout, display, unit);
     this.caption.textContent = this.getAttribute("label") ?? "";
 
-    const lbl = this.getAttribute("label");
+    const over = range ? `, ${range} range` : "";
     setMeterA11y(this, {
-      label: lbl,
-      summary: `${display}${unit} — ${band}`,
-      value: Math.round(num(this, "value", 0)),
+      label: this.getAttribute("label"),
+      summary: `${display}${unit} — ${band}${over}`,
+      value: Math.round(value),
       min,
       max,
     });
+  }
+
+  /** Per-frame draw: only the eased fill length. */
+  private drawFill(): void {
+    const { min, max } = this;
+    const clamped = Math.max(min, Math.min(max, this.shown));
+    const frac = max > min ? (clamped - min) / (max - min) : 0;
+    this.fill.style.transform = `scaleX(${frac})`;
   }
 }

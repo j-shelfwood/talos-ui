@@ -29,8 +29,9 @@
  * invert semantics to gauge/meter/trend; a starved link (low throughput as a
  * symptom) reads red via `invert`.
  */
-import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import { BAND_TOKENS_CSS, bandColorVar, bandOf, num, prefersReducedMotion, type Band } from "./bands";
 import { setImageA11y } from "./a11y";
+import { FrameLoop, watchVisibility } from "./loop";
 
 export class TalosFlow extends HTMLElement {
   static get observedAttributes() {
@@ -42,9 +43,13 @@ export class TalosFlow extends HTMLElement {
   private dash!: SVGPathElement;
   private chevrons!: SVGGElement;
 
-  private raf = 0;
   private offset = 0;
   private last = 0;
+  private visible = true;
+  private unwatch?: () => void;
+  /** Dash travel. Runs only while something flows (rate > 0), motion is
+   *  allowed and the element is on screen; render() restarts it on change. */
+  private travel = new FrameLoop((now) => this.tick(now));
 
   constructor() {
     super();
@@ -52,9 +57,7 @@ export class TalosFlow extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_idle: var(--talos-edge-default, hsl(0 0% 100% / 0.18));
           --_c: var(--_nominal);
 
@@ -77,30 +80,35 @@ export class TalosFlow extends HTMLElement {
           vector-effect: non-scaling-stroke;
           /* colour snaps to band (state must not lag); speed conveys rate */
         }
-        .chev { fill: none; stroke: var(--_c); stroke-width: 1.5; display: none; }
+        /* The group is hidden until the reduced-motion fallback shows it; the
+           polylines inside carry their own class so this rule never hides them. */
+        .chevrons { display: none; }
+        .chevron { fill: none; stroke: var(--_c); stroke-width: 1.5; }
       </style>
       <svg part="svg">
         <path class="base" part="base"></path>
         <path class="dash" part="dash"></path>
-        <g class="chev" part="chevrons"></g>
+        <g class="chevrons" part="chevrons"></g>
       </svg>
     `;
     this.base = this.root.querySelector(".base")!;
     this.dash = this.root.querySelector(".dash")!;
-    this.chevrons = this.root.querySelector(".chev")!;
+    this.chevrons = this.root.querySelector(".chevrons")!;
   }
 
   private observer?: MutationObserver;
 
   connectedCallback(): void {
+    this.unwatch = watchVisibility(this, (visible) => {
+      this.visible = visible;
+      this.syncTravel();
+    });
     this.render();
-    this.tick(performance.now());
     // Reactivity is driven by a filtered MutationObserver (not
     // attributeChangedCallback): render writes role/aria-* back onto the host,
     // and the observer's attributeFilter excludes those, so one mechanism
     // handles inputs without looping on its own writes.
-    // (Dash speed already updates live in the rAF tick; this keeps the band
-    // colour / geometry in sync when attributes change.)
+    // render() also (re)starts or stops the dash travel loop.
     this.observer = new MutationObserver(() => this.render());
     // attributeFilter REQUIRED — render() writes role/aria-* on the host; an
     // unfiltered observer would loop on its own write-backs.
@@ -110,8 +118,23 @@ export class TalosFlow extends HTMLElement {
   }
 
   disconnectedCallback(): void {
-    cancelAnimationFrame(this.raf);
+    this.travel.stop();
+    this.unwatch?.();
     this.observer?.disconnect();
+  }
+
+  /** Whether the dash should be travelling right now. */
+  private moving(): boolean {
+    return this.isConnected && this.visible && num(this, "rate", 0) > 0 && !prefersReducedMotion();
+  }
+
+  private syncTravel(): void {
+    if (this.moving()) {
+      if (!this.travel.running) this.last = 0; // no dt jump after a pause
+      this.travel.start();
+    } else {
+      this.travel.stop();
+    }
   }
 
   private band(value: number): Band {
@@ -146,9 +169,7 @@ export class TalosFlow extends HTMLElement {
 
     const rate = Math.max(0, num(this, "rate", 0));
     const band = this.band(rate);
-    const bandVar =
-      band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
-    this.style.setProperty("--_c", `var(${bandVar})`);
+    this.style.setProperty("--_c", `var(${bandColorVar(band)})`);
 
     // Idle (rate 0) → no travelling stroke at all; the base hairline alone says
     // "connected, nothing flowing".
@@ -162,6 +183,7 @@ export class TalosFlow extends HTMLElement {
     } else {
       this.chevrons.style.display = "none";
     }
+    this.syncTravel();
 
     setImageA11y(this, {
       summary:
@@ -187,24 +209,23 @@ export class TalosFlow extends HTMLElement {
       const a1y = p.y - Math.sin(ang - 0.5) * s;
       const a2x = p.x - Math.cos(ang + 0.5) * s;
       const a2y = p.y - Math.sin(ang + 0.5) * s;
-      g += `<polyline class="chev" points="${a1x.toFixed(1)},${a1y.toFixed(1)} ${p.x.toFixed(1)},${p.y.toFixed(1)} ${a2x.toFixed(1)},${a2y.toFixed(1)}"></polyline>`;
+      g += `<polyline class="chevron" points="${a1x.toFixed(1)},${a1y.toFixed(1)} ${p.x.toFixed(1)},${p.y.toFixed(1)} ${a2x.toFixed(1)},${a2y.toFixed(1)}"></polyline>`;
     }
     this.chevrons.innerHTML = g;
   }
 
-  private tick = (now: number): void => {
+  /** One travel frame; returns whether to keep going. */
+  private tick(now: number): boolean {
+    if (!this.moving()) return false;
     const dt = this.last ? (now - this.last) / 1000 : 0;
     this.last = now;
-
-    if (!prefersReducedMotion()) {
-      const rate = Math.max(0, num(this, "rate", 0));
-      const max = Math.max(1, num(this, "max", 100));
-      // Speed ∝ rate, saturating at max. ~60 dash-units/sec at full rate.
-      const speed = Math.min(rate / max, 1) * 60;
-      const dir = this.hasAttribute("reverse") ? 1 : -1; // negative offset travels forward
-      this.offset += speed * dt * dir;
-      this.dash.style.strokeDashoffset = String(this.offset);
-    }
-    this.raf = requestAnimationFrame(this.tick);
-  };
+    const rate = Math.max(0, num(this, "rate", 0));
+    const max = Math.max(1, num(this, "max", 100));
+    // Speed ∝ rate, saturating at max. ~60 dash-units/sec at full rate.
+    const speed = Math.min(rate / max, 1) * 60;
+    const dir = this.hasAttribute("reverse") ? 1 : -1; // negative offset travels forward
+    this.offset += speed * dt * dir;
+    this.dash.style.strokeDashoffset = String(this.offset);
+    return true;
+  }
 }
