@@ -19,6 +19,7 @@
  *   options      comma-separated list; each "value" or "value:Label"  (required)
  *   value        the selected option value            (default: first option)
  *   label        accessible group label               (optional)
+ *   disabled     no selection by click or keyboard; segments dimmed (flag)
  *
  * Property: el.value (string) — get/set; setting reflects to the attribute.
  * Event:    talos:change — detail = { value } — fired on user selection.
@@ -32,11 +33,13 @@ export interface ToggleOption {
 
 export class TalosToggle extends HTMLElement {
   static get observedAttributes() {
-    return ["options", "value", "label"];
+    return ["options", "value", "label", "disabled"];
   }
 
   private root: ShadowRoot;
   private group!: HTMLElement;
+  /** The options string the current buttons were built from. */
+  private built: string | null = null;
 
   constructor() {
     super();
@@ -82,12 +85,18 @@ export class TalosToggle extends HTMLElement {
           outline: var(--talos-focus-ring-width, 1px) solid var(--talos-focus-ring, hsl(0 0% 100% / 0.9));
           outline-offset: -2px;
         }
+        /* The selected segment is filled with the foreground colour, so a
+           foreground ring on it is invisible: invert it there. */
+        button[aria-checked="true"]:focus-visible { outline-color: var(--_on-fg); }
+        button:disabled { cursor: not-allowed; opacity: 0.45; }
+        button:disabled:hover { color: var(--_muted); }
+        button[aria-checked="true"]:disabled:hover { color: var(--_on-fg); }
       </style>
       <div class="group" part="group" role="radiogroup"></div>`;
     this.group = this.root.querySelector(".group")!;
     this.group.addEventListener("click", (e) => {
       const btn = (e.target as HTMLElement).closest("button");
-      if (btn?.dataset.value != null) this.select(btn.dataset.value);
+      if (btn?.dataset.value != null && !this.disabled) this.select(btn.dataset.value);
     });
     this.group.addEventListener("keydown", this.onKeydown);
   }
@@ -100,6 +109,9 @@ export class TalosToggle extends HTMLElement {
   }
   set value(v: string) { this.setAttribute("value", v); }
 
+  get disabled(): boolean { return this.hasAttribute("disabled"); }
+  set disabled(v: boolean) { this.toggleAttribute("disabled", v); }
+
   private parseOptions(): ToggleOption[] {
     return parseToggleOptions(this.getAttribute("options") ?? "");
   }
@@ -111,6 +123,7 @@ export class TalosToggle extends HTMLElement {
   }
 
   private onKeydown = (e: KeyboardEvent): void => {
+    if (this.disabled) return;
     const options = this.parseOptions();
     if (!options.length) return;
     const currentIndex = Math.max(0, options.findIndex((o) => o.value === this.value));
@@ -162,6 +175,7 @@ export class TalosToggle extends HTMLElement {
     const options = this.parseOptions();
     if (!options.length) {
       this.group.replaceChildren();
+      this.built = null;
       return;
     }
 
@@ -174,20 +188,33 @@ export class TalosToggle extends HTMLElement {
       return;
     }
 
-    this.group.replaceChildren(
-      ...options.map((o) => {
-        const selected = o.value === current;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.setAttribute("part", "segment");
-        btn.setAttribute("role", "radio");
-        btn.dataset.value = o.value;
-        btn.setAttribute("aria-checked", selected ? "true" : "false");
-        btn.tabIndex = selected ? 0 : -1;
-        btn.textContent = o.label;
-        return btn;
-      }),
-    );
+    // Rebuild the buttons only when the option list changes. A value change
+    // updates the existing buttons in place, so the colour transition runs and
+    // focus stays on the focused segment.
+    const key = this.getAttribute("options") ?? "";
+    if (key !== this.built) {
+      this.built = key;
+      this.group.replaceChildren(
+        ...options.map((o) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.setAttribute("part", "segment");
+          btn.setAttribute("role", "radio");
+          btn.dataset.value = o.value;
+          btn.textContent = o.label;
+          return btn;
+        }),
+      );
+    }
+    const disabled = this.disabled;
+    for (const btn of this.group.querySelectorAll<HTMLButtonElement>("button")) {
+      const selected = btn.dataset.value === current;
+      btn.setAttribute("aria-checked", selected ? "true" : "false");
+      btn.tabIndex = selected ? 0 : -1;
+      btn.disabled = disabled;
+    }
+    if (disabled) this.group.setAttribute("aria-disabled", "true");
+    else this.group.removeAttribute("aria-disabled");
 
     const lbl = this.getAttribute("label");
     if (lbl) this.group.setAttribute("aria-label", lbl);

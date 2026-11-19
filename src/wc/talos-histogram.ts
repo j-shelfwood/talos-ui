@@ -1,4 +1,4 @@
-import { num } from "./bands";
+import { BAND_TOKENS_CSS, num } from "./bands";
 import { setImageA11y } from "./a11y";
 
 /**
@@ -42,9 +42,7 @@ export class TalosHistogram extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           display: block;
           width: 100%;
         }

@@ -27,12 +27,20 @@
  *   sweep            arc sweep in degrees (180–300)        (default 240)
  *   size             px square                             (default 160)
  *
+ * A value outside [min, max] pins the needle at the end stop, but the readout
+ * and aria still state the true value and the host carries
+ * `data-range="over"` or `data-range="under"` (style it via the host selector).
+ *
  * Bands are inclusive-from: value >= crit → critical; else value >= warn →
  * warning; else nominal. `warn`/`crit` may be omitted for a single-band gauge.
  */
-import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import {
+  BAND_TOKENS_CSS, bandColorVar, bandOf, markRange, num, prefersReducedMotion, rangeState, type Band,
+} from "./bands";
 import { setMeterA11y } from "./a11y";
+import { approach, FrameLoop } from "./loop";
 import { replaceTextWithUnit } from "./render";
+
 
 export class TalosGauge extends HTMLElement {
   // CONVENTION: every Talos web component declares observedAttributes as a
@@ -52,8 +60,15 @@ export class TalosGauge extends HTMLElement {
   private readout!: HTMLElement;
   private caption!: HTMLElement;
 
-  private frame = 0;
   private shown = 0; // the currently-displayed (eased) value
+  /** Eases `shown` toward the live value; stops once it arrives. */
+  private ease = new FrameLoop(() => {
+    this.shown = approach(this.shown, num(this, "value", this.shown));
+    this.drawNeedle();
+    return this.shown !== num(this, "value", this.shown);
+  });
+  /** Geometry from the last full render, reused by the per-frame needle draw. */
+  private geo = { cx: 0, cy: 0, r: 0, stroke: 0, start: 0, end: 0, min: 0, max: 100, innerR: 0, size: 160 };
 
   constructor() {
     super();
@@ -63,9 +78,7 @@ export class TalosGauge extends HTMLElement {
         :host {
           /* Band colours default to the status tokens; the rendered band sets
              --_c to one of these, and everything that encodes state reads it. */
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_track: var(--talos-edge-subtle, hsl(0 0% 100% / 0.1));
           --_c: var(--_nominal);
 
@@ -153,17 +166,12 @@ export class TalosGauge extends HTMLElement {
     this.shown = num(this, "value", 0);
     this.render();
     // Reactivity via a filtered MutationObserver (not attributeChangedCallback).
-    // render() writes role/aria-* back onto the host every frame; the observe()
+    // render() writes role/aria-* back onto the host on each render; the observe()
     // call below uses an explicit attributeFilter that excludes those, so a
     // single mechanism handles real inputs without looping on its own write-backs
     // (an unfiltered observer would freeze the renderer). This is the pattern
     // the animated instruments share.
     this.observer = new MutationObserver(() => this.update());
-    // Drive a continuous needle ease independent of the observer, so the
-    // displayed value always converges to the attribute even if a mutation
-    // batch is coalesced. rAF reads the live target each frame — no per-change
-    // tween bookkeeping to deadlock.
-    this.startEase();
     // attributeFilter is REQUIRED: render() writes role/aria-* on the host, and
     // an unfiltered observer would catch its own write-backs → infinite loop /
     // frozen renderer. Only observe the real inputs.
@@ -173,36 +181,17 @@ export class TalosGauge extends HTMLElement {
   }
 
   disconnectedCallback(): void {
-    cancelAnimationFrame(this.frame);
+    this.ease.stop();
     this.observer?.disconnect();
   }
 
-  /** Render immediately from the true value (colour + readout are exact at once);
-   *  the needle position eases toward it via startEase(). */
+  /** Render immediately from the true value (colour + readout + aria are exact
+   *  at once), then ease the needle toward it. The ease loop reads the live
+   *  attribute each frame, so a burst of updates retargets one running loop. */
   private update(): void {
     if (prefersReducedMotion()) this.shown = num(this, "value", this.shown);
     this.render();
-  }
-
-  /** A single persistent rAF that eases `shown` toward the live target each
-   *  frame. Self-contained — it reads the attribute live, so no per-mutation
-   *  tween state to cancel/restart (the old approach deadlocked under rapid
-   *  updates). Runs until disconnect. */
-  private startEase(): void {
-    cancelAnimationFrame(this.frame);
-    const loop = () => {
-      const target = num(this, "value", this.shown);
-      const diff = target - this.shown;
-      if (Math.abs(diff) > 0.5) {
-        this.shown += diff * 0.18; // exponential approach, ~frame-rate stable
-        this.render();
-      } else if (this.shown !== target) {
-        this.shown = target;
-        this.render();
-      }
-      this.frame = requestAnimationFrame(loop);
-    };
-    this.frame = requestAnimationFrame(loop);
+    if (this.shown !== num(this, "value", this.shown)) this.ease.start();
   }
 
   /** Which band the value falls in — this is the state, and it drives colour. */
@@ -224,6 +213,8 @@ export class TalosGauge extends HTMLElement {
     return `M ${x0} ${y0} A ${r} ${r} 0 ${large} ${sweep} ${x1} ${y1}`;
   }
 
+  /** Full render: geometry, band colour, readout, keep-out, aria. Runs on
+   *  connect and on attribute change, never per animation frame. */
   private render(): void {
     const size = num(this, "size", 160);
     const min = num(this, "min", 0);
@@ -235,13 +226,11 @@ export class TalosGauge extends HTMLElement {
     const cy = size / 2;
     const r = size / 2 - stroke / 2 - 2;
 
-    // The readout sits just below the dial's geometric centre — the visual
-    // centroid of a bottom-opening arc, where the number reads as the dial's
-    // core rather than crowding the top shoulder. The needle's inner end is
-    // clamped OUTSIDE this box's circumscribed radius (computed below from the
-    // rendered text), so the marker can never cross the number at any value,
-    // sweep, or size. This replaces the old fixed `r*0.52` needle radius that
-    // reached into the number at low values.
+    // The readout sits just below the dial's geometric centre: the visual
+    // centroid of a bottom-opening arc. The needle's inner end is clamped
+    // OUTSIDE this box's circumscribed radius (computed below from the rendered
+    // text), so the marker can never cross the number at any value, sweep, or
+    // size.
     const textCx = cx;
     const textCy = cy + size * 0.08;
 
@@ -251,34 +240,28 @@ export class TalosGauge extends HTMLElement {
     const start = 90 + sweep / 2;
     const end = 90 - sweep / 2;
 
-    // POSITION uses the tweening `shown` (smooth needle motion); COLOUR uses the
-    // true target value so the band never lags the data — the needle may still
-    // be sweeping toward 80 while the colour already says "warning", which is
-    // correct: the state changed the moment the value did.
-    const clamped = Math.max(min, Math.min(max, this.shown));
-    const frac = max > min ? (clamped - min) / (max - min) : 0;
-    const valAngle = start + (end - start) * frac;
-
-    const target = Math.max(min, Math.min(max, num(this, "value", this.shown)));
-    const band = this.band(target);
-    const bandVar =
-      band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
-    this.style.setProperty("--_c", `var(${bandVar})`);
+    // COLOUR and the readout use the TRUE value so the band never lags the data:
+    // the needle may still be sweeping toward 80 while the colour already says
+    // "warning", which is correct, the state changed the moment the value did.
+    // An out-of-domain value is shown as-is and flagged, never silently clamped.
+    const value = num(this, "value", this.shown);
+    const band = this.band(value);
+    const range = rangeState(value, min, max);
+    this.style.setProperty("--_c", `var(${bandColorVar(band)})`);
+    markRange(this, range);
 
     const svg = this.root.querySelector("svg")!;
     svg.setAttribute("width", String(size));
     svg.setAttribute("height", String(size));
     svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
 
-    this.root.querySelector(".track")!.setAttribute("d", this.arcPath(cx, cy, r, start, end));
-    this.root.querySelector(".track")!.setAttribute("stroke-width", String(stroke));
-    this.arc.setAttribute("d", this.arcPath(cx, cy, r, start, valAngle));
+    const track = this.root.querySelector(".track")!;
+    track.setAttribute("d", this.arcPath(cx, cy, r, start, end));
+    track.setAttribute("stroke-width", String(stroke));
     this.arc.setAttribute("stroke-width", String(stroke));
 
     const unit = this.getAttribute("unit") ?? "";
-    // Readout shows the true value (the number is the state, like the colour);
-    // the needle eases toward it. Digital-exact + analog-smooth, as instruments do.
-    const display = Math.round(target).toString();
+    const display = Math.round(value).toString();
     replaceTextWithUnit(this.readout, display, unit);
     this.readout.style.fontSize = `${size * 0.22}px`;
     this.readout.style.left = `${(textCx / size) * 100}%`;
@@ -286,11 +269,9 @@ export class TalosGauge extends HTMLElement {
 
     // KEEP-OUT: reserve a circle (centred on the DIAL centre cx,cy) large enough
     // to enclose the readout box wherever it sits. Because the readout is offset
-    // below centre by (textCy - cy), the radius must reach its FAR corner — half
-    // the text box plus that offset — not just its half-diagonal. The needle's
-    // inner end is then clamped outside this radius, so the marker can never
-    // cross the number at any value, sweep, or size. Falls back to a sound
-    // estimate when layout metrics aren't available yet (first paint / no DOM).
+    // below centre by (textCy - cy), the radius must reach its FAR corner: half
+    // the text box plus that offset. Measured here, once per value change, not
+    // per frame. Falls back to an estimate when layout metrics aren't available.
     const measured = this.readout.getBoundingClientRect();
     const hostRect = this.getBoundingClientRect();
     const scale = hostRect.width > 0 ? size / hostRect.width : 1;
@@ -298,13 +279,35 @@ export class TalosGauge extends HTMLElement {
     const th = (measured.height || size * 0.22) * scale;
     const offset = Math.abs(textCy - cy);
     const keepOut = Math.hypot(tw / 2, th / 2 + offset) + stroke * 0.5;
+    const innerR = Math.min(r - stroke - 2, Math.max(r * 0.52, keepOut));
+
+    this.geo = { cx, cy, r, stroke, start, end, min, max, innerR, size };
+    this.drawNeedle();
+
+    this.caption.textContent = this.getAttribute("label") ?? "";
+
+    const over = range ? `, ${range} range` : "";
+    setMeterA11y(this, {
+      label: this.getAttribute("label"),
+      summary: `${display}${unit} — ${band}${over}`,
+      value: Math.round(value),
+      min,
+      max,
+    });
+  }
+
+  /** Per-frame draw: only the eased needle position (value arc, needle, hub). */
+  private drawNeedle(): void {
+    const { cx, cy, r, stroke, start, end, min, max, innerR, size } = this.geo;
+    const clamped = Math.max(min, Math.min(max, this.shown));
+    const frac = max > min ? (clamped - min) / (max - min) : 0;
+    const valAngle = start + (end - start) * frac;
+
+    this.arc.setAttribute("d", this.arcPath(cx, cy, r, start, valAngle));
 
     // Needle as a short hub-anchored marker pointing at the arc, NOT a full
-    // clock hand. Its inner end is the larger of a fraction of r and the keep-out
-    // radius (so it can never enter the readout zone); its outer end stops short
-    // of the arc. The hub anchors at the same inner point, not the dial centre,
-    // so a long stem never crosses the number.
-    const innerR = Math.min(r - stroke - 2, Math.max(r * 0.52, keepOut));
+    // clock hand. Its inner end sits on the keep-out radius (so it can never
+    // enter the readout zone); its outer end stops short of the arc.
     const [nx0, ny0] = this.point(cx, cy, innerR, valAngle);
     const [nx1, ny1] = this.point(cx, cy, r - stroke, valAngle);
     this.needle.setAttribute("x1", String(nx0));
@@ -316,17 +319,5 @@ export class TalosGauge extends HTMLElement {
     hub.setAttribute("cx", String(nx0));
     hub.setAttribute("cy", String(ny0));
     hub.setAttribute("r", String(Math.max(2.5, size * 0.025)));
-
-    this.caption.textContent = this.getAttribute("label") ?? "";
-
-    const lbl = this.getAttribute("label");
-    const text = `${display}${unit} — ${band}`;
-    setMeterA11y(this, {
-      label: lbl,
-      summary: text,
-      value: Math.round(num(this, "value", 0)),
-      min,
-      max,
-    });
   }
 }

@@ -41,7 +41,8 @@
  * arithmetic the operator has to do in their head. With no target the needle is
  * always nominal — a bearing alone has no "wrong".
  */
-import { num, prefersReducedMotion } from "./bands";
+import { BAND_TOKENS_CSS, num, prefersReducedMotion } from "./bands";
+import { FrameLoop } from "./loop";
 
 /** Normalise any angle into [0, 360). */
 function norm360(deg: number): number {
@@ -68,8 +69,19 @@ export class TalosCompass extends HTMLElement {
   private readout!: HTMLElement;
   private caption!: HTMLElement;
 
-  private frame = 0;
   private shown = 0; // the currently-displayed (eased) heading, may be unwrapped
+  /** Eases the needle the SHORT way round toward the live heading; stops once
+   *  it arrives. The ease runs on the signed shortest delta (350°→10° is +20°,
+   *  not -340°), so the needle never takes the long way past S. */
+  private ease = new FrameLoop(() => {
+    const target = norm360(num(this, "heading", this.shown));
+    const delta = shortestDelta(this.shown, target);
+    this.shown = Math.abs(delta) > 0.5 ? norm360(this.shown + delta * 0.18) : target;
+    this.drawNeedle();
+    return this.shown !== target;
+  });
+  /** Dial geometry from the last full render, reused by the per-frame draw. */
+  private geo = { cx: 0, cy: 0, r: 0, size: 160 };
 
   constructor() {
     super();
@@ -81,9 +93,7 @@ export class TalosCompass extends HTMLElement {
              --_c to one of these, and the needle (the state-bearer) reads it.
              Copied verbatim from the gauge so a retheme via
              --talos-success/warning/danger reaches every instrument alike. */
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_track: var(--talos-edge-subtle, hsl(0 0% 100% / 0.1));
           --_c: var(--_nominal);
 
@@ -170,51 +180,28 @@ export class TalosCompass extends HTMLElement {
     this.shown = norm360(num(this, "heading", 0));
     this.render();
     // Reactivity via a filtered MutationObserver (not attributeChangedCallback).
-    // render() writes role/aria-* back onto the host every frame; the observe()
+    // render() writes role/aria-* back onto the host on each render; the observe()
     // call below uses an explicit attributeFilter that excludes those, so a
     // single mechanism handles real inputs without looping on its own
     // write-backs (an unfiltered observer would freeze the renderer). This is
     // the pattern the animated instruments share.
     this.observer = new MutationObserver(() => this.update());
-    this.startEase();
     this.observer.observe(this, {
       attributeFilter: ["heading", "target", "warn", "crit", "label", "size"],
     });
   }
 
   disconnectedCallback(): void {
-    cancelAnimationFrame(this.frame);
+    this.ease.stop();
     this.observer?.disconnect();
   }
 
   /** Render immediately from the true heading (colour + readout are exact at
-   *  once); the needle angle eases toward it via startEase(). */
+   *  once), then ease the needle toward it. */
   private update(): void {
     if (prefersReducedMotion()) this.shown = norm360(num(this, "heading", this.shown));
     this.render();
-  }
-
-  /** A single persistent rAF that eases the displayed needle angle toward the
-   *  live target each frame — the SHORT way around the dial. The ease runs on the
-   *  signed shortest delta (350°→10° is +20°, not -340°), so the needle never
-   *  takes the long way past S to get from W to N. Self-contained: it reads the
-   *  attribute live, so there is no per-mutation tween state to cancel/restart. */
-  private startEase(): void {
-    cancelAnimationFrame(this.frame);
-    const loop = () => {
-      const target = norm360(num(this, "heading", this.shown));
-      // Shortest-angle interpolation: ease along the signed delta, then re-wrap.
-      const delta = shortestDelta(this.shown, target);
-      if (Math.abs(delta) > 0.5) {
-        this.shown = norm360(this.shown + delta * 0.18);
-        this.render();
-      } else if (this.shown !== target) {
-        this.shown = target;
-        this.render();
-      }
-      this.frame = requestAnimationFrame(loop);
-    };
-    this.frame = requestAnimationFrame(loop);
+    if (this.shown !== norm360(num(this, "heading", this.shown))) this.ease.start();
   }
 
   /** Polar→cartesian with 0° = NORTH (up) and angle increasing CLOCKWISE, the
@@ -243,7 +230,7 @@ export class TalosCompass extends HTMLElement {
     ring.setAttribute("stroke-width", String(stroke));
 
     // ── Fixed dial: ticks every 30°, cardinals heavier. Drawn once geometry is
-    //    known; cheap enough to rebuild each render so it tracks `size`. ────────
+    //    known; rebuilt on attribute change (never per frame) so it tracks `size`.
     const ticks = this.root.querySelector(".ticks")!;
     const cardinals = this.root.querySelector(".cardinals")!;
     ticks.innerHTML = "";
@@ -310,16 +297,8 @@ export class TalosCompass extends HTMLElement {
       this.targetMark.innerHTML = "";
     }
 
-    // ── Needle: rotates to the EASED `shown` angle (smooth motion); colour uses
-    //    the TRUE heading's band so state never lags the pointer. The needle is a
-    //    hub-anchored pointer with a short opposing tail, so it reads as a compass
-    //    needle rather than a single ray. ────────────────────────────────────────
-    const angle = this.shown;
-    const [tipX, tipY] = this.point(cx, cy, r - size * 0.12, angle);
-    const [tailX, tailY] = this.point(cx, cy, r * 0.42, angle + 180);
-    this.needle.innerHTML =
-      `<line class="head" x1="${cx}" y1="${cy}" x2="${tipX}" y2="${tipY}" stroke-width="${Math.max(2, size * 0.022)}"></line>` +
-      `<line class="tail" x1="${cx}" y1="${cy}" x2="${tailX}" y2="${tailY}" stroke-width="${Math.max(1.5, size * 0.016)}"></line>`;
+    this.geo = { cx, cy, r, size };
+    this.drawNeedle();
 
     const hub = this.root.querySelector(".hub")!;
     hub.setAttribute("cx", String(cx));
@@ -344,5 +323,19 @@ export class TalosCompass extends HTMLElement {
       ? `, target ${Math.round(norm360(parseFloat(targetAttr!)))} degrees`
       : "";
     this.setAttribute("aria-label", `${lbl ? `${lbl}: ` : ""}${headingWord}${targetWord}`);
+  }
+
+  /** Per-frame draw: the needle rotated to the EASED `shown` angle. Its colour
+   *  comes from --_c, set by render() from the TRUE heading's band, so state
+   *  never lags the pointer. A hub-anchored pointer with a short opposing tail,
+   *  so it reads as a compass needle rather than a single ray. */
+  private drawNeedle(): void {
+    const { cx, cy, r, size } = this.geo;
+    const angle = this.shown;
+    const [tipX, tipY] = this.point(cx, cy, r - size * 0.12, angle);
+    const [tailX, tailY] = this.point(cx, cy, r * 0.42, angle + 180);
+    this.needle.innerHTML =
+      `<line class="head" x1="${cx}" y1="${cy}" x2="${tipX}" y2="${tipY}" stroke-width="${Math.max(2, size * 0.022)}"></line>` +
+      `<line class="tail" x1="${cx}" y1="${cy}" x2="${tailX}" y2="${tailY}" stroke-width="${Math.max(1.5, size * 0.016)}"></line>`;
   }
 }

@@ -1,4 +1,4 @@
-import { num } from "./bands";
+import { BAND_TOKENS_CSS, num } from "./bands";
 
 /**
  * <talos-groundtrack> — an equirectangular world strip showing where a
@@ -58,9 +58,7 @@ export class TalosGroundtrack extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_grid: var(--talos-edge-subtle, hsl(0 0% 100% / 0.08));
           --_track: var(--talos-edge-default, hsl(0 0% 100% / 0.14));
           --_gateway: var(--talos-muted-foreground, hsl(0 0% 60%));

@@ -1,4 +1,4 @@
-import { bandOf, num } from "./bands";
+import { BAND_TOKENS_CSS, bandOf, num } from "./bands";
 import { setImageA11y } from "./a11y";
 import { parseNumberList } from "./parse";
 
@@ -54,9 +54,7 @@ export class TalosSpark extends HTMLElement {
           height: var(--talos-spark-h, 16px);
           /* nominal band = --talos-success (the band token), matching gauge/
              meter/trend. --talos-accent is reserved for live-status, not bands. */
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_stroke: var(--_nominal);
         }
         svg { display: block; width: 100%; height: 100%; overflow: visible; }

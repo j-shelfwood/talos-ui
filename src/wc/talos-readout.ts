@@ -29,10 +29,10 @@
  *   duration  scramble length in ms                            (default 420)
  *
  * Bands apply only when `value` parses as a number; non-numeric values render
- * nominal. Banding uses the shared bandOf() helper (bands.ts), so warn/crit are
+ * nominal. Nominal text is foreground (monochrome); warning/critical tint it. Banding uses the shared bandOf() helper (bands.ts), so warn/crit are
  * inclusive-from and `invert` works identically to the other instruments.
  */
-import { bandOf, num, prefersReducedMotion, type Band } from "./bands";
+import { BAND_TOKENS_CSS, bandColorVar, bandOf, num, prefersReducedMotion, type Band } from "./bands";
 import { setStatusA11y } from "./a11y";
 import { replaceTextWithUnit } from "./render";
 
@@ -61,9 +61,7 @@ export class TalosReadout extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_c: var(--talos-foreground, #e7e9ec);
 
           display: inline-flex;
@@ -124,12 +122,16 @@ export class TalosReadout extends HTMLElement {
   }
 
   private onAttrs(): void {
-    this.renderCaption();
-    this.renderBand();
     const next = this.getAttribute("value") ?? "";
-    if (next === this.lastValue) return; // stable value → stable text, no motion
+    const changed = next !== this.lastValue;
     this.toText = next;
     this.lastValue = next;
+    this.renderCaption();
+    this.renderBand();
+    if (!changed) {
+      this.paint(this.toText); // unit may have changed; stable value, no motion
+      return;
+    }
     if (prefersReducedMotion()) {
       this.paint(this.toText); // honest: show the value, skip the scramble
       return;
@@ -137,27 +139,31 @@ export class TalosReadout extends HTMLElement {
     this.startScramble();
   }
 
-  /** Band tint, only meaningful for numeric values — uses the shared bandOf()
-   *  helper (bands.ts), so threshold + invert semantics match gauge/meter. A
-   *  non-numeric value has no band: it stays neutral foreground. */
-  private renderBand(): void {
+  /** The band of a numeric value with warn/crit set; null when unbanded. */
+  private band(): Band | null {
     const n = parseFloat(this.getAttribute("value") ?? "");
-    const band: Band = Number.isFinite(n) ? bandOf(this, n) : "nominal";
+    if (!Number.isFinite(n) || !(this.hasAttribute("warn") || this.hasAttribute("crit"))) return null;
+    return bandOf(this, n);
+  }
+
+  /** Band tint via the shared bandOf() helper (bands.ts), so threshold + invert
+   *  semantics match gauge/meter. Nominal and unbanded text stays foreground
+   *  (DESIGN.md: monochrome, accent rare); only warning/critical tint it. */
+  private renderBand(): void {
+    const band = this.band();
     const v =
-      band === "critical"
-        ? "var(--_critical)"
-        : band === "warning"
-          ? "var(--_warning)"
-          : "var(--talos-foreground, #e7e9ec)";
+      band && band !== "nominal" ? `var(${bandColorVar(band)})` : "var(--talos-foreground, #e7e9ec)";
     this.style.setProperty("--_c", v);
   }
 
   private renderCaption(): void {
     this.caption.textContent = this.getAttribute("label") ?? "";
-    // a11y: expose the true value, never a scrambled frame.
+    // a11y: expose the true value with its unit and band, never a scrambled frame.
+    const unit = this.getAttribute("unit");
+    const band = this.band();
     setStatusA11y(this, {
       label: this.getAttribute("label"),
-      summary: this.toText,
+      summary: `${this.toText}${unit ? ` ${unit}` : ""}${band ? `, ${band}` : ""}`,
     });
   }
 

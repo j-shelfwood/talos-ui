@@ -1,4 +1,4 @@
-import { bandOf, num } from "./bands";
+import { BAND_TOKENS_CSS, bandOf, num } from "./bands";
 
 /**
  * <talos-dots> — a dot-matrix: a discrete COUNT shown as filled-of-total marks.
@@ -38,9 +38,7 @@ export class TalosDots extends HTMLElement {
           /* nominal band = --talos-success (the band token), matching gauge/
              meter/trend. --talos-accent stays reserved for the live-status glow
              below, not for band colour. */
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_off: var(--talos-surface-3, hsl(0 0% 10%));
           --_on: var(--_nominal);
         }

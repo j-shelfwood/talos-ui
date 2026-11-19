@@ -37,7 +37,7 @@
  *   el.push({ msg, level?, time? })  — append one event, scroll the window.
  *   el.events = [ … ]                — seed/replace the whole window at once.
  */
-import { num, prefersReducedMotion } from "./bands";
+import { BAND_TOKENS_CSS, bandColorVar, num, prefersReducedMotion } from "./bands";
 
 export interface TickerEvent {
   msg: string;
@@ -87,9 +87,7 @@ export class TalosTicker extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_edge: var(--talos-edge-subtle, hsl(0 0% 100% / 0.08));
 
           display: inline-flex;
@@ -223,7 +221,7 @@ export class TalosTicker extends HTMLElement {
       ...this.buf.map((e, i) => {
         const band = levelOf(e.level);
         const bandVar =
-          band === "critical" ? "--_critical" : band === "warning" ? "--_warning" : "--_nominal";
+          bandColorVar(band);
 
         const row = document.createElement("div");
         row.className = i === 0 && animateTop ? "row arrive" : "row";

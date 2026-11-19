@@ -27,6 +27,8 @@ export type Parts = Record<string, PartState>;
 
 const PART_IDS = ["bus", "gpu", "solarL", "solarR", "radL", "radR", "antenna"] as const;
 
+import { BAND_TOKENS_CSS } from "./bands";
+
 export class TalosSpacecraft extends HTMLElement {
   static get observedAttributes(): string[] {
     return ["selected", "eclipse", "label"];
@@ -42,9 +44,7 @@ export class TalosSpacecraft extends HTMLElement {
     this.root.innerHTML = /* html */ `
       <style>
         :host {
-          --_nominal: var(--talos-success, hsl(140 90% 60%));
-          --_warning: var(--talos-warning, hsl(38 92% 60%));
-          --_critical: var(--talos-danger, hsl(0 80% 62%));
+          ${BAND_TOKENS_CSS}
           --_body: var(--talos-hud-fill, hsl(0 0% 8%));
           --_edge: var(--talos-hud-edge, hsl(0 0% 100% / 0.28));
           --_fg: var(--talos-foreground, #e7e9ec);

@@ -83,3 +83,15 @@ export function prefersReducedMotion(): boolean {
     matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 }
+/** Where a value sits against the [min, max] domain. */
+export type RangeState = "under" | "over" | null;
+
+export function rangeState(value: number, min: number, max: number): RangeState {
+  return value < min ? "under" : value > max ? "over" : null;
+}
+
+/** Reflect an out-of-domain value as `data-range="over|under"` on the host. */
+export function markRange(el: Element, state: RangeState): void {
+  if (state) el.setAttribute("data-range", state);
+  else el.removeAttribute("data-range");
+}
